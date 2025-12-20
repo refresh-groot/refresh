@@ -20,11 +20,11 @@ const sequelize = new Sequelize(
 // 구조: ./폴더명/entity/파일명.js
 // ==========================================================
 
-const User = require('./user/entity/User');
-const Plant = require('./plant/entity/Plant');
+const User = require('./user/User');
+const Plant = require('./plant/Plant');
 const Device = require('./device/entity/Device');
-const DiagnosisLog = require('./diagnosisLog/entity/DiagnosisLog');
-const WateringLog = require('./wateringLog/entity/WateringLog');
+const DiagnosisLog = require('./diagnosisLog/DiagnosisLog');
+const WateringLog = require('./wateringLog/WateringLog');
 
 // 5. db 객체에 담기
 db.User = User;
