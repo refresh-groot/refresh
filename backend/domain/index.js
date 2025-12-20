@@ -17,12 +17,12 @@ const sequelize = new Sequelize(
 
 // ==========================================================
 //  4. 모델 파일 불러오기 
-// 구조: ./폴더명/entity/파일명.js
+// 구조: ./폴더명/파일명.js
 // ==========================================================
 
 const User = require('./user/User');
 const Plant = require('./plant/Plant');
-const Device = require('./device/entity/Device');
+const Device = require('./device/Device');
 const DiagnosisLog = require('./diagnosisLog/DiagnosisLog');
 const WateringLog = require('./wateringLog/WateringLog');
 
