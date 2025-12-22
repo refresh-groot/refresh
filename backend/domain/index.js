@@ -12,7 +12,10 @@ const sequelize = new Sequelize(
   dbConfig.database,
   dbConfig.username,
   dbConfig.password,
-  dbConfig
+  {
+    ...dbConfig,   // 기존 설정 유지
+    logging: false // SQL 실행 로그 비활성화
+  }
 );
 
 // ==========================================================
