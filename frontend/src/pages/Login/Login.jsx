@@ -45,7 +45,6 @@ function Login() {
   };
 
   useEffect(() => {
-    // 비밀번호 확인칸에 뭔가 적혀있을 때만 검사
     if (confirmPw.length > 0) {
       if (pw !== confirmPw) {
         setErrors(prev => ({ ...prev, confirmPw: '비밀번호가 일치하지 않습니다'}));
