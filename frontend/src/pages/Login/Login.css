@@ -1,15 +1,15 @@
 .login-container {
-    background: linear-gradient(90deg, #8ef693 0%, #26A69A 100%);
-    width: 100%;
+  background: linear-gradient(90deg, #8ef693 0%, #26A69A 100%);
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100dvh;
+  height: 100dvh; 
 }
 
 .login-form {
   background-color: white;
-  padding: 30px;
+  padding: 40px 30px;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -17,56 +17,57 @@
   width: 350px;
 }
 
-.login-title h1{
-  text-align: center;
-  margin:0,0,20px,0;
-}
-
-.login-icons {
+.login-select {
   display: flex;
   justify-content: center;
-  align-Items: center;
-  gap: 30px;
-  margin-top: 30px;
-  width: 100%;
+  gap: 20px;
+  margin-bottom: 30px;
+  font-size: 18px;
 }
 
-.login-form h1 {
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 30px;
-  color: #333;
+.active-tab {
+  cursor: pointer;
+  font-weight: bold;
+  color: #26A69A; 
+  border-bottom: 3px solid #26A69A;
+  padding-bottom: 5px;
+  transition: all 0.3s ease;
+}
+
+.inactive-tab {
+  cursor: pointer;
+  color: #aaa;
+  font-weight: normal;
+  border-bottom: 3px solid transparent;
+  padding-bottom: 5px;
+  transition: all 0.3s ease;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
-  text-align: left;
+  gap: 15px; 
 }
 
-.input-group label {
-  font-size: 14px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.login-input {
+.input-group input {
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 15px;
   outline: none;
   transition: 0.3s;
+  width: 100%; 
+  box-sizing: border-box; 
 }
 
-.login-input:focus {
-  border-color: #667EEA;
+.input-group input:focus {
+  border-color: #26A69A; 
+  box-shadow: 0 0 5px rgba(38, 166, 154, 0.3);
 }
 
-.login-btn {
-  background-color: #667EEA;
+.signin-btn, .signup-btn {
+  background-color: #26A69A; 
   color: white;
   margin-top: 10px;
   padding: 14px;
@@ -75,35 +76,134 @@
   font-weight: bold;
   font-size: 16px;
   cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   transition: 0.3s;
 }
 
-.login-btn:hover {
-  background-color: #5a6fd6;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.signin-btn:hover, .signup-btn:hover {
+  filter: brightness(0.9);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.login-icons svg{
+.login-icons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+
+.login-icons svg {
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
 }
 
-.login-icons svg:hover{
-  transform: scale(1.1);
+.login-icons svg:hover {
+  transform: scale(1.2); 
+}
+
+.signup-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; 
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+}
+.full-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box; 
+  outline: none;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+
+.check-btn {
+  background-color: #8ef693; 
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 0 15px; 
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.check-btn:hover {
+  background-color: #26A69A;
+  color: white;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.input-group input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.error-text {
+  color: #ff4d4d;
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: left;
+  display: block;
+  margin-left: 5px;
+}
+
+.input-error{
+  border: 1px solid #ff4d4d !important;
+}
+
+.input-wrapper {
+  width: 100%;
+}
+
+.signin-btn:disabled,
+.signup-btn:disabled {
+  opacity: 0.7;        /* 흐리게 */
+  cursor: not-allowed; /* 금지 커서 */
+  background-color: #ccc; /* (선택사항) 회색으로 변경하고 싶다면 추가 */
 }
 
 @media (max-width: 768px) {
   .login-form {
-    width: 90%; 
-    max-width: 350px;
-    padding: 20px;
-  }
-
-  .login-title {
-    font-size: 1.5rem; 
+    width: 85%;
+    padding: 25px;
   }
 }
