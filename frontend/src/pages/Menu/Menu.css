@@ -1,0 +1,129 @@
+.menu-dashboard {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.section-title {
+    margin: 20px 0 10px 0;
+    font-size: 1.1rem;
+    color: #555;
+    font-weight: bold;
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);
+}
+
+.img-placeholder {
+    width: 80px;
+    height: 80px;
+    background: #c8e6c9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    flex-shrink: 0;
+}
+
+.img-placeholder img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.plant-info h2 { margin: 0 0 5px 0; }
+.status-text { color: #666; font-weight:bold; margin: 0; }
+.growth-day { color: #2e7d32; font-weight: bold; margin-top: 5px; }
+
+.sensor-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.sensor-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.icon-box { font-size: 24px; margin-bottom: 10px; }
+.temp { color: #ff5722; }
+.humid { color: #2196f3; }
+.soil { color: #795548; }
+.light { color: #ffeb3b; }
+
+.sensor-value { font-size: 1.5rem; font-weight: bold; color: #333; }
+.sensor-value.warning { color: #e53935; }
+.sensor-label { font-size: 0.9rem; color: #888; margin-top: 5px; }
+
+.chart-card { min-height: 200px; }
+
+.control-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+.control-btn:hover { background-color: #1976d2; }
+
+.toggle-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+}
+
+.alert-list {
+    list-style: none;
+    padding: 0;
+}
+.alert-item {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+.alert-item.warning { background: #ffebee; color: #c62828; }
+
+.ai-diagnosis {
+    background: #e8f5e9;
+    color: #2e7d32;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #c8e6c9;
+}
+
+@media (max-width: 768px) {
+    .menu-dashboard {
+        grid-template-columns: 1fr; 
+    }
+    .sensor-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+}
