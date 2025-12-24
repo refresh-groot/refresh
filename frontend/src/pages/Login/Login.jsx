@@ -6,12 +6,14 @@ import { FaGithub } from "react-icons/fa6";
 import { SiNaver } from "react-icons/si";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import './Login.css'
-import { checkIdApi, checkNicknameApi, signupApi } from '../../api/auth';
+import { checkIdApi, checkNicknameApi, signupApi, loginApi } from '../../api/auth';
 import Swal from "sweetalert2";
 
 function Login() {
   const [activeTab, setActiveTab] = useState('signin');
+
   const navigate = useNavigate();
+  
   const initialInputs = {
     id: '',
     pw: '',
@@ -30,6 +32,7 @@ function Login() {
   const toggleShowPw = () =>{
     setShowpw(!showpw);
   }
+
   const handleTabChange = (tabName) =>{
     setActiveTab(tabName);
     setInputs(initialInputs);
@@ -61,7 +64,7 @@ function Login() {
       icon: icon,
       title: title,
       text: text,
-      confirmButtonColor: '#26A69A', // 우리 테마색 (초록)
+      confirmButtonColor: '#26A69A',
     });
   };
 
@@ -98,14 +101,15 @@ function Login() {
       // === 로그인 로직 ===
       setIsLoading(true);
       try{
-        await new Promise(r => setTimeout(r, 1000));
-      
-        if (id === 'jss229510' && pw === 'thwntjd123') {
+        const response = await loginApi({
+          id: id,
+          pw: pw
+        }); 
+        if (response.data.success){
           Swal.fire({
             icon: 'success',
             title: '로그인 성공!',
-            showConfirmButton: false,
-            timer: 1500
+            text: `${response.data.nickname}님 환영합니다!`
           }).then(() => {
             navigate('/menu');
           });
