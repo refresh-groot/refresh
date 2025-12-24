@@ -32,13 +32,11 @@ app.use(session({
 
 app.use(flash()); // 일회성 알림 메시지 처리 미들웨어
 
-/**
- * 데이터베이스 동기화
- * Sequelize 모델과 실제 데이터베이스 테이블 일치화
- */
-db.sequelize.sync({ force: true }) // force: true 설정 시 기존 테이블 삭제 후 재생성
+// force: false로 바꾸면 기존 데이터는 유지하고, 없으면 생성합니다.
+// alter: true를 추가하면, 테이블 구조가 바꼈을 때(컬럼 추가 등) 데이터는 살리고 구조만 바꿔줍니다.
+db.sequelize.sync({ force: false, alter: true }) 
   .then(() => {
-    console.log('smartplant DB 연결 및 테이블 생성 성공');
+    console.log('smartplant DB 연결 성공 (데이터 유지 모드)');
   })
   .catch((err) => {
     console.error('DB 연결 에러:', err);
