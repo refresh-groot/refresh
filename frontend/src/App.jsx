@@ -10,9 +10,8 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route element={<Layout />}>
       <Route path="/menu" element={<Menu />} />
-      
-      </Route>
       <Route path="/community" element={<Community />} />
+      </Route>
     </Routes>
   );
 }
