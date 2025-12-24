@@ -86,23 +86,11 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.login-icons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 30px;
-  margin-top: 20px;
-  width: 100%;
-}
-
-
-.login-icons svg {
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out;
-}
-
-.login-icons svg:hover {
-  transform: scale(1.2); 
+.signin-btn:disabled,
+.signup-btn:disabled {
+  opacity: 0.7;        
+  cursor: not-allowed; 
+  background-color: #ccc; 
 }
 
 .signup-container {
@@ -192,13 +180,6 @@
 
 .input-wrapper {
   width: 100%;
-}
-
-.signin-btn:disabled,
-.signup-btn:disabled {
-  opacity: 0.7;        /* 흐리게 */
-  cursor: not-allowed; /* 금지 커서 */
-  background-color: #ccc; /* (선택사항) 회색으로 변경하고 싶다면 추가 */
 }
 
 @media (max-width: 768px) {

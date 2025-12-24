@@ -6,7 +6,7 @@ import { FaGithub } from "react-icons/fa6";
 import { SiNaver } from "react-icons/si";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import './Login.css'
-import { checkIdApi, checkNicknameApi, signupApi, loginApi } from '../../api/auth';
+import { checkIdApi, checkNicknameApi, signupApi, loginApi, sendEmailCodeApi, verifyEmailCodeApi } from '../../api/auth';
 import Swal from "sweetalert2";
 
 function Login() {
@@ -92,6 +92,48 @@ function Login() {
       showAlert('error', '오류 발생', '서버 확인 불가');
     }
   };
+
+  const handleSendEmailCode = async () =>{
+    if(!email) {
+      return showAlert('warning', '이메일 입력', '이메일 주소를 입력하세요.');
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)){
+      return showAlert('warning', '형식 오류', '올바른 이메일 형식이 아닙니다.');
+    }
+
+    try{
+      setIsLoading(true);
+      await sendEmailCodeApi(email);
+      showAlert('success', '전송 완료', '인증코드가 메일로 발송되었습니다. 확인해주세요.');
+    }
+    catch (error){
+      console.error(error);
+      showAlert('error', '전송 실패', '메일 발송 중 오류가 발생했습니다.');
+    }
+    finally{
+      setIsLoading(false);
+    }
+  }
+
+  const handleVerifyCode = async () => {
+    if(!authCode) {
+      return showAlert('warning',  '코드 입력', '인증코드를 입력해주세요');
+    }
+    try {
+      const data = await verifyEmailCodeApi(email, authCode);
+      if(data.success){
+        showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
+      }
+      else{
+        showAlert('error', '인증 실패', '인증코드가 일치하지 않습니다.');
+      }
+    }
+    catch (error){
+      console.error(error);
+      showAlert('error', '오류', '인증 확인 중 문제가 발생했습니다.');
+    }
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -187,11 +229,11 @@ function Login() {
             </div>
             <div className="input-with-btn">
               <input type="email" name="email" placeholder='이메일' value={email} onChange={onChange} />
-              <button type="button" className="check-btn">코드발송</button>
+              <button type="button" className="check-btn" onClick={handleSendEmailCode}>코드발송</button>
             </div>
             <div className="input-with-btn">
               <input type="text" name="authCode" placeholder='인증코드 입력' value={authCode} onChange={onChange} />
-              <button type="button" className="check-btn">인증하기</button>
+              <button type="button" className="check-btn" onClick={handleVerifyCode}>인증하기</button>
             </div>
             <div className="input-with-btn">
               <input type="text" name="nickname" placeholder='닉네임' value={nickname} onChange={onChange} />
@@ -203,12 +245,7 @@ function Login() {
             </button>
           </div>
         )}
-        <div className="login-icons">  
-          <RiKakaoTalkFill size={32} />
-          <FaGoogle size={30} color='red'/>
-          <FaGithub size={30} />
-          <SiNaver size={28} color='green' />
-        </div>
+        
       </form>
     </div>
   )
