@@ -34,12 +34,13 @@ app.use(flash()); // 일회성 알림 메시지 처리 미들웨어
 
 // force: false로 바꾸면 기존 데이터는 유지하고, 없으면 생성합니다.
 // alter: true를 추가하면, 테이블 구조가 바꼈을 때(컬럼 추가 등) 데이터는 살리고 구조만 바꿔줍니다.
-db.sequelize.sync({ force: false, alter: true }) 
+// 테이블을 매번 새로 만들지 않고 연결만 확인합니다. (에러 방지)
+db.sequelize.authenticate() 
   .then(() => {
-    console.log('smartplant DB 연결 성공 (데이터 유지 모드)');
+    console.log('smartplant DB 연결 성공!');
   })
   .catch((err) => {
-    console.error('DB 연결 에러:', err);
+    console.error('DB 연결 에러 (무시하고 실행):', err);
   });
 
 
@@ -55,4 +56,10 @@ app.get('/', (req, res) => {
  * app 객체 외부 노출
  * bin/www 실행 파일에서 설정을 가져가기 위한 모듈 배출
  */
+// 포트를 실제로 여는 코드를 추가합니다.
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`서버가 ${port}번 포트에서 정상 작동 중입니다!`);
+});
+
 module.exports = app;
