@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
@@ -11,6 +12,7 @@ const app = express(); // 익스프레스 애플리케이션 객체 생성
  * 미들웨어 설정
  * 요청 처리 단계별 로직 정의
  */
+app.use(cors());
 app.use(morgan('dev')); // 개발 모드 로그 기록 및 접속 정보 콘솔 출력
 app.use(express.json()); // JSON 데이터 파싱
 app.use(express.urlencoded({ extended: false })); // URL-encoded 데이터 파싱 (폼 데이터 처리)
