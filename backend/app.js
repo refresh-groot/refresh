@@ -40,7 +40,7 @@ app.use(flash());
  */
 // alter: true -> 데이터 유지하면서 컬럼 변경사항 반영
 // force: false -> 기존 데이터 삭제 안 함
-db.sequelize.sync({ force: true })
+db.sequelize.sync({ force: false, alter: true })
   .then(() => {
     console.log('smartplant DB 연결 및 동기화 성공!');
   })

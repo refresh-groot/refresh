@@ -11,7 +11,6 @@ import Swal from "sweetalert2";
 
 function Login() {
   const [activeTab, setActiveTab] = useState('signin');
-
   const navigate = useNavigate();
   
   const initialInputs = {
@@ -27,7 +26,6 @@ function Login() {
   const {id, pw, confirmPw, email, authCode, nickname} = inputs;
   const [showpw, setShowpw] = useState(false);
   const [errors, setErrors] = useState({ confirmPw: '' });
-  // [수정] 중복 클릭 방지용 로딩 상태 추가
   const [isLoading, setIsLoading] = useState(false);
 
   const toggleShowPw = () =>{
@@ -95,7 +93,6 @@ function Login() {
   };
 
   const handleSendEmailCode = async () =>{
-    // [수정] 이미 로딩 중이면 클릭 방지
     if (isLoading) return;
 
     if(!email) {
@@ -107,7 +104,7 @@ function Login() {
     }
 
     try{
-      setIsLoading(true); // 로딩 시작
+      setIsLoading(true);
       await sendEmailCodeApi(email);
       showAlert('success', '전송 완료', '인증코드가 메일로 발송되었습니다. 확인해주세요.');
     }
@@ -116,24 +113,26 @@ function Login() {
       showAlert('error', '전송 실패', '메일 발송 중 오류가 발생했습니다.');
     }
     finally{
-      setIsLoading(false); // 로딩 끝
+      setIsLoading(false);
     }
   }
 
   const handleVerifyCode = async () => {
-    // [수정] 이미 로딩 중이면 클릭 방지 (중복 요청 해결)
     if (isLoading) return;
 
     if(!authCode) {
       return showAlert('warning',  '코드 입력', '인증코드를 입력해주세요');
     }
     try {
-      setIsLoading(true); // 버튼 잠금
+      setIsLoading(true);
       
       const data = await verifyEmailCodeApi(email, authCode);
       
-      // [핵심 수정] 백엔드가 보내는 verified 값 확인
-      if(data.verified || data.success){ 
+      // [디버깅] F12 콘솔에서 서버가 보낸 데이터를 직접 확인해보세요!
+      console.log("서버 응답 데이터:", data); 
+
+      // 백엔드 응답 구조의 모든 가능성을 체크 (안전장치)
+      if(data && (data.verified || data.success || (data.result && data.result.verified))) { 
         showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
       }
       else{
@@ -144,7 +143,7 @@ function Login() {
       console.error(error);
       showAlert('error', '오류', '인증 확인 중 문제가 발생했습니다.');
     } finally {
-      setIsLoading(false); // 버튼 잠금 해제
+      setIsLoading(false);
     }
   }
 
@@ -153,14 +152,12 @@ function Login() {
     if(isLoading) return;
 
     if(activeTab === 'signin'){
-      // === 로그인 로직 ===
       setIsLoading(true);
       try{
         const response = await loginApi({
           id: id,
           pw: pw
         }); 
-        // 응답 구조에 따라 success 체크
         if (response.success || (response.data && response.data.success)){
           Swal.fire({
             icon: 'success',
@@ -190,7 +187,14 @@ function Login() {
 
       setIsLoading(true);
       try {
-        await signupApi(inputs);
+        const signupData = {
+          loginId: id,   
+          password: pw,  
+          email: email,
+          nickname: nickname
+        };
+
+        await signupApi(signupData); 
         
         Swal.fire({
           icon: 'success',
@@ -203,7 +207,8 @@ function Login() {
         
       } catch (err) {
         console.error(err);
-        showAlert('error', '가입 실패', '회원가입 중 오류가 발생했습니다.');
+        const msg = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
+        showAlert('error', '가입 실패', msg);
       } finally {
         setIsLoading(false);
       }
@@ -245,14 +250,12 @@ function Login() {
             </div>
             <div className="input-with-btn">
               <input type="email" name="email" placeholder='이메일' value={email} onChange={onChange} />
-              {/* [수정] disabled 추가: 로딩 중엔 클릭 불가 */}
               <button type="button" className="check-btn" onClick={handleSendEmailCode} disabled={isLoading}>
                 {isLoading ? '전송중' : '코드발송'}
               </button>
             </div>
             <div className="input-with-btn">
               <input type="text" name="authCode" placeholder='인증코드 입력' value={authCode} onChange={onChange} />
-              {/* [수정] disabled 추가: 로딩 중엔 클릭 불가 */}
               <button type="button" className="check-btn" onClick={handleVerifyCode} disabled={isLoading}>
                 {isLoading ? '확인중' : '인증하기'}
               </button>
