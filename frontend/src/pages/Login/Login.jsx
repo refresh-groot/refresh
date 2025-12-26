@@ -146,35 +146,45 @@ function Login() {
       setIsLoading(false);
     }
   }
-
+//로그인
   const handleLogin = async (e) => {
-    e.preventDefault();
-    if(isLoading) return;
+  e.preventDefault();
+  if(isLoading) return;
 
-    if(activeTab === 'signin'){
-      setIsLoading(true);
-      try{
-        const response = await loginApi({
-          id: id,
-          pw: pw
-        }); 
-        if (response.success || (response.data && response.data.success)){
-          Swal.fire({
-            icon: 'success',
-            title: '로그인 성공!',
-            text: `${response.data ? response.data.nickname : '사용자'}님 환영합니다!`
-          }).then(() => {
-            navigate('/menu');
-          });
-        } else {
-          showAlert('error', '로그인 실패', '아이디 또는 비밀번호가 틀렸습니다.');
-        }
-      } catch(err){
-        console.error("로그인 에러 발생:", err);
-        showAlert('error', '오류', '로그인 중 오류가 발생했습니다.');
-      } finally{
-        setIsLoading(false);
+  if(activeTab === 'signin'){
+    setIsLoading(true);
+    try {
+      const response = await loginApi({
+        id: id,
+        pw: pw
+      }); 
+
+
+      // 데이터 안에 'user' 정보가 있거나, 응답 자체가 성공적이면 통과시킴
+      if (response && (response.user || response.data?.user || response.status === 200)) {
+        
+        // 백엔드에서 보낸 닉네임 위치에 맞춰 수정
+        const nickname = response.user?.nickname || response.data?.user?.nickname || '사용자';
+
+        Swal.fire({
+          icon: 'success',
+          title: '로그인 성공!',
+          text: `${nickname}님 환영합니다!`
+        }).then(() => {
+          navigate('/menu'); // 메인 메뉴로 이동
+        });
+      } else {
+        // 백엔드가 200을 줬지만 데이터 형식이 이상한 경우
+        showAlert('error', '로그인 실패', '응답 형식이 올바르지 않습니다.');
       }
+    } catch(err) {
+      console.error("로그인 에러 발생:", err);
+      // 백엔드에서 401(비번 틀림)을 보내면 catch문으로 들어오게됨
+      const errorMsg = err.response?.data?.message || '아이디 또는 비밀번호가 틀렸습니다.';
+      showAlert('error', '로그인 실패', errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
 
     } else {
       // === 회원가입 로직 ===
