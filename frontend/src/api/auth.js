@@ -4,8 +4,8 @@ import { SERVER_URL } from '../app/constants'; // 서버주소 바꿔주면 됨
 /**
  * 1. 아이디 중복 확인 API
  */
-export const checkIdApi = async (id) => {
-  const response = await axios.post(`${SERVER_URL}/check/id`, { id });
+export const checkIdApi = async (loginId) => {
+  const response = await axios.post(`${SERVER_URL}/check/id`, { loginId });
   return response.data;
 };
 

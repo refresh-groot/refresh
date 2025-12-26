@@ -10,7 +10,7 @@ class User extends Sequelize.Model {
           autoIncrement: true,
           allowNull: false,
         },
-        login_id: {
+        loginId: {
           type: Sequelize.STRING(255), 
           allowNull: false,
           unique: true, // 아이디 중복 불가
@@ -23,8 +23,15 @@ class User extends Sequelize.Model {
         },
         nickname: {
           type: Sequelize.STRING(255), 
+          unique: true, // 닉네임 중복 불가
           allowNull: false,
           comment: '사용자 닉네임',
+        },
+        email: {
+          type: Sequelize.STRING(255),
+          allowNull: false,
+          unique: true, // 이메일 중복 불가
+          comment: '사용자 이메일',
         },
       },
       {

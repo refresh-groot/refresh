@@ -27,6 +27,7 @@ function Login() {
   const {id, pw, confirmPw, email, authCode, nickname} = inputs;
   const [showpw, setShowpw] = useState(false);
   const [errors, setErrors] = useState({ confirmPw: '' });
+  // [수정] 중복 클릭 방지용 로딩 상태 추가
   const [isLoading, setIsLoading] = useState(false);
 
   const toggleShowPw = () =>{
@@ -94,6 +95,9 @@ function Login() {
   };
 
   const handleSendEmailCode = async () =>{
+    // [수정] 이미 로딩 중이면 클릭 방지
+    if (isLoading) return;
+
     if(!email) {
       return showAlert('warning', '이메일 입력', '이메일 주소를 입력하세요.');
     }
@@ -103,7 +107,7 @@ function Login() {
     }
 
     try{
-      setIsLoading(true);
+      setIsLoading(true); // 로딩 시작
       await sendEmailCodeApi(email);
       showAlert('success', '전송 완료', '인증코드가 메일로 발송되었습니다. 확인해주세요.');
     }
@@ -112,17 +116,24 @@ function Login() {
       showAlert('error', '전송 실패', '메일 발송 중 오류가 발생했습니다.');
     }
     finally{
-      setIsLoading(false);
+      setIsLoading(false); // 로딩 끝
     }
   }
 
   const handleVerifyCode = async () => {
+    // [수정] 이미 로딩 중이면 클릭 방지 (중복 요청 해결)
+    if (isLoading) return;
+
     if(!authCode) {
       return showAlert('warning',  '코드 입력', '인증코드를 입력해주세요');
     }
     try {
+      setIsLoading(true); // 버튼 잠금
+      
       const data = await verifyEmailCodeApi(email, authCode);
-      if(data.success){
+      
+      // [핵심 수정] 백엔드가 보내는 verified 값 확인
+      if(data.verified || data.success){ 
         showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
       }
       else{
@@ -132,6 +143,8 @@ function Login() {
     catch (error){
       console.error(error);
       showAlert('error', '오류', '인증 확인 중 문제가 발생했습니다.');
+    } finally {
+      setIsLoading(false); // 버튼 잠금 해제
     }
   }
 
@@ -147,11 +160,12 @@ function Login() {
           id: id,
           pw: pw
         }); 
-        if (response.data.success){
+        // 응답 구조에 따라 success 체크
+        if (response.success || (response.data && response.data.success)){
           Swal.fire({
             icon: 'success',
             title: '로그인 성공!',
-            text: `${response.data.nickname}님 환영합니다!`
+            text: `${response.data ? response.data.nickname : '사용자'}님 환영합니다!`
           }).then(() => {
             navigate('/menu');
           });
@@ -165,8 +179,6 @@ function Login() {
         setIsLoading(false);
       }
 
-      
-
     } else {
       // === 회원가입 로직 ===
       if(!id || !pw || !confirmPw || !email || !authCode || !nickname){
@@ -179,11 +191,15 @@ function Login() {
       setIsLoading(true);
       try {
         await signupApi(inputs);
-        console.log(inputs);
-        await new Promise(r => setTimeout(r, 1000)); 
         
-        showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.');
-        handleTabChange('signin');
+        Swal.fire({
+          icon: 'success',
+          title: '회원가입 완료!',
+          text: '이제 로그인을 진행해주세요.',
+          confirmButtonColor: '#26A69A'
+        }).then(() => {
+           handleTabChange('signin');
+        });
         
       } catch (err) {
         console.error(err);
@@ -229,11 +245,17 @@ function Login() {
             </div>
             <div className="input-with-btn">
               <input type="email" name="email" placeholder='이메일' value={email} onChange={onChange} />
-              <button type="button" className="check-btn" onClick={handleSendEmailCode}>코드발송</button>
+              {/* [수정] disabled 추가: 로딩 중엔 클릭 불가 */}
+              <button type="button" className="check-btn" onClick={handleSendEmailCode} disabled={isLoading}>
+                {isLoading ? '전송중' : '코드발송'}
+              </button>
             </div>
             <div className="input-with-btn">
               <input type="text" name="authCode" placeholder='인증코드 입력' value={authCode} onChange={onChange} />
-              <button type="button" className="check-btn" onClick={handleVerifyCode}>인증하기</button>
+              {/* [수정] disabled 추가: 로딩 중엔 클릭 불가 */}
+              <button type="button" className="check-btn" onClick={handleVerifyCode} disabled={isLoading}>
+                {isLoading ? '확인중' : '인증하기'}
+              </button>
             </div>
             <div className="input-with-btn">
               <input type="text" name="nickname" placeholder='닉네임' value={nickname} onChange={onChange} />
