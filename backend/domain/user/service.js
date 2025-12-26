@@ -77,7 +77,26 @@ module.exports = {
       email,
       nickname,
     });
-
     return newUser;
   },
+  // 6. 로그인 (중요: signup 함수 밖에 독립적으로 있어야 함)
+  login: async (loginId, password) => {
+    const user = await repository.findByLoginId(loginId);
+    if (!user) {
+      throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
+    }
+
+    return {
+      id: user.id,
+      loginId: user.loginId,
+      nickname: user.nickname,
+      email: user.email
+    };
+  },
+
 };

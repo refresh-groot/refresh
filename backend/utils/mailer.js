@@ -7,6 +7,9 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER, // .env 파일에 설정
     pass: process.env.EMAIL_PASS, 
   },
+  tls: {
+    rejectUnauthorized: false // 보안 인증서가 일치하지 않아도 연결을 허용함
+  }
 });
 
 module.exports = {

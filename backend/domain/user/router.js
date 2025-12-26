@@ -5,6 +5,10 @@ const controller = require('./controller');
 // 회원가입
 router.post('/signup', controller.signup);
 
+// 로그인
+router.post('/login', controller.login);
+router.post('/logout', controller.logout);
+
 // 아이디/닉네임 중복 확인
 router.post('/check/id', controller.checkloginId);
 router.post('/check/nickname', controller.checkNickname);

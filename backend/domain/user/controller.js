@@ -32,6 +32,10 @@ module.exports = {
       const result = await service.sendEmailCode(email);
       return res.status(200).json(result);
     } catch (error) {
+      console.error("====== 메일 전송 상세 에러 시작 ======");
+      console.error(error); 
+      console.error("====== 메일 전송 상세 에러 끝 ======");
+      
       return res.status(500).json({ message: '메일 전송에 실패했습니다.', error: error.message });
     }
   },
@@ -66,4 +70,39 @@ module.exports = {
       return res.status(400).json({ message: error.message });
     }
   },
+
+  // 로그인 처리
+  login: async (req, res) => {
+    try {
+      console.log("==== 로그인 요청 도착 ====");
+      console.log("전달된 데이터:", req.body); // { id: '...', pw: '...' } 가 찍힘
+
+      // 프론트에서 보내는 id와 pw로 이름을 맞춰줍니다.
+      const { id, pw } = req.body; 
+      
+      if (!id || !pw) {
+        return res.status(400).json({ message: '아이디와 비밀번호를 입력해주세요.' });
+      }
+
+      // service.login 함수에 id와 pw를 넘깁니다.
+      const user = await service.login(id, pw);
+
+      // 세션에 유저 정보 저장
+      req.session.user = user;
+
+      return res.status(200).json({
+        message: '로그인 성공!',
+        user: user
+      });
+    } catch (error) {
+      // 인증 실패 (아이디 없음, 비번 틀림)
+      return res.status(401).json({ message: error.message });
+    }
+  },
+
+  // 로그아웃 처리
+  logout: (req, res) => {
+    req.session.destroy(); 
+    return res.status(200).json({ message: '로그아웃 되었습니다.' });
+  }
 };

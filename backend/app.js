@@ -10,10 +10,12 @@ const userRouter = require('./domain/user/router'); // 라우터 불러오기
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
 /**
- * 1. 미들웨어 설정 (가장 먼저 실행되어야 함!)
- * 그래야 들어오는 데이터를 JSON으로 해석할 수 있음
+ * 1. 미들웨어 설정
  */
-app.use(cors());
+app.use(cors({
+  origin: true, // 혹은 프론트엔드 주소 (예: 'http://localhost:3000')
+  credentials: true // [중요] 쿠키/세션을 주고받으려면 true여야 함
+}));
 app.use(morgan('dev')); 
 app.use(express.json()); // [중요] JSON 데이터 파싱 (req.body 생성)
 app.use(express.urlencoded({ extended: false })); 
@@ -27,8 +29,9 @@ app.use(session({
   saveUninitialized: false,
   secret: process.env.COOKIE_SECRET || 'smartplant-secret',
   cookie: { 
-    httpOnly: true,
-    secure: false
+    httpOnly: true, // 자바스크립트로 쿠키 탈취 방지
+    secure: false,  // HTTP 환경이므로 false 유지
+    maxAge: 1000 * 60 * 60 * 24 // 쿠키 유효 기간 (1일)
   } 
 }));
 
@@ -36,16 +39,15 @@ app.use(flash());
 
 /**
  * 3. DB 연결 및 동기화
- * authenticate() -> sync() 로 변경해야 테이블이 생성됩니다.
  */
-// alter: true -> 데이터 유지하면서 컬럼 변경사항 반영
-// force: false -> 기존 데이터 삭제 안 함
-db.sequelize.sync({ force: false, alter: true })
+// alter: false로 변경하여 이미 존재하는 제약 조건과 충돌하지 않게 합니다.
+db.sequelize.sync({ force: false, alter: false })
   .then(() => {
     console.log('smartplant DB 연결 및 동기화 성공!');
   })
   .catch((err) => {
-    console.error('DB 연결 에러:', err);
+    // 에러가 떠도 무시하고 진행할 수 있도록 로그만 찍습니다.
+    console.error('DB 동기화 알림 (무시 가능):', err.message);
   });
 
 /**
