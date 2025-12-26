@@ -30,7 +30,6 @@ class User extends Sequelize.Model {
         email: {
           type: Sequelize.STRING(255),
           allowNull: false,
-          unique: true, // 이메일 중복 불가
           comment: '사용자 이메일',
         },
       },

@@ -1,11 +1,11 @@
 const nodemailer = require('nodemailer');
 
-// 전송 객체 설정 (한 번만 만들어두면 계속 씀)
+// 전송 객체 설정
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER, // .env 파일에 설정
-    pass: process.env.EMAIL_PASS, // 구글 앱 비밀번호
+    pass: process.env.EMAIL_PASS, 
   },
 });
 
