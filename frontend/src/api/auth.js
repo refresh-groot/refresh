@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { SERVER_URL } from '../app/constants'; // 서버주소 바꿔주면 됨
-                                              // 호출주소 맞는지 체크 /check/id이런 부분 다 맞는지 확인하고 틀릴경우 백엔드 주소랑 맞게 변경
+import { SERVER_URL } from '../app/constants';  // 서버주소 바꿔주면 됨
+                                                // 호출주소 맞는지 체크 /check/id이런 부분 다 맞는지 확인하고 틀릴경우 백엔드 주소랑 맞게 변경
 /**
  * 1. 아이디 중복 확인 API
  */

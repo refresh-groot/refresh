@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { RiKakaoTalkFill } from "react-icons/ri";
-import { FaGoogle } from "react-icons/fa";
-import { FaGithub } from "react-icons/fa6";
-import { SiNaver } from "react-icons/si";
+import { useAuth } from '../../context/AuthContext';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import './Login.css'
 import { checkIdApi, checkNicknameApi, signupApi, loginApi, sendEmailCodeApi, verifyEmailCodeApi } from '../../api/auth';
@@ -12,6 +9,7 @@ import Swal from "sweetalert2";
 function Login() {
   const [activeTab, setActiveTab] = useState('signin');
   const navigate = useNavigate();
+  const { login } = useAuth();
   
   const initialInputs = {
     id: '',
@@ -24,12 +22,15 @@ function Login() {
 
   const [inputs, setInputs] = useState(initialInputs);
   const {id, pw, confirmPw, email, authCode, nickname} = inputs;
-  const [showpw, setShowpw] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({ confirmPw: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isNicknameChecked, setIsNicknameChecked] = useState(false);
 
   const toggleShowPw = () =>{
-    setShowpw(!showpw);
+    setShowPw(!showPw);
   }
 
   const handleTabChange = (tabName) =>{
@@ -44,6 +45,9 @@ function Login() {
       ...inputs,
       [name]: value
     });
+    if (name === 'id') setIsIdChecked(false);
+    if (name === 'email') setIsEmailVerified(false);
+    if (name === 'nickname') setIsNicknameChecked(false);
   };
 
   useEffect(() => {
@@ -72,8 +76,14 @@ function Login() {
 
     try {
       const data = await checkIdApi(id); 
-      if (data.isDuplicate) showAlert('error', '중복된 아이디', '이미 사용 중인 아이디입니다');
-      else showAlert('success', '사용 가능', '사용 가능한 아이디입니다');
+      if (data.isDuplicate) {
+        showAlert('error', '중복된 아이디', '이미 사용 중인 아이디입니다');
+        setIsIdChecked(false);
+      }
+      else {
+        showAlert('success', '사용 가능', '사용 가능한 아이디입니다');
+        setIsIdChecked(true);
+      }
     } catch (error) {
       console.error("중복 확인 에러:", error);
       showAlert('error', '오류 발생', '서버 연결 실패');
@@ -85,7 +95,10 @@ function Login() {
     try {
       const data = await checkNicknameApi(nickname);
       if (data.isDuplicate) showAlert('error', '중복된 닉네임', '이미 존재하는 닉네임입니다.');
-      else showAlert('success', '멋진 닉네임!', '사용 가능한 닉네임입니다.');
+      else if(!data.isDuplicate){
+        showAlert('success', '사용가능한 닉네임', '사용 가능한 닉네임입니다.');
+        setIsNicknameChecked(true);
+      }
     } catch (error) {
       console.error(error);
       showAlert('error', '오류 발생', '서버 확인 불가');
@@ -133,7 +146,8 @@ function Login() {
 
       // 백엔드 응답 구조의 모든 가능성을 체크 (안전장치)
       if(data && (data.verified || data.success || (data.result && data.result.verified))) { 
-        showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
+          showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
+          setIsEmailVerified(true);
       }
       else{
         showAlert('error', '인증 실패', '인증코드가 일치하지 않습니다.');
@@ -163,6 +177,8 @@ function Login() {
       // 데이터 안에 'user' 정보가 있거나, 응답 자체가 성공적이면 통과시킴
       if (response && (response.user || response.data?.user || response.status === 200)) {
         
+        const userData = response.user || response.data?.user;
+        if (userData) login(userData);
         // 백엔드에서 보낸 닉네임 위치에 맞춰 수정
         const nickname = response.user?.nickname || response.data?.user?.nickname || '사용자';
 
@@ -191,6 +207,10 @@ function Login() {
       if(!id || !pw || !confirmPw || !email || !authCode || !nickname){
         return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.');
       }
+      if (!isIdChecked) return showAlert('warning', '중복 확인', '아이디 중복 확인을 해주세요.');
+      if (!isEmailVerified) return showAlert('warning', '인증 필요', '이메일 인증을 완료해주세요.');
+      if (!isNicknameChecked) return showAlert('warning', '중복 확인', '닉네임 중복 확인을 해주세요.');
+
       if (pw !== confirmPw) {
         return showAlert('error', '비밀번호 불일치', '비밀번호가 서로 다릅니다.');
       }
@@ -212,7 +232,7 @@ function Login() {
           text: '이제 로그인을 진행해주세요.',
           confirmButtonColor: '#26A69A'
         }).then(() => {
-           handleTabChange('signin');
+          handleTabChange('signin');
         });
         
       } catch (err) {
@@ -252,8 +272,8 @@ function Login() {
               <button type="button" className="check-btn" onClick={handleCheckId}>중복확인</button>
             </div>
             <div className="password-wrapper">
-            <input className="full-input" type={showpw ? "text" : "password"} name="pw" placeholder='비밀번호' value={pw} onChange={onChange} />
-            <span onClick={toggleShowPw} className='eye-icon'>{showpw ? <FaEyeSlash /> : <FaEye />}</span></div>
+            <input className="full-input" type={showPw ? "text" : "password"} name="pw" placeholder='비밀번호' value={pw} onChange={onChange} />
+            <span onClick={toggleShowPw} className='eye-icon'>{showPw ? <FaEyeSlash /> : <FaEye />}</span></div>
             <div className='input-wrapper'>
               <input className={`full-input ${errors.confirmPw ? 'input-error' : ''}`} type="password" name="confirmPw" placeholder='비밀번호 재확인' value={confirmPw} onChange={onChange} />
               {errors.confirmPw && <span className="error-text">{errors.confirmPw}</span>}
