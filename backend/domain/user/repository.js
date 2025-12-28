@@ -15,6 +15,10 @@ module.exports = {
   findByEmail: async (email) => {
     return await User.findOne({ where: { email } });
   },
+  // PK(고유 ID)로 유저 찾기
+  findById: async (id) => {
+    return await User.findByPk(id);
+  },
 
   // 유저 생성
   createUser: async ({ loginId, password, email, nickname }) => {

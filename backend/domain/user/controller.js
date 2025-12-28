@@ -104,5 +104,29 @@ module.exports = {
   logout: (req, res) => {
     req.session.destroy(); 
     return res.status(200).json({ message: '로그아웃 되었습니다.' });
+  },
+
+  // 계정 실재 여부를 확인하는 미들웨어
+  validateUser: async (req, res, next) => {
+    try {
+      // 세션에 유저 정보가 있는지 확인합니다.
+      if (req.session && req.session.user) {
+        // 세션의 ID로 DB를 다시 조회하여 삭제 여부를 확인합니다.
+        const user = await service.getUserById(req.session.user.id);
+        
+        if (!user) {
+          // DB에 유저가 없다면 세션을 파괴하고 쿠키를 삭제합니다.
+          return req.session.destroy(() => {
+            res.clearCookie('connect.sid'); 
+            return res.status(401).json({ message: '존재하지 않거나 삭제된 계정입니다.' });
+          });
+        }
+      }
+      // 문제가 없으면 다음 로직으로 진행합니다.
+      next();
+    } catch (error) {
+      console.error("유저 검증 중 에러:", error);
+      next(); 
+    }
   }
 };
