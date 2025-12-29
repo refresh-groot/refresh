@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
 import './Header.css';
-import RefreshLogo from '../../assets/Refresh_Logo.png';
+import RefreshLogo from '../../assets/img/Refresh_Logo.png';
 import { FaBars } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
-
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { showAlert } from '../../app/alert';
+import { APP_NAME } from '../../app/constants';
 function Header() {
 
+const { isLoggedIn, logout } = useAuth();
+const navigate = useNavigate();
 const [isOpen, setIsOpen] = useState(false);
+
+if(!isLoggedIn) return null;
+
 const toggleMenu =() =>{
 setIsOpen(!isOpen);
+}
+
+const handleLogout = () =>{
+  showAlert('success', '성공', '로그아웃에 성공했습니다.');
+  logout();
+  navigate('/login');
 }
 
 const handleRefresh = (e) =>{
   e.preventDefault();
   window.location.href = '/menu';
-}
-
-const handleLogout = (e) =>{
-  e.preventDefault();
-  window.location.href = '/';
 }
 
   return (
@@ -27,7 +35,7 @@ const handleLogout = (e) =>{
       <div className='nav-logo'>
       <a href='/' onClick={handleRefresh}>
         <img src={RefreshLogo} alt="Refresh_Logo" className="logo-img"/>
-        Refresh
+        {APP_NAME}
         </a>
       </div>
       <div className="navbar-toggle" onClick={toggleMenu}>

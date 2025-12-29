@@ -1,29 +1,27 @@
-import React, { useState } from 'react';
+import React, {  useState } from 'react';
 import './Menu.css';
 import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/fa';
-import roseImage from '../../assets/rose.png';
+import { useAuth } from '../../context/AuthContext';
+import { SERVER_URL } from '../../app/constants';
+import { useSensorData } from '../../hooks/useSensorData';
+import roseImage from '../../assets/img/rose.png';
 
 function Menu() {
 
-  const [sensorData, setSensorData] = useState({
-    temp: 24.5,
-    humid: 60,
-    soil: 30,
-    light: 800
-  });
-
+  const {user} = useAuth();
+  const {sensorData, loading: sensorLoading} = useSensorData(5000);
   const [isAutoMode, setIsAutoMode] =useState(true);
 
-  const [plantProfile] =useState({
+  const [plantProfile] = useState({
     name: "장미",
-    status: "현재 상태: ???",
+    status: "현재 상태: 양호함",
     days: 24,
     img: roseImage
   });
-  
+
   const [alerts] =useState([{
   id: 1, type: 'warning', msg: "물통에 물이 부족합니다!"},
-  {id: 2, type: 'success', msg: "오전 ??시에 급수 완료"
+  {id: 2, type: 'success', msg: "오전 09:00 급수 완료"
   }]);
 
   const SENSOR_CONFIG = [
@@ -32,6 +30,10 @@ function Menu() {
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
+
+  if( sensorLoading && sensorData.temp === 0){
+    return <div className="loading">데이터를 불러오는 중입니다...</div>;
+  }
 
   return (
     <div className="menu-dashboard">
@@ -44,8 +46,7 @@ function Menu() {
               <img src = {plantProfile.img} alt = "rose"/>
           </div>
           <div className="plant-info">
-            <h2>{plantProfile.name}</h2>
-            
+            <h2>{user?.nickname}</h2>
             <p className="status-text">{plantProfile.status}</p>
             <div className="growth-day">함께한 지 {plantProfile.days}일째</div>
           </div>
@@ -70,9 +71,7 @@ function Menu() {
 
         <h3 className="section-title">주간 성장 리포트</h3>
         <div className="card chart-card">
-            <p style={{color: '#aaa', textAlign: 'center', lineHeight: '150px'}}>
-                📊 그래프가 들어갈 자리입니다 (Chart.js 예정)
-            </p>
+            <p>📊 그래프가 들어갈 자리입니다 (Chart.js 예정)</p>
         </div>
 
       </section>

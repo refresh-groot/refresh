@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import './Login.css'
 import { checkIdApi, checkNicknameApi, signupApi, loginApi, sendEmailCodeApi, verifyEmailCodeApi } from '../../api/auth';
-import Swal from "sweetalert2";
+import { showAlert } from '../../app/alert';
+import useInput from '../../hooks/useInput';
 
 function Login() {
   const [activeTab, setActiveTab] = useState('signin');
@@ -20,7 +21,7 @@ function Login() {
     nickname: ''
   };
 
-  const [inputs, setInputs] = useState(initialInputs);
+  const [inputs, onChange, reset] = useInput(initialInputs);
   const {id, pw, confirmPw, email, authCode, nickname} = inputs;
   const [showPw, setShowPw] = useState(false);
   const [errors, setErrors] = useState({ confirmPw: '' });
@@ -35,20 +36,21 @@ function Login() {
 
   const handleTabChange = (tabName) =>{
     setActiveTab(tabName);
-    setInputs(initialInputs);
+    reset();
     setErrors({confirmPw: ''});
   }
 
-  const onChange = (e) => {
-    const { name, value } = e.target;
-    setInputs({
-      ...inputs,
-      [name]: value
-    });
-    if (name === 'id') setIsIdChecked(false);
-    if (name === 'email') setIsEmailVerified(false);
-    if (name === 'nickname') setIsNicknameChecked(false);
-  };
+  useEffect(()=>{
+    setIsIdChecked(false);
+  },[id]);
+
+    useEffect(()=>{
+    setIsEmailVerified(false);
+  },[email]);
+
+    useEffect(()=>{
+    setIsNicknameChecked(false);
+  },[nickname]);
 
   useEffect(() => {
     if (confirmPw.length > 0) {
@@ -62,14 +64,6 @@ function Login() {
     }
   }, [pw, confirmPw]);
 
-  const showAlert = (icon, title, text) => {
-    Swal.fire({
-      icon: icon,
-      title: title,
-      text: text,
-      confirmButtonColor: '#26A69A',
-    });
-  };
 
   const handleCheckId = async () => {
     if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.');
@@ -182,11 +176,8 @@ function Login() {
         // 백엔드에서 보낸 닉네임 위치에 맞춰 수정
         const nickname = response.user?.nickname || response.data?.user?.nickname || '사용자';
 
-        Swal.fire({
-          icon: 'success',
-          title: '로그인 성공!',
-          text: `${nickname}님 환영합니다!`
-        }).then(() => {
+        showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`)
+        .then(() => {
           navigate('/menu'); // 메인 메뉴로 이동
         });
       } else {
@@ -226,12 +217,8 @@ function Login() {
 
         await signupApi(signupData); 
         
-        Swal.fire({
-          icon: 'success',
-          title: '회원가입 완료!',
-          text: '이제 로그인을 진행해주세요.',
-          confirmButtonColor: '#26A69A'
-        }).then(() => {
+        showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.')
+        .then(() => {
           handleTabChange('signin');
         });
         
