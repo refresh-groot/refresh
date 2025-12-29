@@ -1,5 +1,5 @@
 .login-container {
-  background: linear-gradient(90deg, #8ef693 0%, #26A69A 100%);
+  background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-color) 100%);
   width: 100%;
   display: flex;
   justify-content: center;
@@ -8,7 +8,7 @@
 }
 
 .login-form {
-  background-color: white;
+  background-color: var(--white);
   padding: 40px 30px;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -28,8 +28,8 @@
 .active-tab {
   cursor: pointer;
   font-weight: bold;
-  color: #26A69A; 
-  border-bottom: 3px solid #26A69A;
+  color: var(--primary-color); 
+  border-bottom: 3px solid var(--primary-color);
   padding-bottom: 5px;
   transition: all 0.3s ease;
 }
@@ -52,7 +52,7 @@
 
 .input-group input {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 15px;
   outline: none;
@@ -62,13 +62,13 @@
 }
 
 .input-group input:focus {
-  border-color: #26A69A; 
+  border-color: var(--primary-color); 
   box-shadow: 0 0 5px rgba(38, 166, 154, 0.3);
 }
 
 .signin-btn, .signup-btn {
-  background-color: #26A69A; 
-  color: white;
+  background-color: var(--primary-color); 
+  color: var(--white);
   margin-top: 10px;
   padding: 14px;
   border: none;
@@ -107,14 +107,14 @@
 .input-with-btn input {
   flex: 1;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   outline: none;
 }
 .full-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-sizing: border-box; 
   outline: none;
@@ -131,14 +131,14 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #888;
+  color: var(--text-sub);
   display: flex;
   align-items: center;
 }
 
 .check-btn {
-  background-color: #8ef693; 
-  color: #333;
+  background-color: var(--primary-light); 
+  color: var(--text-main);
   border: none;
   border-radius: 8px;
   padding: 0 15px; 
@@ -150,8 +150,8 @@
 }
 
 .check-btn:hover {
-  background-color: #26A69A;
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--white);
 }
 
 .input-group {
@@ -161,12 +161,12 @@
 }
 .input-group input {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
 }
 
 .error-text {
-  color: #ff4d4d;
+  color: var(--error-color);
   font-size: 12px;
   margin-top: 5px;
   text-align: left;
@@ -175,7 +175,7 @@
 }
 
 .input-error{
-  border: 1px solid #ff4d4d !important;
+  border: 1px solid var(--error-color) !important;
 }
 
 .input-wrapper {
