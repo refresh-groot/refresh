@@ -65,6 +65,7 @@ function Login() {
   }, [pw, confirmPw]);
 
 
+  // [수정 1] 아이디 중복 확인 에러 처리 강화
   const handleCheckId = async () => {
     if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.');
 
@@ -80,10 +81,14 @@ function Login() {
       }
     } catch (error) {
       console.error("중복 확인 에러:", error);
-      showAlert('error', '오류 발생', '서버 연결 실패');
+      
+      // 여기가 핵심입니다! 백엔드가 보낸 메시지가 있으면 그걸 보여줍니다.
+      const errorMsg = error.response?.data?.message || '서버와의 연결이 원활하지 않습니다.';
+      showAlert('error', '확인 실패', errorMsg);
     }
   };
 
+  // [수정 2] 닉네임 중복 확인 에러 처리 강화
   const handleCheckNickname = async () => {
     if (!nickname) return showAlert('warning', '닉네임 입력', '닉네임을 입력해주세요.');
     try {
@@ -95,10 +100,12 @@ function Login() {
       }
     } catch (error) {
       console.error(error);
-      showAlert('error', '오류 발생', '서버 확인 불가');
+      const errorMsg = error.response?.data?.message || '서버 확인 불가';
+      showAlert('error', '오류 발생', errorMsg);
     }
   };
 
+  // [수정 3] 이메일 코드 전송 에러 처리 강화
   const handleSendEmailCode = async () =>{
     if (isLoading) return;
 
@@ -117,13 +124,15 @@ function Login() {
     }
     catch (error){
       console.error(error);
-      showAlert('error', '전송 실패', '메일 발송 중 오류가 발생했습니다.');
+      const errorMsg = error.response?.data?.message || '메일 발송 중 오류가 발생했습니다.';
+      showAlert('error', '전송 실패', errorMsg);
     }
     finally{
       setIsLoading(false);
     }
   }
 
+  // [수정 4] 인증 코드 확인 에러 처리 강화
   const handleVerifyCode = async () => {
     if (isLoading) return;
 
@@ -135,10 +144,8 @@ function Login() {
       
       const data = await verifyEmailCodeApi(email, authCode);
       
-      // [디버깅] F12 콘솔에서 서버가 보낸 데이터를 직접 확인해보세요!
       console.log("서버 응답 데이터:", data); 
 
-      // 백엔드 응답 구조의 모든 가능성을 체크 (안전장치)
       if(data && (data.verified || data.success || (data.result && data.result.verified))) { 
           showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
           setIsEmailVerified(true);
@@ -149,12 +156,14 @@ function Login() {
     }
     catch (error){
       console.error(error);
-      showAlert('error', '오류', '인증 확인 중 문제가 발생했습니다.');
+      const errorMsg = error.response?.data?.message || '인증 확인 중 문제가 발생했습니다.';
+      showAlert('error', '인증 오류', errorMsg);
     } finally {
       setIsLoading(false);
     }
   }
-//로그인
+
+  // 로그인 및 회원가입
   const handleLogin = async (e) => {
   e.preventDefault();
   if(isLoading) return;
@@ -167,8 +176,6 @@ function Login() {
         pw: pw
       }); 
 
-
-      // 데이터 안에 'user' 정보가 있거나, 응답 자체가 성공적이면 통과시킴
       if (response && (response.user || response.data?.user || response.status === 200)) {
         
         const userData = response.user || response.data?.user;
@@ -181,12 +188,11 @@ function Login() {
           navigate('/menu'); // 메인 메뉴로 이동
         });
       } else {
-        // 백엔드가 200을 줬지만 데이터 형식이 이상한 경우
         showAlert('error', '로그인 실패', '응답 형식이 올바르지 않습니다.');
       }
     } catch(err) {
       console.error("로그인 에러 발생:", err);
-      // 백엔드에서 401(비번 틀림)을 보내면 catch문으로 들어오게됨
+      // 백엔드 에러 메시지 우선 표시
       const errorMsg = err.response?.data?.message || '아이디 또는 비밀번호가 틀렸습니다.';
       showAlert('error', '로그인 실패', errorMsg);
     } finally {
@@ -224,6 +230,7 @@ function Login() {
         
       } catch (err) {
         console.error(err);
+        // 회원가입 실패 시에도 구체적인 메시지 표시 (예: Joi 검증 오류 등)
         const msg = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
         showAlert('error', '가입 실패', msg);
       } finally {
