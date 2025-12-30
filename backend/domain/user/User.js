@@ -39,7 +39,7 @@ class User extends Sequelize.Model {
         underscored: true, // 컬럼명을 스네이크 케이스로 (loginId -> login_id)
         modelName: 'User',
         tableName: 'users',
-        paranoid: true, // 삭제 시 복구 가능하도록 deleted_at 생성 (선택사항)
+        paranoid: false, // 삭제 시 복구 불가.
         charset: 'utf8mb4',
         collate: 'utf8mb4_general_ci',
       }
