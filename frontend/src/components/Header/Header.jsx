@@ -44,7 +44,7 @@ const handleRefresh = (e) =>{
       <div className={`navbar-menu ${isOpen ? 'active' : ''}`}>
         <ul>
         <li><Link to="/menu" onClick={handleRefresh}>HOME</Link></li>
-        <li><Link to="#">MY PLANT</Link></li>
+        <li><Link to="/Profile">PROFILE</Link></li>
         <li><Link to="/Community">COMMUNITY</Link></li>
         <li><Link to="#">SETTINGS</Link></li>
         <li><Link to="/" onClick={(handleLogout)}>LOGOUT</Link></li>

@@ -1,0 +1,8 @@
+.Profile-container{
+    background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-color) 100%);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100dvh; 
+}
