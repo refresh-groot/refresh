@@ -82,6 +82,7 @@ module.exports = {
   // 6. 로그인 (중요: signup 함수 밖에 독립적으로 있어야 함)
   login: async (loginId, password) => {
     const user = await repository.findByLoginId(loginId);
+  
     if (!user) {
       throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
     }
@@ -98,5 +99,9 @@ module.exports = {
       email: user.email
     };
   },
-
+// 7. ID로 사용자 정보 조회 (세션 검증용)
+  getUserById: async (id) => {
+    // repository의 findById 기능을 사용하여 DB에 해당 ID가 있는지 확인
+    return await repository.findById(id); 
+  }
 };

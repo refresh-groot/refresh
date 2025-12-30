@@ -78,6 +78,11 @@
 
 .chart-card { min-height: 200px; }
 
+.chart-card p{
+    color: #aaa ;
+    text-align: center;
+    line-height: 150px;
+}
 .control-btn {
     width: 100%;
     padding: 12px;
