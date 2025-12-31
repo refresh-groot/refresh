@@ -40,8 +40,11 @@ class Plant extends Sequelize.Model {
   }
 
   static associate(db) {
-    // Plant는 User에 속한다 (N:1)
-    db.Plant.belongsTo(db.User, { foreignKey: 'user_id', targetKey: 'id' });
+    db.Plant.belongsTo(db.User, { 
+      foreignKey: 'userId', 
+      targetKey: 'id', 
+      onDelete: 'CASCADE' 
+    });
     // Plant는 하나의 Device와 연결된다 (1:1)
     db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id' });
     // Plant는 여러 진단 기록을 가진다 (1:N)

@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const repository = require('./repository');
 const mailer = require('../../utils/mailer'); 
+const { User } = require('../index');
 
 // 인증번호 임시 저장소
 let verificationCodes = {}; 
@@ -103,5 +104,33 @@ module.exports = {
   getUserById: async (id) => {
     // repository의 findById 기능을 사용하여 DB에 해당 ID가 있는지 확인
     return await repository.findById(id); 
+  },
+  // 8. 프로필 조회 서비스
+  getProfile: async (id) => {
+    const user = await repository.findById(id);
+    if (!user) throw new Error('유저를 찾을 수 없습니다.');
+    // 필요한 정보만 리턴
+    return { nickname: user.nickname, bio: user.bio };
+  },
+
+  // 9. 프로필 수정 서비스
+  updateProfile: async (id, bio) => {
+    // repository에 update 기능이 없으므로 User 모델 직접 사용
+    // (또는 repository.updateUser(id, bio)를 만들어도 됨)
+    await User.update({ bio }, { where: { id } });
+  },
+
+  // 10. 회원 탈퇴 서비스
+  withdraw: async (id, password) => {
+    // (1) 유저 찾기
+    const user = await repository.findById(id);
+    if (!user) throw new Error('유저를 찾을 수 없습니다.');
+
+    // (2) 비밀번호 검증
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
+
+    // (3) 삭제 (Hard Delete + Cascade)
+    await User.destroy({ where: { id } });
   }
 };

@@ -32,6 +32,12 @@ class User extends Sequelize.Model {
           allowNull: false,
           comment: '사용자 이메일',
         },
+        bio: {
+          type: Sequelize.STRING(100), 
+          allowNull: true,             
+          defaultValue: '안녕하세요.',            // 기본값
+          comment: '한 줄 소개',
+        },
       },
       {
         sequelize,
@@ -45,10 +51,17 @@ class User extends Sequelize.Model {
       }
     );
   }
+  
 
   static associate(db) {
     // User는 여러 Plant를 가질 수 있다 (1:N)
-    db.User.hasMany(db.Plant, { foreignKey: 'user_id', sourceKey: 'id' });
+    db.User.hasMany(db.Plant, { 
+      foreignKey: 'userId', 
+      sourceKey: 'id',
+      // 연쇄 삭제 설정 (Cascade)
+      onDelete: 'CASCADE', // DB에서 유저 삭제 시 식물 데이터 자동 삭제
+      hooks: true          // Sequelize 메모리 상에서도 연관 관계 정리
+    });
   }
 }
 

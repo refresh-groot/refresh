@@ -1,19 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./controller');
-const { validateSignup, validateCheckId, validateCheckNickname } = require('../../middleware/inAuth');
+const validator = require('../../middleware/validator');
 
-// 회원가입
-router.post('/signup', validateSignup, controller.signup);
-router.post('/check/id', validateCheckId, controller.checkloginId); 
-router.post('/check/nickname', validateCheckNickname, controller.checkNickname);
+//  회원가입
+router.post('/signup', validator.Signup, controller.signup);
+router.post('/check/id', validator.CheckId, controller.checkloginId);
+router.post('/check/nickname', validator.CheckNickname, controller.checkNickname);
+router.post('/email/send', controller.sendEmail);   
+router.post('/email/verify', controller.verifyEmail); 
 
-// 이메일 인증 관련
-router.post('/email/send', controller.sendEmail);   // 인증번호 발송 (POST /api/email/send) 
-router.post('/email/verify', controller.verifyEmail); // 인증번호 확인 (POST /api/email/verify) 
-
-// 로그인
+//  로그인/로그아웃
 router.post('/login', controller.login);
 router.post('/logout', controller.logout);
+
+//  프로필 조회 및 수정
+router.get('/profile', controller.getProfile);
+router.put('/profile', controller.updateProfile);
+
+// 3. 회원 탈퇴
+router.delete('/withdraw', validator.Withdraw, controller.withdraw);
 
 module.exports = router;
