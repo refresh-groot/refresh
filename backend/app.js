@@ -39,15 +39,17 @@ app.use(flash());
 
 /**
  * 3. DB 연결 및 동기화
+ * [변경 사항]: 네이버 클라우드 MySQL에 테이블이 없는 상태이므로 alter: true로 설정합니다.
+ * alter: true는 모델(Device.js 등) 정의와 실제 DB를 비교해서 테이블을 자동으로 생성해줍니다.
  */
-// alter: false로 변경하여 이미 존재하는 제약 조건과 충돌하지 않게 합니다.
-db.sequelize.sync({ force: false, alter: false })
+db.sequelize.sync({ force: false, alter: true })
   .then(() => {
-    console.log('smartplant DB 연결 및 동기화 성공!');
+    // 성공 시 출력될 메시지
+    console.log('✅ 네이버 클라우드 smartplant DB 연결 및 테이블 동기화 성공!');
   })
   .catch((err) => {
-    // 에러가 떠도 무시하고 진행할 수 있도록 로그만 찍습니다.
-    console.error('DB 동기화 알림 (무시 가능):', err.message);
+    // 에러 발생 시 로그를 찍어 원인을 파악합니다.
+    console.error('❌ DB 동기화 에러 (설정 확인 필요):', err.message);
   });
 
 /**
@@ -63,11 +65,13 @@ app.get('/', (req, res) => {
 });
 
 /**
- * 서버 실행
+ * [주의] 서버 실행 설정
+ * bin/www 파일에서 이미 서버를 실행(listen)하고 있으므로, 
+ * app.js 내부의 중복된 listen 코드는 주석 처리하여 포트 충돌을 방지합니다.
  */
-const port = process.env.PORT || 8080;
-app.listen(port, '0.0.0.0', () => {
-  console.log(`서버가 ${port}번 포트에서 정상 작동 중입니다!`);
-});
+// const port = process.env.PORT || 8080;
+// app.listen(port, '0.0.0.0', () => {
+//   console.log(`서버가 ${port}번 포트에서 정상 작동 중입니다!`);
+// });
 
 module.exports = app;
