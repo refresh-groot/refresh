@@ -3,6 +3,7 @@ import React, { lazy, Suspense} from 'react'
 import Layout from './layout/Layout';
 const Login = lazy(() => import('./pages/Login/Login'));
 const Menu = lazy(() => import('./pages/Menu/Menu'));
+const Profile = lazy(() => import('./pages/Profile/Profile'));
 const Community = lazy(() => import('./pages/Community/Community'));
 // 1. Lazy Loading: 초기 로딩 시 모든 페이지를 불러오지 않고 필요할때만 불러옴
 const LoadingFallback = () => (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route element={<Layout />}>  {/* 상단 헤더바를 필요한 라우터에 적용하기 위해 가장 위에 넣고 아래에 메뉴 및 커뮤니티 작성 */}
           <Route path="/menu" element={<Menu />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/community" element={<Community />} />
         </Route>
 
