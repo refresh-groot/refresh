@@ -18,6 +18,11 @@ const toggleMenu =() =>{
 setIsOpen(!isOpen);
 }
 
+const closeMenu = () => {
+  setIsOpen(false);
+}
+
+
 const handleLogout = () =>{
   showAlert('success', '성공', '로그아웃에 성공했습니다.');
   logout();
@@ -44,10 +49,10 @@ const handleRefresh = (e) =>{
       <div className={`navbar-menu ${isOpen ? 'active' : ''}`}>
         <ul>
         <li><Link to="/menu" onClick={handleRefresh}>HOME</Link></li>
-        <li><Link to="/Profile">PROFILE</Link></li>
-        <li><Link to="/Community">COMMUNITY</Link></li>
-        <li><Link to="#">SETTINGS</Link></li>
-        <li><Link to="/" onClick={(handleLogout)}>LOGOUT</Link></li>
+        <li><Link to="/Profile" onClick={closeMenu}>PROFILE</Link></li>
+        <li><Link to="/Community" onClick={closeMenu}>COMMUNITY</Link></li>
+        <li><Link to="#" onClick={closeMenu}>SETTINGS</Link></li>
+        <li><Link to="/" onClick={handleLogout}>LOGOUT</Link></li>
         </ul>
       </div>
     </nav>
