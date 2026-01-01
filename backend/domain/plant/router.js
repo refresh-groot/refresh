@@ -8,6 +8,8 @@ const upload = require('../../utils/multer'); // utils 폴더의 multer 설정 �
 // 변경: 어떤 필드명이든 일단 다 받도록 .any()로 변경
 router.post('/', upload.any(), controller.addPlant);
 
+//식물 리스트 조회
+router.get('/', controller.getPlants);
 // 2. 식물 삭제: 기존 기능 유지
 router.delete('/:id', controller.removePlant);
 
