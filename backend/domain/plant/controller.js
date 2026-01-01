@@ -8,6 +8,7 @@ module.exports = {
       console.log('--- 데이터 수신 확인 ---');
       console.log('Body:', req.body);
       console.log('File:', req.file);
+      console.log('Headers:', req.headers['content-type']); // 헤더에 boundary가 포함되어 있는지 확인용
 
       // 1. 세션 확인
       if (!req.session || !req.session.user) {
