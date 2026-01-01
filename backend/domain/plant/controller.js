@@ -4,41 +4,39 @@ const repository = require('./repository');
 
 module.exports = {
   addPlant: async (req, res) => {
-    try {
-      console.log('--- 데이터 수신 확인 ---');
-      console.log('Headers:', req.headers['content-type']);
-      console.log('Body:', req.body);
-      console.log('File:', req.file);
+  try {
+    // [중요] any()로 받을 때는 req.files(배열)를 확인해야 합니다.
+    const file = req.files && req.files.length > 0 ? req.files[0] : null;
+    
+    const { plant_name, species, reg_date } = req.body || {};
 
-      if (!req.session || !req.session.user) {
-        return res.status(401).json({ message: '로그인이 필요합니다.' });
-      }
-
-      // req.body가 undefined일 경우를 대비해 빈 객체로 초기화
-      const data = req.body || {};
-      const { plant_name, species, reg_date } = data;
-
-      if (!plant_name) {
-        return res.status(400).json({ message: '식물 이름을 입력해주세요.' });
-      }
-
-      const userId = req.session.user.id;
-      const photo_url = req.file ? `/uploads/${req.file.filename}` : '/uploads/default.png';
-
-      const newPlant = await service.addPlant({
-        user_id: userId,
-        plant_name,
-        species,
-        reg_date,
-        photo_url 
-      });
-      
-      return res.status(201).json({ message: '식물이 성공적으로 등록되었습니다!', plant: newPlant });
-    } catch (error) {
-      console.error('식물 등록 에러:', error);
-      return res.status(500).json({ message: error.message });
+    if (!plant_name) {
+      return res.status(400).json({ message: '식물 이름을 입력해주세요.' });
     }
-  },
+
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: '로그인이 필요합니다.' });
+    }
+
+    const userId = req.session.user.id;
+    
+    // 파일이 있으면 저장된 파일명을 사용하고, 없으면 기본 이미지를 사용합니다.
+    const photo_url = file ? `/uploads/${file.filename}` : '/uploads/default.png';
+
+    const newPlant = await service.addPlant({
+      user_id: userId,
+      plant_name,
+      species,
+      reg_date,
+      photo_url 
+    });
+    
+    return res.status(201).json({ message: '식물이 성공적으로 등록되었습니다!', plant: newPlant });
+  } catch (error) {
+    console.error('식물 등록 에러:', error);
+    return res.status(500).json({ message: error.message });
+  }
+},
   
   removePlant: async (req, res) => {
     try {
