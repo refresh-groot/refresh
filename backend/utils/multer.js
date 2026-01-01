@@ -6,7 +6,7 @@ const fs = require('fs');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     // 위에서 만든 폴더 경로 지정
-    cb(null, 'public/uploads/'); 
+    cb(null, path.join(__dirname, '../public/uploads/')); 
   },
   filename: (req, file, cb) => {
     // 파일명 중복 방지를 위해 "유저ID_시간.확장자"로 저장
