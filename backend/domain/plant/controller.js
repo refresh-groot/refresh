@@ -1,29 +1,29 @@
 // backend/domain/plant/controller.js
 const service = require('./service');
-const repository = require('./repository'); // 랜덤 팁 조회를 위해 레포지토리 추가
+const repository = require('./repository');
 
 module.exports = {
-  // 1. 식물 추가 (사진 업로드 로직 포함)
   addPlant: async (req, res) => {
     try {
       console.log('--- 데이터 수신 확인 ---');
-    console.log('Body:', req.body);
-    console.log('File:', req.file);
-      // [안전장치 1] 세션 체크: 로그인이 안 되어 있으면 여기서 먼저 걸러줘야 합니다.
+      console.log('Body:', req.body);
+      console.log('File:', req.file);
+
+      // [수정] 로그인이 안 되어 있으면 여기서 먼저 중단
       if (!req.session || !req.session.user) {
         return res.status(401).json({ message: '로그인이 필요합니다.' });
       }
 
-      const userId = req.session.user.id; // 세션에서 유저 ID 가져오기
-      
-      // [안전장치 2] 데이터 체크: Multer가 데이터를 제대로 파싱했는지 확인
-      if (!req.body) {
-        return res.status(400).json({ message: '데이터가 전달되지 않았습니다.' });
+      // [수정] 데이터가 아예 안 들어왔을 때를 위한 초기화
+      const data = req.body || {};
+      const { plant_name, species, reg_date } = data;
+
+      // [수정] 필수 값 체크
+      if (!plant_name) {
+        return res.status(400).json({ message: '식물 이름을 입력해주세요.' });
       }
 
-      const { plant_name, species, reg_date } = req.body;
-      
-      // 파일이 업로드되었다면 해당 경로 사용, 없으면 기본 이미지 사용
+      const userId = req.session.user.id;
       const photo_url = req.file ? `/uploads/${req.file.filename}` : '/uploads/default.png';
 
       const newPlant = await service.addPlant({
@@ -36,7 +36,7 @@ module.exports = {
       
       return res.status(201).json({ message: '식물이 성공적으로 등록되었습니다!', plant: newPlant });
     } catch (error) {
-      console.error('식물 등록 에러:', error); // 서버 터미널에서 상세 원인 확인 가능
+      console.error('식물 등록 에러:', error);
       return res.status(500).json({ message: error.message });
     }
   },
