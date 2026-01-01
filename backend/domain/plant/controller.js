@@ -6,6 +6,9 @@ module.exports = {
   // 1. 식물 추가 (사진 업로드 로직 포함)
   addPlant: async (req, res) => {
     try {
+      console.log('--- 데이터 수신 확인 ---');
+    console.log('Body:', req.body);
+    console.log('File:', req.file);
       // [안전장치 1] 세션 체크: 로그인이 안 되어 있으면 여기서 먼저 걸러줘야 합니다.
       if (!req.session || !req.session.user) {
         return res.status(401).json({ message: '로그인이 필요합니다.' });
