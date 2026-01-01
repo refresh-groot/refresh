@@ -27,6 +27,8 @@ class SpeciesInfo extends Sequelize.Model {
       modelName: 'SpeciesInfo',
       tableName: 'species_info',
       timestamps: false, // 정적 데이터라 생성 시간 불필요
+    charset: 'utf8mb4',
+      collate: 'utf8mb4_general_ci',
     });
   }
 }
