@@ -19,7 +19,9 @@ app.use(cors({
 }));
 app.use(morgan('dev')); 
 app.use(express.json()); // [중요] JSON 데이터 파싱 (req.body 생성)
-app.use(express.urlencoded({ extended: false })); 
+app.use(express.urlencoded({ extended: true })); 
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use(cookieParser(process.env.COOKIE_SECRET || 'smartplant-secret'));
 
 /**
