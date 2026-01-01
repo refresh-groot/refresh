@@ -16,8 +16,14 @@ class Plant extends Sequelize.Model {
           comment: '사용자가 지어준 식물 애칭 (프론트 nickname)',
         },
         species: {
-          type: Sequelize.STRING(100), // 길이를 100으로 확장 (ERD 반영)
+          type: Sequelize.STRING(100),
           allowNull: false,
+          references: {
+            model: 'species_info', // 참조할 테이블 이름
+            key: 'species_name',   // 참조할 테이블의 컬럼 이름
+          },
+          onUpdate: 'CASCADE', // SpeciesInfo의 이름이 바뀌면 같이 바뀜
+          onDelete: 'CASCADE', // SpeciesInfo에서 삭제되면 같이 삭제 (혹은 SET NULL)
           comment: '식물 종류 (프론트 name)',
         },
         reg_date: { // adoption_date에서 reg_date로 변경 (ERD 일치)
