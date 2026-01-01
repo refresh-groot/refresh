@@ -6,6 +6,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const db = require('./domain'); // 도메인 모델 및 데이터베이스 설정 로드
 const userRouter = require('./domain/user/router'); // 라우터 불러오기
+const plantRouter = require('./domain/plant/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
@@ -56,7 +57,8 @@ db.sequelize.sync({ force: false, alter: true })
  * 4. 라우터 설정 (미들웨어 밑에 있어야 함!)
  */
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
-
+app.use('/api/user', userRouter);
+app.use('/api/plant', plantRouter); //식물 API를 활성화
 /**
  * 기본 라우트
  */
