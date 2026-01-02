@@ -51,14 +51,15 @@ module.exports = {
 
   getPlants: async (req, res) => {
     try {
+      if (!req.session || !req.session.user) {
+        return res.status(401).json({ message: '로그인이 필요합니다.' });
+      }
       const userId = req.session.user.id;
       const plants = await service.getUserActivePlants(userId);
-      const level = await service.calculateUserLevel(userId);
       const tip = await repository.getRandomTip();
 
       return res.status(200).json({
         user_nickname: req.session.user.nickname,
-        user_level: level,
         random_tip: tip ? tip.mini_tip : "식물과 함께 상쾌한 하루 되세요!",
         plants: plants
       });
