@@ -25,6 +25,7 @@ const sequelize = new Sequelize(
 
 const User = require('./user/User');
 const Plant = require('./plant/Plant');
+const SpeciesInfo = require('./plant/SpeciesInfo'); // 1. 추가
 const Device = require('./device/Device');
 const DiagnosisLog = require('./diagnosisLog/DiagnosisLog');
 const WateringLog = require('./wateringLog/WateringLog');
@@ -32,6 +33,7 @@ const WateringLog = require('./wateringLog/WateringLog');
 // 5. db 객체에 담기
 db.User = User;
 db.Plant = Plant;
+db.SpeciesInfo = SpeciesInfo; // 2. 추가
 db.Device = Device;
 db.DiagnosisLog = DiagnosisLog;
 db.WateringLog = WateringLog;
@@ -39,6 +41,7 @@ db.WateringLog = WateringLog;
 // 6. 모델 초기화 (init)
 User.init(sequelize);
 Plant.init(sequelize);
+SpeciesInfo.init(sequelize); // 3. 추가
 Device.init(sequelize);
 DiagnosisLog.init(sequelize);
 WateringLog.init(sequelize);
@@ -46,6 +49,9 @@ WateringLog.init(sequelize);
 // 7. 관계 설정 (associate)
 User.associate(db);
 Plant.associate(db);
+// SpeciesInfo는 정적 데이터라 현재 관계 설정이 없으면 생략 가능하지만
+// 형식을 맞추기 위해 추가(SpeciesInfo.js에 static associate가 있어야 함)
+if (SpeciesInfo.associate) SpeciesInfo.associate(db); // 4. 추가
 Device.associate(db);
 DiagnosisLog.associate(db);
 WateringLog.associate(db);

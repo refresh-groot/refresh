@@ -1,8 +1,145 @@
-.Profile-container{
-    background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-color) 100%);
-    width: 100%;
-    display: flex;
-    justify-content: center;
+.profile-container{
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+.user-info-row{
+    display:flex;
     align-items: center;
-    height: 100dvh; 
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.user-avatar-icon{
+    font-size: 3rem;
+    color: #bdbdbd;
+}
+
+.user-text h2 {
+    font-size: 1.4rem;
+    margin: 0;
+    color: #333;
+}
+.user-text p {
+    margin: 5px 0 0;
+    color: #888;
+    font-size: 1rem;
+}
+
+.divider{
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin-bottom: 20px;
+}
+
+.plant-list-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.plant-item{
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: 12px;
+    height: 80px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.plant-item:hover{
+    transform: translateY(-2px);
+}
+
+.solid-item{
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.item-img-box img{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 1px solid #eee;
+}
+
+.item-info{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-top{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plant-nickname{
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.plant-name-tag{
+    font-size: 0.75rem;
+    color: #666;
+    background-color: #f1f1f1;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.info-bottom{
+    font-size: 0.9rem;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.delete-btn-box{
+    background-color: white;
+    border: 1px solid #ff8a80;
+    color: #ff5252;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-btn-box:hover{
+    background-color: #ffebee;
+}
+
+.dashed-item{
+    background-color: transparent;
+    border: 2px dashed #aaa;
+    justify-content: center;
+    color: #888;
+}
+
+.dashed-item:hover{
+    border-color: #4caf50;
+    color: #4caf50;
+    background-color: #f9fbe7;
+}
+
+.add-content{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+}
+
+.plus-icon{
+    font-size: 1.2rem;
 }
