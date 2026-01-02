@@ -6,7 +6,6 @@ module.exports = {
   addPlant: async (req, res) => {
   try {
     // [중요] any()로 받을 때는 req.files(배열)를 확인해야 합니다.
-    console.log("포스트맨:", req.body);
     const file = req.files && req.files.length > 0 ? req.files[0] : null;
     
     const { plant_name, species, reg_date } = req.body || {};
