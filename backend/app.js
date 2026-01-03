@@ -45,10 +45,10 @@ app.use(flash());
  * [변경 사항]: 네이버 클라우드 MySQL에 테이블이 없는 상태이므로 alter: true로 설정합니다.
  * alter: true는 모델(Device.js 등) 정의와 실제 DB를 비교해서 테이블을 자동으로 생성해줍니다.
  */
-db.sequelize.sync({ force: false, alter: true })
+db.sequelize.sync({ force: false, alter: false })
   .then(() => {
     // 성공 시 출력될 메시지
-    console.log('✅ 네이버 클라우드 smartplant DB 연결 및 테이블 동기화 성공!');
+    console.log('네이버 클라우드 smartplant DB 연결 및 테이블 동기화 성공!');
   })
   .catch((err) => {
     // 에러 발생 시 로그를 찍어 원인을 파악합니다.
