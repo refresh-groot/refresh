@@ -66,6 +66,11 @@
     align-items: center;
 }
 
+.plant-species{
+    margin: 0 auto;
+    font-weight: bold;
+}
+
 .icon-box { font-size: 24px; margin-bottom: 10px; }
 .temp { color: #ff5722; }
 .humid { color: #2196f3; }

@@ -1,28 +1,53 @@
-import React, {  useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Menu.css';
+import { useLocation } from 'react-router-dom';
 import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/fa';
-import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
-import roseImage from '../../assets/img/rose.png';
-
+import defaultImg from '../../assets/img/rose.png';
 function Menu() {
-
-  const {user} = useAuth();
+  const location = useLocation();
   const {sensorData, loading: sensorLoading} = useSensorData(5000);
   const [isAutoMode, setIsAutoMode] =useState(true);
-
-  const [plantProfile] = useState({
-    name: "장미",
-    status: "현재 상태: 양호함",
-    days: 24,
-    img: roseImage
-  });
 
   const [alerts] =useState([{
   id: 1, type: 'warning', msg: "물통에 물이 부족합니다!"},
   {id: 2, type: 'success', msg: "오전 09:00 급수 완료"
   }]);
+
+  const receivedPlant = location.state?.plant;
+  const [currentPlant, setCurrentPlant] = useState(() => {
+    if(receivedPlant) return receivedPlant;
+    
+    const saved = localStorage.getItem('my-plants');
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.length > 0 ? parsed[0] : {
+      plant_name: '식물을 등록해주세요',
+      species: '식물 종류',
+      reg_date: new Date().toISOString().split('T')[0],
+      photo_url: defaultImg,
+      status: 'active'
+    };
+  });
+
+  useEffect(() => {
+  if (receivedPlant && receivedPlant.name !== currentPlant.name) {
+    const timer = setTimeout(() => {
+      setCurrentPlant(receivedPlant);
+    }, 0);
+    return () => clearTimeout(timer);
+  }
+}, [receivedPlant, currentPlant]);
+
+  const calculateDays = (dateString) => {
+    if (!dateString) return 0;
+    const start = new Date(dateString);
+    const today = new Date();
+    const diff = today - start;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return days + 1;
+  };
+
 
   const SENSOR_CONFIG = [
     { id: 'temp', label: '온도', unit: '°C', icon: <FaTemperatureHigh />, color: 'temp' },
@@ -41,14 +66,15 @@ function Menu() {
       <section className="dashboard-left">
         <div className="card profile-card">
           <div className="plant-img-box">
-</div>
             <div className="img-placeholder">
-              <img src = {plantProfile.img} alt = "rose"/>
+              <img src = {currentPlant.photo_url} alt = "plant"/>
+          </div>
           </div>
           <div className="plant-info">
-            <h2>{user?.nickname}</h2>
-            <p className="status-text">{plantProfile.status}</p>
-            <div className="growth-day">함께한 지 {plantProfile.days}일째</div>
+            <h2>{currentPlant.plant_name}</h2>
+            <p className="plant-species">{currentPlant.species}</p>
+            <p className="status-text">현재 상태: {sensorData.soil < 30 ? '목마름 💧' : '양호함 😊'}</p>
+            <div className="growth-day">함께한 지 {calculateDays(currentPlant.reg_date)}일째</div>
           </div>
         </div>
         

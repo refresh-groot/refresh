@@ -24,24 +24,21 @@ function AddPlantModal({onClose, onSave}) {
         if(!nickname || !species || !date){
             return showAlert('warning', '정보 부족', '모든 정보를 입력해주세요.');
         }
-    
 
     const newPlant = {
     id: Date.now(),
-    name: species,
-    nickname: nickname,
-    startDate: date,
-    img: preview
+    plant_name: nickname,
+    species: species,
+    reg_date: date,
+    photo_url: preview,
+    status: 'active'
     };
 
     onSave(newPlant);
     onClose();
 };
 
-
-
-
-  return (
+    return (
     <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className='close-btn' onClick={onClose}>

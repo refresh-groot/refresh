@@ -185,7 +185,7 @@ function Login() {
 
         showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`)
         .then(() => {
-          navigate('/menu'); // 메인 메뉴로 이동
+          navigate('/profile'); // 메인 메뉴로 이동
         });
       } else {
         showAlert('error', '로그인 실패', '응답 형식이 올바르지 않습니다.');
@@ -288,13 +288,11 @@ function Login() {
               <input type="text" name="nickname" placeholder='닉네임' value={nickname} onChange={onChange} />
               <button type="button" className="check-btn" onClick={handleCheckNickname}>중복확인</button>
             </div>
-            
             <button className='signup-btn' type='submit' disabled={isLoading}>
               {isLoading ? '처리 중...' : '회원가입'}
             </button>
           </div>
         )}
-        
       </form>
     </div>
   )
