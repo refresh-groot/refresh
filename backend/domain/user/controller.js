@@ -117,8 +117,24 @@ module.exports = {
       return res.status(500).json({ message: '서버 에러' });
     }
   },
+  // 10. 알림 설정 변경
+  updateAlert: async (req, res) => {
+    try {
+      const id = req.session.user.id;
+      const { isAlertOn } = req.body; // true 또는 false
 
-  // 10. 회원 탈퇴 (DELETE /withdraw)
+      await service.updateAlert(id, isAlertOn);
+
+      return res.status(200).json({ 
+        message: `알림이 ${isAlertOn ? '켜졌습니다' : '꺼졌습니다'}.` 
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: '서버 에러' });
+    }
+  },
+
+  // 11. 회원 탈퇴 (DELETE /withdraw)
   withdraw: async (req, res) => {
     try {
       const id = req.session.user.id;

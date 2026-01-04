@@ -68,5 +68,19 @@ module.exports = {
     const { error } = schema.validate(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });
     next();
+  },
+  // 알림 설정
+  UpdateAlert: (req, res, next) => {
+    const schema = Joi.object({
+      isAlertOn: Joi.boolean().required().messages({
+        'any.required': '알림 설정 값(true/false)을 보내주세요.',
+        'boolean.base': '알림 설정은 true 또는 false여야 합니다.'
+      }),
+    });
+
+    const { error } = schema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.details[0].message });
+    next();
   }
 };
+

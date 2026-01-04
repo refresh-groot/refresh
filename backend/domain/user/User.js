@@ -32,6 +32,12 @@ class User extends Sequelize.Model {
           allowNull: false,
           comment: '사용자 이메일',
         },
+        is_alert_on: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: true, 
+          comment: '알림 수신 여부 (1: ON, 0: OFF)',
+        },
         bio: {
           type: Sequelize.STRING(100), 
           allowNull: true,             

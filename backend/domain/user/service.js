@@ -110,17 +110,26 @@ module.exports = {
     const user = await repository.findById(id);
     if (!user) throw new Error('유저를 찾을 수 없습니다.');
     // 필요한 정보만 리턴
-    return { nickname: user.nickname, bio: user.bio };
+    return { 
+      nickname: user.nickname, 
+      email: user.email, 
+      bio: user.bio,
+      isAlertOn: user.is_alert_on 
+    };
   },
-
+  
   // 9. 프로필 수정 서비스
   updateProfile: async (id, bio) => {
     // repository에 update 기능이 없으므로 User 모델 직접 사용
-    // (또는 repository.updateUser(id, bio)를 만들어도 됨)
     await User.update({ bio }, { where: { id } });
   },
 
-  // 10. 회원 탈퇴 서비스
+  // 10. 알림 설정 변경 (ON/OFF)
+  updateAlert: async (id, isAlertOn) => {
+    await User.update({ is_alert_on: isAlertOn }, { where: { id } });
+  },
+
+  // 11. 회원 탈퇴 서비스
   withdraw: async (id, password) => {
     // (1) 유저 찾기
     const user = await repository.findById(id);

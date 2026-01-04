@@ -24,7 +24,8 @@ function Login() {
   const [inputs, onChange, reset] = useInput(initialInputs);
   const {id, pw, confirmPw, email, authCode, nickname} = inputs;
   const [showPw, setShowPw] = useState(false);
-  const [errors, setErrors] = useState({ confirmPw: '' });
+  //  pw 에러 상태 추가
+  const [errors, setErrors] = useState({ confirmPw: '', pw: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -37,7 +38,7 @@ function Login() {
   const handleTabChange = (tabName) =>{
     setActiveTab(tabName);
     reset();
-    setErrors({confirmPw: ''});
+    setErrors({confirmPw: '', pw: ''}); //  에러 초기화 시 pw도 포함
   }
 
   useEffect(()=>{
@@ -52,6 +53,15 @@ function Login() {
     setIsNicknameChecked(false);
   },[nickname]);
 
+  //  비밀번호 8자리 실시간 검사
+  useEffect(() => {
+    if (pw.length > 0 && pw.length < 8) {
+      setErrors(prev => ({ ...prev, pw: '비밀번호는 8자리 이상이어야 합니다.' }));
+    } else {
+      setErrors(prev => ({ ...prev, pw: '' }));
+    }
+  }, [pw]);
+
   useEffect(() => {
     if (confirmPw.length > 0) {
       if (pw !== confirmPw) {
@@ -65,7 +75,7 @@ function Login() {
   }, [pw, confirmPw]);
 
 
-  // [수정 1] 아이디 중복 확인 에러 처리 강화
+  //  아이디 중복 확인 에러 처리 강화
   const handleCheckId = async () => {
     if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.');
 
@@ -82,13 +92,12 @@ function Login() {
     } catch (error) {
       console.error("중복 확인 에러:", error);
       
-      // 여기가 핵심입니다! 백엔드가 보낸 메시지가 있으면 그걸 보여줍니다.
       const errorMsg = error.response?.data?.message || '서버와의 연결이 원활하지 않습니다.';
       showAlert('error', '확인 실패', errorMsg);
     }
   };
 
-  // [수정 2] 닉네임 중복 확인 에러 처리 강화
+  //  닉네임 중복 확인 에러 처리 강화
   const handleCheckNickname = async () => {
     if (!nickname) return showAlert('warning', '닉네임 입력', '닉네임을 입력해주세요.');
     try {
@@ -105,7 +114,7 @@ function Login() {
     }
   };
 
-  // [수정 3] 이메일 코드 전송 에러 처리 강화
+  //  이메일 코드 전송 에러 처리 강화
   const handleSendEmailCode = async () =>{
     if (isLoading) return;
 
@@ -132,7 +141,7 @@ function Login() {
     }
   }
 
-  // [수정 4] 인증 코드 확인 에러 처리 강화
+  //  인증 코드 확인 에러 처리 강화
   const handleVerifyCode = async () => {
     if (isLoading) return;
 
@@ -204,6 +213,9 @@ function Login() {
       if(!id || !pw || !confirmPw || !email || !authCode || !nickname){
         return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.');
       }
+      //  8자리 미만일 경우 가입 방지
+      if (pw.length < 8) return showAlert('warning', '비밀번호 오류', '비밀번호는 8자리 이상이어야 합니다.');
+      
       if (!isIdChecked) return showAlert('warning', '중복 확인', '아이디 중복 확인을 해주세요.');
       if (!isEmailVerified) return showAlert('warning', '인증 필요', '이메일 인증을 완료해주세요.');
       if (!isNicknameChecked) return showAlert('warning', '중복 확인', '닉네임 중복 확인을 해주세요.');
@@ -265,9 +277,23 @@ function Login() {
               <input type="text" name="id" placeholder='아이디' value={id} onChange={onChange} />
               <button type="button" className="check-btn" onClick={handleCheckId}>중복확인</button>
             </div>
-            <div className="password-wrapper">
-            <input className="full-input" type={showPw ? "text" : "password"} name="pw" placeholder='비밀번호' value={pw} onChange={onChange} />
-            <span onClick={toggleShowPw} className='eye-icon'>{showPw ? <FaEyeSlash /> : <FaEye />}</span></div>
+            
+            {/*  비밀번호 에러 메시지를 위해 input-wrapper로 감쌈 */}
+            <div className="input-wrapper">
+              <div className="password-wrapper">
+                <input 
+                  className={`full-input ${errors.pw ? 'input-error' : ''}`} 
+                  type={showPw ? "text" : "password"} 
+                  name="pw" 
+                  placeholder='비밀번호' 
+                  value={pw} 
+                  onChange={onChange} 
+                />
+                <span onClick={toggleShowPw} className='eye-icon'>{showPw ? <FaEyeSlash /> : <FaEye />}</span>
+              </div>
+              {errors.pw && <span className="error-text">{errors.pw}</span>}
+            </div>
+
             <div className='input-wrapper'>
               <input className={`full-input ${errors.confirmPw ? 'input-error' : ''}`} type="password" name="confirmPw" placeholder='비밀번호 재확인' value={confirmPw} onChange={onChange} />
               {errors.confirmPw && <span className="error-text">{errors.confirmPw}</span>}
