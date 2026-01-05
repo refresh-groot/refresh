@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import './AddPlantModal.css';
 import { FaTimes, FaCamera } from 'react-icons/fa';
-import defaultImg from '../../assets/img/rose.png';
+import defaultImg from '../../assets/img/default.png';
 import { showAlert } from '../../app/alert';
 
 function AddPlantModal({onClose, onSave}) {
@@ -25,16 +25,7 @@ function AddPlantModal({onClose, onSave}) {
             return showAlert('warning', '정보 부족', '모든 정보를 입력해주세요.');
         }
 
-    const newPlant = {
-    id: Date.now(),
-    plant_name: nickname,
-    species: species,
-    reg_date: date,
-    photo_url: preview,
-    status: 'active'
-    };
-
-    onSave(newPlant);
+    onSave(nickname, species, date, file);
     onClose();
 };
 

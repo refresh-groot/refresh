@@ -22,4 +22,6 @@ router.patch('/alert', validator.UpdateAlert, controller.updateAlert);
 // 3. 회원 탈퇴
 router.delete('/withdraw', validator.Withdraw, controller.withdraw);
 
+router.get('/check', controller.check);
+
 module.exports = router;

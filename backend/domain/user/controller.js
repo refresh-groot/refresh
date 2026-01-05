@@ -61,31 +61,48 @@ module.exports = {
 
   // 6. 로그인 처리
   login: async (req, res) => {
-    try {
-      const { id, pw } = req.body;
-      if (!id || !pw) {
-        return res.status(400).json({ message: '아이디와 비밀번호를 입력해주세요.' });
-      }
+  try {
+    const { id, pw } = req.body;
+    if (!id || !pw) {
+      return res.status(400).json({ message: '아이디와 비밀번호를 입력해주세요.' });
+    }
 
-      const user = await service.login(id, pw);
+    const user = await service.login(id, pw);
 
-      // 세션 저장
-      req.session.user = user;
+    // 세션 객체에 유저 정보 할당
+    req.session.user = user;
 
+    // [수정 중요!] 세션이 스토어에 완전히 저장된 후 응답을 보냅니다.
+    req.session.save(() => {
       return res.status(200).json({
         message: '로그인 성공!',
         user: user
       });
-    } catch (error) {
-      return res.status(401).json({ message: error.message });
-    }
-  },
+    });
+
+  } catch (error) {
+    return res.status(401).json({ message: error.message });
+  }
+},
 
   // 7. 로그아웃 처리
   logout: (req, res) => {
     req.session.destroy();
     res.clearCookie('connect.sid');
     return res.status(200).json({ message: '로그아웃 되었습니다.' });
+  },
+
+  check: (req, res) => {
+    // 세션에 유저 정보가 있는지 확인
+    if (req.session && req.session.user) {
+      return res.status(200).json({
+        user: req.session.user,
+        message: '로그인 된 상태입니다.'
+      });
+    } else {
+      // 정보가 없으면 401(인증되지 않음) 응답
+      return res.status(401).json({ message: '로그인 정보가 없습니다.' });
+    }
   },
 
   // 8. 프로필 조회 (GET /profile)

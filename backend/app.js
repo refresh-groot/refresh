@@ -14,7 +14,7 @@ const app = express(); // 익스프레스 애플리케이션 객체 생성
  * 1. 미들웨어 설정
  */
 app.use(cors({
-  origin: true, // 혹은 프론트엔드 주소 (예: 'http://localhost:3000')
+  origin: 'http://localhost:5173',  // 프론트엔드 주소를 명확히 지정
   credentials: true // [중요] 쿠키/세션을 주고받으려면 true여야 함
 }));
 app.use(morgan('dev')); 
@@ -34,8 +34,10 @@ app.use(session({
   cookie: { 
     httpOnly: true, // 자바스크립트로 쿠키 탈취 방지
     secure: false,  // HTTP 환경이므로 false 유지
+    sameSite: 'lax',      // 크로스 도메인에서 일부 작동
     maxAge: 1000 * 60 * 60 * 24 // 쿠키 유효 기간 (1일)
-  } 
+  },
+  name: 'connect.sid'     // 세션 쿠키 이름 명시 
 }));
 
 app.use(flash());
@@ -58,9 +60,11 @@ db.sequelize.sync({ force: false, alter: false })
 /**
  * 4. 라우터 설정 (미들웨어 밑에 있어야 함!)
  */
-app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
+app.use('/api/plants', plantRouter); //식물 API를 활성화
 app.use('/api/user', userRouter);
-app.use('/api/plant', plantRouter); //식물 API를 활성화
+app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
+
+
 /**
  * 기본 라우트
  */

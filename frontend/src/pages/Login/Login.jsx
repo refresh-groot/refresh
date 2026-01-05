@@ -173,49 +173,55 @@ function Login() {
   }
 
   // 로그인 및 회원가입
+// 로그인 및 회원가입 처리 함수
   const handleLogin = async (e) => {
-  e.preventDefault();
-  if(isLoading) return;
+    e.preventDefault();
+    if (isLoading) return;
 
-  if(activeTab === 'signin'){
-    setIsLoading(true);
-    try {
-      const response = await loginApi({
-        id: id,
-        pw: pw
-      }); 
-
-      if (response && (response.user || response.data?.user || response.status === 200)) {
-        
-        const userData = response.user || response.data?.user;
-        if (userData) login(userData);
-        // 백엔드에서 보낸 닉네임 위치에 맞춰 수정
-        const nickname = response.user?.nickname || response.data?.user?.nickname || '사용자';
-
-        showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`)
-        .then(() => {
-          navigate('/profile'); // 메인 메뉴로 이동
+    // ==========================================
+    // 1. 로그인 (Sign In) 로직
+    // ==========================================
+    if (activeTab === 'signin') {
+      setIsLoading(true);
+      try {
+        // [중요] loginApi 내부에서 axios 요청 시 { withCredentials: true }가 반드시 있어야 쿠키가 저장됩니다.
+        const response = await loginApi({
+          id: id,
+          pw: pw
         });
-      } else {
-        showAlert('error', '로그인 실패', '응답 형식이 올바르지 않습니다.');
-      }
-    } catch(err) {
-      console.error("로그인 에러 발생:", err);
-      // 백엔드 에러 메시지 우선 표시
-      const errorMsg = err.response?.data?.message || '아이디 또는 비밀번호가 틀렸습니다.';
-      showAlert('error', '로그인 실패', errorMsg);
-    } finally {
-      setIsLoading(false);
-    }
 
-    } else {
-      // === 회원가입 로직 ===
-      if(!id || !pw || !confirmPw || !email || !authCode || !nickname){
+        // 서버 응답 구조에 따라 유저 정보 추출 (user 또는 data.user)
+        const userData = response.user || response.data?.user;
+
+        if (userData) {
+          // [핵심] 페이지 이동 전에 Context에 유저 정보를 '먼저' 저장해야 튕기지 않습니다.
+          login(userData);
+
+          const nickname = userData.nickname || '사용자';
+          
+          // 알림창 확인 버튼을 누르면 그때 프로필로 이동
+          await showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`);
+          navigate('/profile'); 
+          
+        } else {
+          showAlert('error', '로그인 실패', '회원 정보를 불러올 수 없습니다.');
+        }
+      } catch (err) {
+        console.error("로그인 에러 발생:", err);
+        const errorMsg = err.response?.data?.message || '아이디 또는 비밀번호가 틀렸습니다.';
+        showAlert('error', '로그인 실패', errorMsg);
+      } finally {
+        setIsLoading(false);
+      }
+    } 
+    // ==========================================
+    // 2. 회원가입 (Sign Up) 로직
+    // ==========================================
+    else {
+      if (!id || !pw || !confirmPw || !email || !authCode || !nickname) {
         return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.');
       }
-      //  8자리 미만일 경우 가입 방지
       if (pw.length < 8) return showAlert('warning', '비밀번호 오류', '비밀번호는 8자리 이상이어야 합니다.');
-      
       if (!isIdChecked) return showAlert('warning', '중복 확인', '아이디 중복 확인을 해주세요.');
       if (!isEmailVerified) return showAlert('warning', '인증 필요', '이메일 인증을 완료해주세요.');
       if (!isNicknameChecked) return showAlert('warning', '중복 확인', '닉네임 중복 확인을 해주세요.');
@@ -227,22 +233,20 @@ function Login() {
       setIsLoading(true);
       try {
         const signupData = {
-          loginId: id,   
-          password: pw,  
+          loginId: id,
+          password: pw,
           email: email,
           nickname: nickname
         };
 
-        await signupApi(signupData); 
-        
-        showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.')
-        .then(() => {
-          handleTabChange('signin');
-        });
-        
+        await signupApi(signupData);
+
+        // 회원가입 성공 시 로그인 탭으로 자동 전환
+        await showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.');
+        handleTabChange('signin');
+
       } catch (err) {
         console.error(err);
-        // 회원가입 실패 시에도 구체적인 메시지 표시 (예: Joi 검증 오류 등)
         const msg = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
         showAlert('error', '가입 실패', msg);
       } finally {
