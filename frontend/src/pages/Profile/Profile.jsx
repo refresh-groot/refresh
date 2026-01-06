@@ -74,7 +74,6 @@ function Profile() {
     try {
       const safeSpecies =
         species && species.trim() !== '' ? species : '기타';
-
       const formData = new FormData();
       formData.append('plant_name', nickname);
       formData.append('species', safeSpecies);
@@ -154,12 +153,11 @@ function Profile() {
             <div
               key={plant.id}
               className="plant-item solid-item"
-              onClick={() => handlePlantClick(plant)}
-            >
+              onClick={() => handlePlantClick(plant)}>
               <div className="item-img-box">
                 <img src={`http://localhost:8080${plant.photo_url}`}alt={plant.species}/>
               </div>
-
+              
               <div className="item-info">
                 <div className="info-top">
                   <span className="plant-nickname">{plant.plant_name}</span>

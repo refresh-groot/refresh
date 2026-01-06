@@ -10,12 +10,24 @@ const plantRouter = require('./domain/plant/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://223.130.157.123:8080'
+];
+
 /**
  * 1. 미들웨어 설정
  */
 app.use(cors({
-  origin: 'http://localhost:5173',  // 프론트엔드 주소를 명확히 지정
-  credentials: true // [중요] 쿠키/세션을 주고받으려면 true여야 함
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS 차단'));
+    }
+  },
+  credentials: true
 }));
 app.use(morgan('dev')); 
 app.use(express.json()); // [중요] JSON 데이터 파싱 (req.body 생성)
