@@ -113,7 +113,7 @@ function Profile() {
     if (!result.isConfirmed) return;
 
     try {
-      await api.delete(`/api/plants/${id}?mode=archive`);
+      await api.delete(`/api/plants/${id}?mode=permanent`);
       await fetchPlants();
       Swal.fire('삭제 완료', '식물이 삭제되었습니다.', 'success');
     } catch (error) {
