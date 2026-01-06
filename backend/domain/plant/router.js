@@ -10,7 +10,12 @@ router.post('/', upload.any(), controller.addPlant);
 
 //식물 리스트 조회
 router.get('/', controller.getPlants);
-// 2. 식물 삭제: 기존 기능 유지
+
+// 2. 식물 삭제: 기존 기능 유지 (쓰레기통 아이콘: ?mode=permanent 사용)
 router.delete('/:id', controller.removePlant);
+
+// 3. 식물 상태 수정 및 보관함 이동 (연필 아이콘: 사망 이유 기록 포함)
+// 데이터를 부분적으로 수정하므로 PATCH 메서드를 사용
+router.patch('/:id/archive', controller.archivePlant);
 
 module.exports = router;
