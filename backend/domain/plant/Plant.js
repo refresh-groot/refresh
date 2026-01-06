@@ -42,6 +42,12 @@ class Plant extends Sequelize.Model {
           allowNull: false,
           comment: '식물 상태 (활성, 보관함, 삭제 대기)',
         },
+        // [추가] 사망 이유 저장 컬럼
+        death_reason: {
+          type: Sequelize.STRING(50),
+          allowNull: true,
+          comment: '식물 사망 이유 (물 부족, 과습, 빛 부족, 병충해, 기타)',
+        },
       },
       {
         sequelize,

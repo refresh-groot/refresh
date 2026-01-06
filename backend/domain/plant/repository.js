@@ -1,3 +1,5 @@
+// backend/domain/plant/repository.js
+
 // 1. 필요한 모델과 sequelize 객체를 한꺼번에 가져옵니다.
 const { Plant, SpeciesInfo, sequelize } = require('../index'); 
 
@@ -24,23 +26,34 @@ module.exports = {
     });
   },
 
-  // 3. 식물의 상태(status) 변경 (보관함 이동 등)
+  // 3. 식물의 상태(status) 변경 (일반적인 상태 변경)
   updateStatus: async (id, status) => {
     return await Plant.update({ status }, { where: { id } });
   },
 
-  // 4. DB에서 영구 삭제
+  // 4. [추가된 기능] 식물 상태 변경 및 사망 이유 기록 (연필 아이콘 대응)
+  // 보관함으로 이동하면서 왜 죽었는지를 함께 저장합니다.
+  updateStatusWithReason: async (id, status, reason) => {
+    return await Plant.update(
+      { 
+        status: status,           // 'archived'로 변경
+        death_reason: reason      // 프론트에서 보낸 '과습', '물 부족' 등 저장
+      }, 
+      { where: { id } }
+    );
+  },
+
+  // 5. DB에서 영구 삭제 (쓰레기통 아이콘 대응)
+  // force: true를 통해 DB에서 데이터를 완전히 지웁니다.
   permanentDelete: async (id) => {
     return await Plant.destroy({ where: { id }, force: true });
   },
 
-  // --- 새로 추가하는 로직 ---
-
-  // 5. 랜덤 미세팁 하나 가져오기 (로딩창 등에 활용)
+  // 6. 랜덤 미세팁 하나 가져오기 (로딩창 등에 활용)
   getRandomTip: async () => {
     return await SpeciesInfo.findOne({
-      order: sequelize.random(), // DB 엔진의 랜덤 함수 호출
-      attributes: ['mini_tip']   // 데이터 중 'mini_tip' 컬럼만 뽑아옴
+      order: sequelize.random(), 
+      attributes: ['mini_tip']   
     });
   }
 };

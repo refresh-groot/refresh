@@ -66,5 +66,20 @@ module.exports = {
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
+  },
+  archivePlant: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { death_reason } = req.body; // 프론트에서 보낸 5가지 값 중 하나
+
+      if (!death_reason) {
+        return res.status(400).json({ message: '사망 이유를 선택해주세요.' });
+      }
+
+      await service.archiveWithReason(id, death_reason);
+      return res.status(200).json({ message: '식물이 보관함으로 이동되었습니다.' });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
   }
 };
