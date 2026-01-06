@@ -120,6 +120,21 @@
     background-color: #ffebee;
 }
 
+.edit-btn-box{
+    background-color: white;
+    border: 1px solid #9e9696;
+    color: #423f3f;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    margin-right: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-btn-box:hover{
+    background-color: #a79f9f;
+}
+
 .dashed-item{
     background-color: transparent;
     border: 2px dashed #aaa;

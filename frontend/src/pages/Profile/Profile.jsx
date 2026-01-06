@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
-import { FaPlus, FaCalendarAlt, FaUserCircle } from 'react-icons/fa';
+import { FaPlus, FaCalendarAlt, FaUserCircle, FaTrash } from 'react-icons/fa';
+import { LuPencilLine } from "react-icons/lu";
 import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
@@ -122,6 +123,31 @@ function Profile() {
     }
   };
 
+  const handleEdit = async (id, status, e) => {
+    e.stopPropagation();
+
+    const result = await Swal.fire({
+      title: '식물 정보를 수정하시겠습니까?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: '수정',
+      cancelButtonText: '취소',
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await api.edit(`/api/plants/${id}`, {
+        status: status,
+      });
+      await fetchPlants();
+      Swal.fire('수정 완료', '식물 상태가 업데이트 되었습니다.', 'success');
+    } catch (error) {
+      console.error('수정 실패:', error);
+      Swal.fire('오류', '식물 상태 업데이트에 실패했습니다.', 'error');
+    }
+  };
+
   const handlePlantClick = (plant) => {
     navigate('/menu', { state: { plant } });
   };
@@ -168,10 +194,15 @@ function Profile() {
                 </div>
               </div>
 
+<button 
+className='edit-btn-box'
+onClick={(e) => handleEdit(plant.id, plant.status, e)}>
+  <LuPencilLine />
+  </button>
               <button
                 className="delete-btn-box"
                 onClick={(e) => handleDelete(plant.id, e)}>
-                remove
+                <FaTrash/>
               </button>
             </div>
           ))
