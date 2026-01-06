@@ -12,21 +12,22 @@ module.exports = {
     return await repository.create(plantData);
   },
 
-  // 3. 식물 삭제 처리 (기존 기능 유지)
+  // [수정] 휴지통 버튼(DELETE) 대응 로직
   handleDeletion: async (plantId, mode) => {
-    if (mode === 'archive') {
-      // 일반적인 보관 처리
-      return await repository.updateStatus(plantId, 'archived');
-    } else if (mode === 'permanent') {
-      // DB에서 물리적으로 삭제 (쓰레기통 아이콘)
+    // mode가 'permanent'이거나 따로 지정되지 않은 경우 영구 삭제 진행
+    if (mode === 'permanent' || !mode) {
       return await repository.permanentDelete(plantId);
+    } 
+    // 그 외에 명시적으로 'archive'라고 올 때만 보관함 처리
+    else if (mode === 'archive') {
+      return await repository.updateStatus(plantId, 'archived');
     }
     throw new Error('잘못된 삭제 모드입니다.');
   },
 
-  // 4. [새로 추가] 사망 이유 기록 및 보관함 이동 (연필 아이콘 대응)
+  // [수정] 연필 버튼(PATCH) 대응 로직
   archiveWithReason: async (plantId, reason) => {
-    // repository에 새로 추가한 updateStatusWithReason 함수를 호출합니다.
+    // 상태값을 무조건 'archived'로 고정하여 전달
     return await repository.updateStatusWithReason(plantId, 'archived', reason);
   }
 };
