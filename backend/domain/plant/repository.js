@@ -5,11 +5,11 @@ module.exports = {
   create: async (data) => {
     return await Plant.create(data);
   },
-
+//where부분 status: active빼야 사망 처리된 식물까지 불러와짐
   findAllActiveByUserId: async (userId) => {
     return await Plant.findAll({
-      where: { user_id: userId, status: 'active' },
-      include: [{ model: SpeciesInfo, as: 'guide', required: false }]
+      where: { user_id: userId},
+      include: [{ model: SpeciesInfo, as: 'guide', required: false,  order: [['reg_date', 'DESC']]}]
     });
   },
 

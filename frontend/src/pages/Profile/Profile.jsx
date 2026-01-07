@@ -6,18 +6,37 @@ import { LuPencilLine } from "react-icons/lu";
 import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
+import EditPlantModal from './EditPlantModal';
 import api from '../../api/axios';
 
 function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-
+  const [editingPlant, setEditingPlant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentTab, setCurrentTab] = useState('all');
+
+  const filteredPlants = plants.filter(plant => {
+    const dbStatus = plant.status || 'active';
+    if (currentTab === 'alive') {return dbStatus === 'active';}
+    if (currentTab === 'dead') {return dbStatus === 'archived';}
+    return true;
+  })
+  .sort((a,b) => {
+    const statusA = a.status || 'active';
+    const statusB = b.status || 'active';
+    if (statusA === 'archived' && statusB !== 'archived') return 1;
+    if (statusA !== 'archived' && statusB === 'archived') return -1;
+  return 0;
+  });
+  console.log('전체 식물 수:', plants.length);
+console.log('필터링된 식물 수:', filteredPlants.length);
+console.log('현재 탭:', currentTab);
 
   /* ===============================
-     로그인 체크 + 식물 목록 로드
+    로그인 체크 + 식물 목록 로드
   =============================== */
   useEffect(() => {
     if (authLoading) return;
@@ -39,7 +58,7 @@ function Profile() {
   }
 
   /* ===============================
-     식물 목록 조회
+    식물 목록 조회
   =============================== */
   const fetchPlants = async () => {
     try {
@@ -69,7 +88,7 @@ function Profile() {
   };
 
   /* ===============================
-     식물 등록
+    식물 등록
   =============================== */
   const handleSavePlant = async (nickname, species, date, file) => {
     try {
@@ -98,7 +117,7 @@ function Profile() {
   };
 
   /* ===============================
-     🔥 식물 삭제 (DB 연동)
+    🔥 식물 삭제 (DB 연동)
   =============================== */
   const handleDelete = async (id, e) => {
     e.stopPropagation();
@@ -123,37 +142,13 @@ function Profile() {
     }
   };
 
-  const handleEdit = async (id, status, e) => {
-    e.stopPropagation();
-
-    const result = await Swal.fire({
-      title: '식물 정보를 수정하시겠습니까?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '수정',
-      cancelButtonText: '취소',
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      await api.edit(`/api/plants/${id}`, {
-        status: status,
-      });
-      await fetchPlants();
-      Swal.fire('수정 완료', '식물 상태가 업데이트 되었습니다.', 'success');
-    } catch (error) {
-      console.error('수정 실패:', error);
-      Swal.fire('오류', '식물 상태 업데이트에 실패했습니다.', 'error');
-    }
-  };
-
   const handlePlantClick = (plant) => {
     navigate('/menu', { state: { plant } });
   };
 
+
   /* ===============================
-     렌더링
+    렌더링
   =============================== */
   return (
     <div className="profile-container">
@@ -167,57 +162,76 @@ function Profile() {
         </div>
       </header>
 
+      <div className="profile-tab-menu">
+        <button className={currentTab === 'all' ?  'active' : ''}
+        onClick={() => setCurrentTab('all')}>모두</button>
+      <button className={currentTab === 'alive' ? 'active' : ''}
+      onClick={() => setCurrentTab('alive')}>생존</button>
+      <button className={currentTab === 'dead' ? 'active' : ''}
+      onClick={() => setCurrentTab('dead')}>사망</button>
+      </div>
+
       <hr className="divider" />
 
       <div className="plant-list-wrapper">
-        {loading ? (
-          <div className="loading-message">식물 목록을 불러오는 중...</div>
-        ) : plants.length === 0 ? (
-          <div className="empty-message">등록된 식물이 없습니다.</div>
-        ) : (
-          plants.map((plant) => (
-            <div
-              key={plant.id}
-              className="plant-item solid-item"
-              onClick={() => handlePlantClick(plant)}>
-              <div className="item-img-box">
-                <img src={`http://localhost:8080${plant.photo_url}`}alt={plant.species}/>
-              </div>
-              
-              <div className="item-info">
-                <div className="info-top">
-                  <span className="plant-nickname">{plant.plant_name}</span>
-                  <span className="plant-name-tag">{plant.species}</span>
-                </div>
-                <div className="info-bottom">
-                  <FaCalendarAlt /> {plant.reg_date}
-                </div>
-              </div>
+  {loading ? (
+    <div className="loading-message">식물 목록을 불러오는 중...</div>
+  ) : filteredPlants.length === 0 ? (
+    <div className="empty-message">등록된 식물이 없습니다.</div>
+  ) : (
+    filteredPlants.map((plant) => (
+      <div
+        key={plant.id}
+        className={`plant-item solid-item ${plant.status === 'archived' ? 'dead' : ''}`}
+        onClick={() => handlePlantClick(plant)}
+      >
+        <div className="item-img-box">
+          <img
+            src={`http://localhost:8080${plant.photo_url}`}
+            alt={plant.species}
+          />
+        </div>
 
-<button 
-className='edit-btn-box'
-onClick={(e) => handleEdit(plant.id, plant.status, e)}>
-  <LuPencilLine />
-  </button>
-              <button
-                className="delete-btn-box"
-                onClick={(e) => handleDelete(plant.id, e)}>
-                <FaTrash/>
-              </button>
-            </div>
-          ))
-        )}
-
-        <div
-          className="plant-item dashed-item"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <div className="add-content">
-            <FaPlus className="plus-icon" />
-            <span>식물 추가하기</span>
+        <div className="item-info">
+          <div className="info-top">
+            <span className="plant-nickname">{plant.plant_name}</span>
+            <span className="plant-name-tag">
+              {plant.species}
+              {plant.status === 'archived' && <span className="dead-icon"> ☠️</span>}
+            </span>
+          </div>
+          <div className="info-bottom">
+            <FaCalendarAlt /> {plant.reg_date}
           </div>
         </div>
+
+        <button
+          className="edit-btn-box"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingPlant(plant);
+          }}>
+          <LuPencilLine />
+        </button>
+        <button
+          className="delete-btn-box"
+          onClick={(e) => handleDelete(plant.id, e)}>
+          <FaTrash />
+        </button>
       </div>
+    ))
+  )}
+
+  <div
+    className="plant-item dashed-item"
+    onClick={() => setIsModalOpen(true)}
+  >
+    <div className="add-content">
+      <FaPlus className="plus-icon" />
+      <span>식물 추가하기</span>
+    </div>
+  </div>
+</div>
 
       {isModalOpen && (
         <AddPlantModal
@@ -225,6 +239,14 @@ onClick={(e) => handleEdit(plant.id, plant.status, e)}>
           onSave={handleSavePlant}
         />
       )}
+
+      {editingPlant && (
+  <EditPlantModal
+    plant={editingPlant}
+    onClose={() => setEditingPlant(null)}
+    onSaved={fetchPlants}
+  />
+)}
     </div>
   );
 }
