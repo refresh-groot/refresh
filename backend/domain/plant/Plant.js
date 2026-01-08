@@ -18,12 +18,17 @@ class Plant extends Sequelize.Model {
         species: {
           type: Sequelize.STRING(100),
           allowNull: false,
+          /* [수정] 특정 종만 허용하던 제약 조건을 주석 처리
+             이제 species_info 테이블에 없는 식물 이름도 자유롭게 입력 가능함
+          */
+          /*
           references: {
-            model: 'species_info', // 참조할 테이블 이름
-            key: 'species_name',   // 참조할 테이블의 컬럼 이름
+            model: 'species_info', // 참조할 테이블 이름 
+            key: 'species_name',   // 참조할 테이블의 컬럼 이름 
           },
-          onUpdate: 'CASCADE', // SpeciesInfo의 이름이 바뀌면 같이 바뀜
-          onDelete: 'CASCADE', // SpeciesInfo에서 삭제되면 같이 삭제 (혹은 SET NULL)
+          onUpdate: 'CASCADE', 
+          onDelete: 'CASCADE', 
+          */
           comment: '식물 종류 (프론트 name)',
         },
         reg_date: { // adoption_date에서 reg_date로 변경 (ERD 일치)
