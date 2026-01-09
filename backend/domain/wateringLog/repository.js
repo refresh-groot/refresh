@@ -1,5 +1,5 @@
 // backend/domain/wateringLog/repository.js
-const { WateringLog } = require('../../models'); // 모델 관리 위치에 맞게 수정
+const { WateringLog } = require('../index');
 
 module.exports = {
     // 1. 새로운 급수 이력 생성
