@@ -74,7 +74,8 @@ class Plant extends Sequelize.Model {
     db.Plant.belongsTo(db.SpeciesInfo, { 
       foreignKey: 'species',   // Plant의 species 컬럼 사용
       targetKey: 'species_name', // SpeciesInfo의 PK 사용
-      as: 'guide' // 데이터 조회 시 'guide'라는 이름으로 붙여줌
+      as: 'guide', // 데이터 조회 시 'guide'라는 이름으로 붙여줌
+      constraints: false//constraints: false 를 추가하여 DB 수준의 강제 제약 조건을 제거
     });
 
     db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id' });
