@@ -1,0 +1,171 @@
+.chat-container{
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 53px);
+    background-color: #f8f9fa;
+    position: relative;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+.content-width{
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.chat-view{
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 40px;
+}
+
+.empty-state{
+    text-align: center;
+    margin-top: 15vh;
+    color: #444;
+    animation: fadeIn 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ai-logo{
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+    display: inline-block;
+    animation: bounce 2s infinite;
+}
+
+.empty-state h2{
+    font-size: 2rem;
+    margin-bottom: 10px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.suggestion-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+    max-width: 700px;
+}
+
+.suggestion-card{
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    padding: 18px 20px;
+    text-align: left;
+    font-size: 1rem;
+    color: #555;
+    cursor: pointer;
+    transition:  all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    border-radius: 10px;
+}
+
+.suggestion-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-color: #81c784;
+    color: #2e7d32;
+    background-color: #f1f8e9;
+}
+
+.bottom-spacer{
+    height: 160px;
+}
+
+.input-section{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to top, #f8f9fa 85%, rgba(248, 249, 250, 0));
+    padding-bottom: 40px;
+    padding-top: 20px;
+    z-index: 10;
+}
+
+.input-box{
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 50px;
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.input-box:focus-within{
+    box-shadow: 0 5px 25px rgba(46, 125, 50, 0.15);
+    border-color: #a5d6a7;
+}
+
+.input-box input{
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.92rem;
+    background: transparent;
+}
+
+.icon-btn{
+    background: #f1f8e9;
+    color: #2e7d32;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send-btn{
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #2e7d32;
+}
+
+.disclaimer{
+    text-align: center;
+    font-size: 0.75rem;
+    color:#aaa;
+    margin-top: 12px;
+}
+
+@keyframes fadeIn{
+    from{opacity: 0; transform: translateY(10px)}
+    to{opacity: 1;transform: translateY(0);}
+}
+
+@keyframes bounce{
+    0%, 100% {transform: translateY(0);}
+    50% {transform: translateY(-10px)}
+}
+
+@media (max-width: 768px){
+    .suggestion-grid{
+        grid-template-columns: 1fr;
+    }
+    .empty-state{
+        margin-top: 7vh;
+    }
+    .empty-state h2{
+        font-size: 1.5rem;
+    }
+}
