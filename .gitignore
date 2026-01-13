@@ -1,2 +1,4 @@
-# AI 폴더 통째로 무시하기
+# .gitignore 파일 내용
+
 AI/
+.vscode/
