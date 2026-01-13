@@ -5,6 +5,7 @@ import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/f
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
+import Swal from 'sweetalert2';
 
 function Menu() {
   const location = useLocation();
@@ -34,7 +35,7 @@ function Menu() {
         };
   });
 
-  // ✅ receivedPlant 들어오면 currentPlant 갱신 (name -> plant_name)
+  // receivedPlant 들어오면 currentPlant 갱신
   useEffect(() => {
     if (
       receivedPlant &&
@@ -44,7 +45,7 @@ function Menu() {
     }
   }, [receivedPlant, currentPlant.plant_name]);
 
-  // ✅ 메뉴에서 새로고침해도 보이게 저장
+  // 메뉴에서 새로고침해도 보이게 저장
   useEffect(() => {
     if (currentPlant) {
       localStorage.setItem('my-plants', JSON.stringify([currentPlant]));
@@ -60,7 +61,7 @@ function Menu() {
     return days + 1;
   };
 
-  // ✅ 이미지 src 정규화 (오타 startsWith + 서버 경로 붙이기)
+  // 이미지 src 정규화 (오타 startsWith + 서버 경로 붙이기)
   const getImageSrc = (url) => {
     if (!url) return defaultImg;
 
@@ -101,13 +102,23 @@ function Menu() {
           </div>
 
           <div className="plant-info">
-            <h2>{currentPlant.plant_name}</h2>
+            <h2 className='plant-nickname'>{currentPlant.plant_name}</h2>
             <p className="plant-species">{currentPlant.species}</p>
             <p className="status-text">
-              현재 상태: {sensorData.soil < 30 ? '목마름 💧' : '양호함 😊'}
+              현재 상태: {
+              currentPlant.status === 'archived' || currentPlant.status === 'dead'
+              ? `${currentPlant.death_reason || '원인 미상'}(으)로 사망 ☠️`
+              : (sensorData.soil < 30 ? '목마름 💧' : '양호함 😊')}
             </p>
             <div className="growth-day">
-              함께한 지 {calculateDays(currentPlant.reg_date)}일째
+              {currentPlant.status === 'archived' || currentPlant.status === 'dead' ?(
+              <span style={{color: `#888`}}>
+                {(currentPlant.updated_at || currentPlant.updatedAt || new Date().toISOString().split('T')[0])}
+                {' '}(떠난지 {calculateDays(currentPlant.updated_at || currentPlant.updatedAt || new Date())}일째)
+              </span>
+              ):(
+              <span>함께한 지 {calculateDays(currentPlant.reg_date)}일째</span>
+              )}
             </div>
           </div>
         </div>
@@ -140,19 +151,28 @@ function Menu() {
       <section className="dashboard-right">
         <div className="card control-panel">
           <h3>퀵 컨트롤</h3>
-          <button className="control-btn water-btn">
-            💧 물 주기 {isAutoMode ? '(자동)' : '(수동)'}
-          </button>
-          <div className="toggle-box">
-            <span>자동 급수 모드</span>
-            <input
-              type="checkbox"
-              id="auto-mode"
-              checked={isAutoMode}
-              onChange={() => setIsAutoMode(!isAutoMode)}
-            />
-            <label htmlFor="auto-mode" className="toggle-label"></label>
+          <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`}
+          onClick={() => setIsAutoMode(!isAutoMode)}>
+            <div className="toggle-label">
+              {isAutoMode ? '자동 급수 모드' : '수동 급수 모드'}
+            </div>
+
+            <div className="toggle-track">
+              <div className="toggle-knob"></div>
+            </div>
           </div>
+          <p className='mode-desc'>
+            {isAutoMode
+            ?'AI가 토양 수분을 갑지해 자동으로 물을 줍니다.'
+            : '직접 버튼을 눌러 물을 줘야 합니다.'}
+          </p>
+
+          <button className='control-btn water-btn'
+          disabled={isAutoMode}
+          style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
+          onClick={() => Swal.fire('성공', '급수를 완료했습니다.', 'success')}>
+            💧 지금 물 주기
+          </button>
         </div>
 
         <div className="card alert-box">
