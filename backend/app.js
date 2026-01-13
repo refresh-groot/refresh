@@ -8,6 +8,7 @@ const db = require('./domain'); // 도메인 모델 및 데이터베이스 설�
 const userRouter = require('./domain/user/router'); // 라우터 불러오기
 const plantRouter = require('./domain/plant/router');
 const diagnosisLogRouter = require('./domain/diagnosisLog/router');
+const wateringRouter = require('./domain/wateringLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
@@ -60,7 +61,7 @@ app.use(flash());
  * [변경 사항]: 네이버 클라우드 MySQL에 테이블이 없는 상태이므로 alter: true로 설정합니다.
  * alter: true는 모델(Device.js 등) 정의와 실제 DB를 비교해서 테이블을 자동으로 생성해줍니다.
  */
-db.sequelize.sync({ force: false, alter: false })
+db.sequelize.sync({ force: false, alter: false })//테이블 생성이 필요할 때 잠시 true로 변경
   .then(() => {
     // 성공 시 출력될 메시지
     console.log('네이버 클라우드 smartplant DB 연결 및 테이블 동기화 성공!');
@@ -76,6 +77,7 @@ db.sequelize.sync({ force: false, alter: false })
 app.use('/api/plants', plantRouter); //식물 API를 활성화
 app.use('/api/user', userRouter);
 app.use('/api/diagnosis-logs', diagnosisLogRouter);
+app.use('/api/watering-log', wateringRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
 
 

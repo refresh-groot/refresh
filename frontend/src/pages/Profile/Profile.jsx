@@ -117,7 +117,7 @@ console.log('현재 탭:', currentTab);
   };
 
   /* ===============================
-    🔥 식물 삭제 (DB 연동)
+    식물 삭제 (DB 연동)
   =============================== */
   const handleDelete = async (id, e) => {
     e.stopPropagation();
@@ -185,6 +185,11 @@ console.log('현재 탭:', currentTab);
         className={`plant-item solid-item ${plant.status === 'archived' ? 'dead' : ''}`}
         onClick={() => handlePlantClick(plant)}
       >
+        {plant.status === 'archived' && (
+          <div className="death-badge">
+            {plant.death_reason || '사망'}
+          </div>
+        )}
         <div className="item-img-box">
           <img
             src={`http://localhost:8080${plant.photo_url}`}
@@ -197,8 +202,8 @@ console.log('현재 탭:', currentTab);
             <span className="plant-nickname">{plant.plant_name}</span>
             <span className="plant-name-tag">
               {plant.species}
-              {plant.status === 'archived' && <span className="dead-icon"> ☠️</span>}
             </span>
+            {plant.status === 'archived' && <span className="dead-icon">☠️</span>}
           </div>
           <div className="info-bottom">
             <FaCalendarAlt /> {plant.reg_date}
