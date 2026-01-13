@@ -137,7 +137,7 @@
     max-width: 100%;
 }
 
-.plant-nickname{
+.profile-container .plant-nickname{
     font-weight: bold;
     font-size: 1rem;
     color: #333;
@@ -149,7 +149,7 @@
     width: auto;
 }
 
-.plant-name-tag{
+.profile-container .plant-name-tag{
     font-size: 0.75rem;
     color: #666;
     background-color: #f1f1f1;

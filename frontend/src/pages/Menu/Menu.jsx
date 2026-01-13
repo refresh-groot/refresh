@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Menu.css';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/fa';
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 
 function Menu() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { sensorData, loading: sensorLoading } = useSensorData(5000);
   const [isAutoMode, setIsAutoMode] = useState(true);
 
@@ -114,7 +115,7 @@ function Menu() {
               {currentPlant.status === 'archived' || currentPlant.status === 'dead' ?(
               <span style={{color: `#888`}}>
                 {(currentPlant.updated_at || currentPlant.updatedAt || new Date().toISOString().split('T')[0])}
-                {' '}(떠난지 {calculateDays(currentPlant.updated_at || currentPlant.updatedAt || new Date())}일째)
+                {' '}(떠난 지 {calculateDays(currentPlant.updated_at || currentPlant.updatedAt || new Date())}일째)
               </span>
               ):(
               <span>함께한 지 {calculateDays(currentPlant.reg_date)}일째</span>
@@ -163,7 +164,7 @@ function Menu() {
           </div>
           <p className='mode-desc'>
             {isAutoMode
-            ?'AI가 토양 수분을 갑지해 자동으로 물을 줍니다.'
+            ?'AI가 토양 수분을 감지해 자동으로 물을 줍니다.'
             : '직접 버튼을 눌러 물을 줘야 합니다.'}
           </p>
 
@@ -186,7 +187,9 @@ function Menu() {
           </ul>
         </div>
 
-        <div className="card ai-diagnosis">
+        <div className="card ai-diagnosis"
+        onClick={() => navigate('/Chat', { state: { plant: currentPlant } })}
+        style={{ cursor: 'pointer' }}>
           <FaRobot size={30} />
           <p>
             내 식물 아픈 곳은 없을까?

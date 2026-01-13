@@ -32,8 +32,8 @@ function Profile() {
   return 0;
   });
   console.log('전체 식물 수:', plants.length);
-console.log('필터링된 식물 수:', filteredPlants.length);
-console.log('현재 탭:', currentTab);
+  console.log('필터링된 식물 수:', filteredPlants.length);
+  console.log('현재 탭:', currentTab);
 
   /* ===============================
     로그인 체크 + 식물 목록 로드
