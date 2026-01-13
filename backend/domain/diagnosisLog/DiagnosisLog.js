@@ -12,7 +12,7 @@ class DiagnosisLog extends Sequelize.Model {
         },
         image_url: {
           type: Sequelize.STRING(255),
-          allowNull: false,
+          allowNull: true,
           comment: '진단한 식물 이미지 경로(URL)',
         },
         result: {
