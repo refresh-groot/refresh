@@ -1,2 +1,2 @@
-AI/__pycache__/test.cpython-314.pyc
-AI/api.env
+# AI 폴더 통째로 무시하기
+AI/
