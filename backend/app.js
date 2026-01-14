@@ -7,10 +7,12 @@ const flash = require('connect-flash');
 const db = require('./domain'); // 도메인 모델 및 데이터베이스 설정 로드
 const userRouter = require('./domain/user/router'); // 라우터 불러오기
 const plantRouter = require('./domain/plant/router');
-const diagnosisLogRouter = require('./domain/diagnosisLog/router');
 const wateringRouter = require('./domain/wateringLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
+
+// [추가] NCP 서버와 같은 프록시 환경에서 세션 쿠키를 신뢰하기 위한 설정
+app.set('trust proxy', 1);
 
 
 const allowedOrigins = [
@@ -76,7 +78,6 @@ db.sequelize.sync({ force: false, alter: false })//테이블 생성이 필요할
  */
 app.use('/api/plants', plantRouter); //식물 API를 활성화
 app.use('/api/user', userRouter);
-app.use('/api/diagnosis-logs', diagnosisLogRouter);
 app.use('/api/watering-log', wateringRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
 
