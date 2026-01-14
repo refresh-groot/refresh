@@ -11,10 +11,6 @@ const wateringRouter = require('./domain/wateringLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
-// [추가] NCP 서버와 같은 프록시 환경에서 세션 쿠키를 신뢰하기 위한 설정
-app.set('trust proxy', 1);
-
-
 const allowedOrigins = [
   'http://localhost:5173',
   'http://223.130.157.123:8080'
