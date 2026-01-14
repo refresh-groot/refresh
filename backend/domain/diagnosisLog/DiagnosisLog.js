@@ -15,6 +15,11 @@ class DiagnosisLog extends Sequelize.Model {
           allowNull: true,
           comment: '진단한 식물 이미지 경로(URL)',
         },
+        question: {
+            type: Sequelize.TEXT, // 질문이 길 수 있으니 TEXT
+            allowNull: true,      // 질문 없이 사진만 보낼 수도 있으니 true
+            comment: '사용자 질문 또는 채팅 내용',
+        },
         result: {
           type: Sequelize.STRING(100),
           allowNull: false,
@@ -28,7 +33,7 @@ class DiagnosisLog extends Sequelize.Model {
         confidence: {
           type: Sequelize.FLOAT,
           allowNull: false,
-          comment: 'AI 진단 확신도 (0.0 ~ 1.0)',
+          comment: 'AI 진단 정확도 (0.0 ~ 1.0)',
         },
         diagnosis_date: {
           type: Sequelize.DATE,
@@ -39,7 +44,7 @@ class DiagnosisLog extends Sequelize.Model {
       },
       {
         sequelize,
-        timestamps: true,
+        timestamps: false,
         updatedAt: false,
         underscored: true,
         modelName: 'DiagnosisLog',
