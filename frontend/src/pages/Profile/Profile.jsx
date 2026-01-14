@@ -192,7 +192,7 @@ function Profile() {
         )}
         <div className="item-img-box">
           <img
-            src={`http://localhost:8080${plant.photo_url}`}
+            src={`${plant.photo_url}`}
             alt={plant.species}
           />
         </div>
