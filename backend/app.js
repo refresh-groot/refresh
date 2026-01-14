@@ -11,6 +11,8 @@ const wateringRouter = require('./domain/wateringLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
+app.set('trust proxy', 1); // 추가: 프록시 환경에서 세션 쿠키가 잘 전달되도록 설정
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://223.130.157.123:8080'
@@ -40,8 +42,8 @@ app.use(cookieParser(process.env.COOKIE_SECRET || 'smartplant-secret'));
  * 2. 세션 설정
  */
 app.use(session({
-  resave: false,
-  saveUninitialized: false,
+  resave: true,               // [수정] false -> true
+  saveUninitialized: true,    // [수정] false -> true
   secret: process.env.COOKIE_SECRET || 'smartplant-secret',
   cookie: { 
     httpOnly: true, // 자바스크립트로 쿠키 탈취 방지
