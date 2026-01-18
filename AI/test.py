@@ -1,84 +1,105 @@
-import os #내 컴퓨터를 빌려쓰는 코드
-import google.generativeai as genai #제미나이 통신 라이브러리
-from dotenv import load_dotenv #env 파일을 열기 위한s
-import PIL.Image #이미지 읽기
+import os 
+import google.generativeai as genai 
+from dotenv import load_dotenv 
+import PIL.Image 
+import json
 
-#API 설정
-load_dotenv("api.env") #API 코드 받아오기
-MY_KEY = os.getenv("GOOGLE_API_KEY") #API 코드 적용
-genai.configure(api_key=MY_KEY) #API 를 제미나이에 적용
+# --- 환경 변수 로드 ---
+load_dotenv("api.env") 
+MY_KEY = os.getenv("GOOGLE_API_KEY") 
+genai.configure(api_key=MY_KEY) 
 
-#모델 설정
-model=genai.GenerativeModel('gemini-flash-latest')
+# --- 모델 설정 (안전장치 포함) ---
+# 최신 모델을 우선 시도하고, 안 되면 구버전(안정적)으로 자동 전환
+try:
+    model = genai.GenerativeModel('gemini-flash-latest')
+except:
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
-def get_plant_diagnosis(image_path, chat_history=[]):
+
+def get_plant_diagnosis(image_path, user_message, history):
     """
-    image_path: 사진 파일 경로
-    chat_history: 지금까지의 대화 기록 (리스트 형태)
+    Args:
+        image_path: 이미지 경로 (없으면 None)
+        user_message: 사용자 질문
+        history: 이전 대화 기록 list [{"role": "user", "parts": [...]}, ...]
     """
+
+    # 1. [핵심 복구] 이전 대화 기록을 텍스트로 복원 (기억력 주입)
+    # 아까 코드엔 이 부분이 빠져 있어서 AI가 기억을 못했습니다.
+    history_text = ""
+    if history:
+        history_text = "\n[이전 대화 내역 (참고용)]\n"
+        for msg in history:
+            role_name = "사용자" if msg['role'] == 'user' else "AI"
+            # 내용이 리스트일 수도, 문자열일 수도 있어서 안전하게 처리
+            content = msg['parts'][0] if isinstance(msg['parts'], list) else msg['parts']
+            history_text += f"- {role_name}: {content}\n"
+
+    # 2. 답변 형식 (JSON) 정의
+    format_instruction = """
+    반드시 다음 JSON 형식으로만 답해:
+    {
+        "ui_status": "상태 요약 (예: 물 부족, 건강함)",
+        "ui_guide": "사용자에게 할 말 (친절하게, 2문장 이내)",
+        "ui_water_msg": "물주기 팁 (1문장)",
+        "pump_now": true 또는 false,
+        "schedule": {"interval_hours": 0, "amount_ml": 0}
+    }
+    """
+
+    # 3. 사용자 질문이 비어있을 때 기본 질문 설정
+    if not user_message:
+        user_message = "이 식물의 상태를 진단하고 관리 방법을 알려줘."
+
+    # 4. 페르소나 및 시스템 프롬프트 조립
+    # 여기서 {history_text}를 넣어줘야 AI가 아까 했던 말을 기억합니다.
+    system_rules = f"""
+    너는 '스마트 화분 AI'야.
+    
+    {history_text}
+
+    현재 사용자 질문: "{user_message}"
+
+    [행동 수칙]
+    1. **문맥 파악**: 위 [이전 대화 내역]을 보고 대화를 자연스럽게 이어가.
+    2. **사진 유무**: 사진이 없으면 사용자의 텍스트 묘사에 의존해서 추론해.
+    3. **제어**: 식물이 위험해 보이면 'pump_now': true.
+    
+    {format_instruction}
+    """
+
+    inputs = []
+
+    # 5. 사진 유무에 따른 분기 처리
+    if image_path and os.path.exists(image_path):
+        # 📸 Case A: 사진이 있는 경우
+        try:
+            with PIL.Image.open(image_path) as img_file:
+                img = img_file.copy()
+            
+            # 프롬프트 + 이미지 같이 전송
+            inputs = [system_rules, img]
+            
+        except Exception as e:
+            return json.dumps({"ui_status": "이미지 오류", "ui_guide": "이미지 파일을 읽을 수 없습니다."})
+    else:
+        # 💬 Case B: 사진이 없는 경우 (텍스트 전용 모드)
+        # 이미지 없이 텍스트만 리스트에 담아서 보냄
+        # (주의: pump_now는 안전을 위해 false로 고정하라고 지시 추가)
+        text_only_prompt = system_rules + "\n[추가 지시] 현재 사진이 제공되지 않았어. 사용자의 말만 듣고 상담해줘. pump_now는 false로 설정해."
+        inputs = [text_only_prompt]
+
+    # 6. AI 실행
     try:
-        img = PIL.Image.open(image_path)
+        response = model.generate_content(inputs)
+        result_text = response.text
         
-        # 3. 과거 기록이 있으면 기억을 되살림 (start_chat 사용!)
-        chat = model.start_chat(history=chat_history)
+        # JSON 포장지 벗기기
+        if "```" in result_text:
+            result_text = result_text.replace("```json", "").replace("```", "").strip()
+
+        return result_text 
         
-        # 4. 질문 던지기 (채팅 모드에서는 send_message를 씀)
-        Q = """
-        당신은 스마트팜 자동 제어 AI입니다. 
-        제공된 사진을 정밀 분석하여 식물의 상태를 진단하고, 물 주기 스케줄을 결정하세요.
-
-        결과는 반드시 아래 **JSON 형식**으로만 출력하세요. (설명글 금지)
-
-        {
-          "ui_status": "상태 요약 (예: 건강함 / 건조함 / 과습 / 병충해)",
-          "ui_guide": "사용자 관리 가이드 (한국어, 2문장 이내. 예: 잎이 처져 있으니 통풍에 신경 써주세요.)",
-          "ui_water_msg": "물 주기 스케줄 요약 (한국어 1줄. 예: '하루 1회 200ml 급수' 또는 '4시간마다 50ml 집중 급수')",
-          "pump_now": true 또는 false, (지금 당장 펌프 작동이 필요하면 true)
-          "schedule": {
-              "interval_hours": 숫자, (몇 시간 간격인지 정수. 0이면 중단)
-              "amount_ml": 숫자 (1회 급수량 ml 정수)
-          }
-        }
-        
-        [판단 기준]
-        - 심각한 건조: interval_hours 짧게(4~6), amount_ml 적게, ui_water_msg에 '집중 케어' 언급. 
-        - 건강함: interval_hours 길게(24~48), amount_ml 넉넉히, ui_water_msg에 '유지 관리' 언급.
-        - 과습: interval_hours 0, ui_water_msg에 '급수 중단' 언급.
-
-        주의사항:
-        1. 반드시 순수한 JSON 문자열 하나만 출력하세요.
-        2. 마크다운(```json)이나 기타 설명은 절대 붙이지 마세요.
-        3. 중복해서 출력하지 말고, 딱 한 번만 출력하고 종료하세요.
-        """
-        response = chat.send_message([Q, img])
-        
-        return response.text  # 결과를 백엔드에게 돌려줌 (return)
-
     except Exception as e:
-        return f"에러 발생: {e}"
-    
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!테스트용 코드!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#!!!!!!!!!!!!!!!!!!!!!!!보험용 코드이니 건들지도 말것!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if __name__ == "__main__":
-    img_path = os.path.join("img", "nanbad.jpg") # 테스트용 사진
-
-    print("--- 🎬 [상황 1] 첫 번째 질문 (기억 없음) ---")
-    
-    # 1. 빈 리스트([])를 넣어서 보냄 -> AI는 첫 만남이라고 생각함
-    history_step_1 = [] 
-    
-    print("사용자: 난초에 물을 어제 줬어. (라고 말했다고 치자)")
-
-    history_step_2 = [
-        {"role": "user", "parts": ["이 난초에 어제 물을 종이컵 한 컵 줬어."]},
-        {"role": "model", "parts": ["네, 알겠습니다. 어제 물을 주셨군요."]}
-    ]
-    
-    print("\n--- 🎬 [상황 2] 두 번째 질문 (기억을 가지고 질문!) ---")
-    print(f"👉 AI에게 주입할 기억: {history_step_2}")
-    
-    # 여기서 'history_step_2'를 넣어주는 게 핵심!
-    result = get_plant_diagnosis(img_path, chat_history=history_step_2)
-    
-    print("\n✅ AI의 답변 결과:")
-    print(result)
+        return json.dumps({"ui_status": "API 에러", "ui_guide": f"시스템 오류가 발생했습니다: {str(e)}"})
