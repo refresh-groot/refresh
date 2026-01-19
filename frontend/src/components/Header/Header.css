@@ -1,11 +1,17 @@
 .navbar{
-    background-color: #A1BC98;
-    color: white;
-    padding: 10px 20px;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #D2DCB6;
+    z-index: 9999; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: relative;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .nav-logo{
@@ -59,7 +65,7 @@ font-weight: bold;
         top: 100%;
         left: 0;
         width: 100%;
-            background-color: #D2DCB6;
+        background-color: #D2DCB6;
 ;
 
         text-align: center;

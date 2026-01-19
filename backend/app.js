@@ -78,7 +78,7 @@ app.use('/api/plants', plantRouter); //식물 API를 활성화
 app.use('/api/user', userRouter);
 app.use('/api/watering-log', wateringRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
-
+app.use('/api/diagnosis-logs', diagnosisLogRouter);
 
 /**
  * 기본 라우트

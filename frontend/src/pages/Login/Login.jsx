@@ -8,10 +8,12 @@ import { showAlert } from '../../app/alert';
 import useInput from '../../hooks/useInput';
 
 function Login() {
+  // 현재 활성화된 탭 상태 ('signin' 또는 'signup')
   const [activeTab, setActiveTab] = useState('signin');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login } = useAuth(); // AuthContext에서 login 함수 가져오기
   
+  // 입력 필드 초기값
   const initialInputs = {
     id: '',
     pw: '',
@@ -21,39 +23,49 @@ function Login() {
     nickname: ''
   };
 
+  // 커스텀 훅 useInput을 사용하여 입력 상태 관리
   const [inputs, onChange, reset] = useInput(initialInputs);
-  const {id, pw, confirmPw, email, authCode, nickname} = inputs;
+  const {id, pw, confirmPw, email, authCode, nickname} = inputs; // 구조 분해 할당으로 변수 추출
+
+  // 비밀번호 표시 여부 상태
   const [showPw, setShowPw] = useState(false);
-  //  pw 에러 상태 추가
+  // 비밀번호 유효성 검사 에러 메시지 상태
   const [errors, setErrors] = useState({ confirmPw: '', pw: '' });
+  // 로딩 상태 (API 요청 중 버튼 비활성화 등에 사용)
   const [isLoading, setIsLoading] = useState(false);
+  // 중복 확인 및 인증 완료 상태
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
 
+  // 비밀번호 표시 토글 함수
   const toggleShowPw = () =>{
     setShowPw(!showPw);
   }
 
+  // 탭 변경 함수: 입력값 및 에러 초기화
   const handleTabChange = (tabName) =>{
     setActiveTab(tabName);
     reset();
-    setErrors({confirmPw: '', pw: ''}); //  에러 초기화 시 pw도 포함
+    setErrors({confirmPw: '', pw: ''}); 
   }
 
+  // ID 변경 시 중복 확인 상태 초기화
   useEffect(()=>{
     setIsIdChecked(false);
   },[id]);
 
-    useEffect(()=>{
+  // 이메일 변경 시 인증 상태 초기화
+  useEffect(()=>{
     setIsEmailVerified(false);
   },[email]);
 
-    useEffect(()=>{
+  // 닉네임 변경 시 중복 확인 상태 초기화
+  useEffect(()=>{
     setIsNicknameChecked(false);
   },[nickname]);
 
-  //  비밀번호 8자리 실시간 검사
+  // 비밀번호 유효성 검사 (8자리 이상)
   useEffect(() => {
     if (pw.length > 0 && pw.length < 8) {
       setErrors(prev => ({ ...prev, pw: '비밀번호는 8자리 이상이어야 합니다.' }));
@@ -62,6 +74,7 @@ function Login() {
     }
   }, [pw]);
 
+  // 비밀번호 확인 일치 검사
   useEffect(() => {
     if (confirmPw.length > 0) {
       if (pw !== confirmPw) {
@@ -75,7 +88,7 @@ function Login() {
   }, [pw, confirmPw]);
 
 
-  //  아이디 중복 확인 에러 처리 강화
+  // 아이디 중복 확인 함수
   const handleCheckId = async () => {
     if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.');
 
@@ -97,7 +110,7 @@ function Login() {
     }
   };
 
-  //  닉네임 중복 확인 에러 처리 강화
+  // 닉네임 중복 확인 함수
   const handleCheckNickname = async () => {
     if (!nickname) return showAlert('warning', '닉네임 입력', '닉네임을 입력해주세요.');
     try {
@@ -114,7 +127,7 @@ function Login() {
     }
   };
 
-  //  이메일 코드 전송 에러 처리 강화
+  // 이메일 인증 코드 전송 함수
   const handleSendEmailCode = async () =>{
     if (isLoading) return;
 
@@ -141,7 +154,7 @@ function Login() {
     }
   }
 
-  //  인증 코드 확인 에러 처리 강화
+  // 인증 코드 확인 함수
   const handleVerifyCode = async () => {
     if (isLoading) return;
 
@@ -172,8 +185,7 @@ function Login() {
     }
   }
 
-  // 로그인 및 회원가입
-// 로그인 및 회원가입 처리 함수
+  // 로그인 및 회원가입 처리 함수
   const handleLogin = async (e) => {
     e.preventDefault();
     if (isLoading) return;
@@ -218,6 +230,7 @@ function Login() {
     // 2. 회원가입 (Sign Up) 로직
     // ==========================================
     else {
+      // 필수 입력값 및 유효성 검사
       if (!id || !pw || !confirmPw || !email || !authCode || !nickname) {
         return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.');
       }
@@ -258,6 +271,7 @@ function Login() {
   return (
     <div className="login-container">
       <form className="login-form" onSubmit={handleLogin}>
+        {/* 탭 선택 영역 */}
         <div className="login-select">
           <span className={activeTab === 'signin' ? 'active-tab' : 'inactive-tab'}
           onClick={()=>handleTabChange('signin')}>Sign In</span>
@@ -265,6 +279,7 @@ function Login() {
           onClick={()=>handleTabChange('signup')}>Sign Up</span>
         </div>
 
+    {/* 로그인 폼 */}
     {activeTab === 'signin' && (
           <div className="input-group">
             <input type="text" name="id" placeholder='아이디' value={id} onChange={onChange} />
@@ -275,6 +290,7 @@ function Login() {
           </div>
         )}
         
+    {/* 회원가입 폼 */}
     {activeTab === 'signup' && (
           <div className="signup-container">
             <div className="input-with-btn">
@@ -282,7 +298,7 @@ function Login() {
               <button type="button" className="check-btn" onClick={handleCheckId}>중복확인</button>
             </div>
             
-            {/*  비밀번호 에러 메시지를 위해 input-wrapper로 감쌈 */}
+            {/* 비밀번호 에러 메시지를 위해 input-wrapper로 감쌈 */}
             <div className="input-wrapper">
               <div className="password-wrapper">
                 <input 

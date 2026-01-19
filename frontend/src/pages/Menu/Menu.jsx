@@ -10,16 +10,24 @@ import Swal from 'sweetalert2';
 function Menu() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // 5초마다 센서 데이터(온도, 습도, 조도 등)를 갱신하는 커스텀 훅 사용
   const { sensorData, loading: sensorLoading } = useSensorData(5000);
+  
+  // 자동 급수 모드 상태 (True: AI 자동 제어, False: 사용자 수동 제어)
   const [isAutoMode, setIsAutoMode] = useState(true);
 
+  // 알림 목록 상태 (추후 백엔드 연동 예정)
   const [alerts] = useState([
     { id: 1, type: 'warning', msg: '물통에 물이 부족합니다!' },
     { id: 2, type: 'success', msg: '오전 09:00 급수 완료' },
   ]);
 
+  // 다른 페이지(목록 등)에서 넘겨받은 식물 데이터
   const receivedPlant = location.state?.plant;
 
+  // 현재 표시할 식물 데이터 초기화
+  // 1순위: 넘겨받은 데이터, 2순위: 로컬 스토리지 저장값, 3순위: 기본값
   const [currentPlant, setCurrentPlant] = useState(() => {
     if (receivedPlant) return receivedPlant;
 
@@ -36,7 +44,7 @@ function Menu() {
         };
   });
 
-  // receivedPlant 들어오면 currentPlant 갱신
+  // 넘겨받은 식물 데이터가 변경되면 현재 상태를 업데이트
   useEffect(() => {
     if (
       receivedPlant &&
@@ -46,41 +54,42 @@ function Menu() {
     }
   }, [receivedPlant, currentPlant.plant_name]);
 
-  // 메뉴에서 새로고침해도 보이게 저장
+  // 새로고침 시에도 데이터가 유지되도록 로컬 스토리지에 현재 식물 정보 저장
   useEffect(() => {
     if (currentPlant) {
       localStorage.setItem('my-plants', JSON.stringify([currentPlant]));
     }
   }, [currentPlant]);
 
+  // 식물 등록일로부터 경과한 날짜(D-Day) 계산 함수
   const calculateDays = (dateString) => {
     if (!dateString) return 0;
     const start = new Date(dateString);
     const today = new Date();
     const diff = today - start;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return days + 1;
+    return days + 1; // 시작일을 1일로 계산
   };
 
-  // 이미지 src 정규화 (오타 startsWith + 서버 경로 붙이기)
+  // 이미지 URL 정규화 함수
+  // 서버에서 상대 경로(/uploads/...)로 넘어오는 경우 전체 URL로 변환 처리
   const getImageSrc = (url) => {
     if (!url) return defaultImg;
 
-    // import된 이미지(defaultImg)는 이미 절대/번들 경로라 그대로 사용
     if (typeof url === 'string') {
-      if (url.startsWith('http')) return url;
-      if (url.startsWith('data:')) return url;
+      if (url.startsWith('http')) return url; // 외부 링크
+      if (url.startsWith('data:')) return url; // Base64 이미지
 
-      // DB에 /uploads/xxx.png 형태로 들어오는 경우
+      // 백엔드 업로드 경로인 경우 서버 주소 추가
       if (url.startsWith('/uploads/')) return `${SERVER_URL}${url}`;
 
-      // 혹시 상대경로로 들어오면 안전하게 처리
       return url;
     }
 
     return defaultImg;
   };
 
+  // 센서 카드 렌더링을 위한 설정 배열 (반복되는 UI를 효율적으로 관리)
   const SENSOR_CONFIG = [
     { id: 'temp', label: '온도', unit: '°C', icon: <FaTemperatureHigh />, color: 'temp' },
     { id: 'humid', label: '습도', unit: '%', icon: <FaTint />, color: 'humid' },
@@ -88,6 +97,7 @@ function Menu() {
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
 
+  // 센서 데이터 로딩 중 표시
   if (sensorLoading && sensorData.temp === 0) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
@@ -95,6 +105,7 @@ function Menu() {
   return (
     <div className="menu-dashboard">
       <section className="dashboard-left">
+        {/* 식물 프로필 카드 영역 */}
         <div className="card profile-card">
           <div className="plant-img-box">
             <div className="img-placeholder">
@@ -105,12 +116,16 @@ function Menu() {
           <div className="plant-info">
             <h2 className='plant-nickname'>{currentPlant.plant_name}</h2>
             <p className="plant-species">{currentPlant.species}</p>
+            
+            {/* 식물 상태 표시: 사망 여부 또는 토양 수분에 따른 상태 텍스트 */}
             <p className="status-text">
               현재 상태: {
               currentPlant.status === 'archived' || currentPlant.status === 'dead'
               ? `${currentPlant.death_reason || '원인 미상'}(으)로 사망 ☠️`
               : (sensorData.soil < 30 ? '목마름 💧' : '양호함 😊')}
             </p>
+            
+            {/* 함께한 날짜 표시 */}
             <div className="growth-day">
               {currentPlant.status === 'archived' || currentPlant.status === 'dead' ?(
               <span style={{color: `#888`}}>
@@ -124,12 +139,14 @@ function Menu() {
           </div>
         </div>
 
+        {/* 실시간 센서 데이터 그리드 */}
         <h3 className="section-title">실시간 환경 데이터</h3>
         <div className="sensor-grid">
           {SENSOR_CONFIG.map((sensor) => (
             <div className="card sensor-card" key={sensor.id}>
               <div className={`icon-box ${sensor.color}`}>{sensor.icon}</div>
 
+              {/* 토양 수분이 낮을 경우 경고 스타일 적용 */}
               <div
                 className={`sensor-value ${
                   sensor.id === 'soil' && sensorData[sensor.id] <= 30 ? 'warning' : ''
@@ -143,6 +160,7 @@ function Menu() {
           ))}
         </div>
 
+        {/* 성장 리포트 차트 영역 (Chart.js 연동 예정) */}
         <h3 className="section-title">주간 성장 리포트</h3>
         <div className="card chart-card">
           <p>📊 그래프가 들어갈 자리입니다 (Chart.js 예정)</p>
@@ -150,8 +168,11 @@ function Menu() {
       </section>
 
       <section className="dashboard-right">
+        {/* 제어 패널: 자동/수동 모드 및 급수 버튼 */}
         <div className="card control-panel">
           <h3>퀵 컨트롤</h3>
+          
+          {/* 모드 전환 토글 버튼 */}
           <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`}
           onClick={() => setIsAutoMode(!isAutoMode)}>
             <div className="toggle-label">
@@ -164,10 +185,11 @@ function Menu() {
           </div>
           <p className='mode-desc'>
             {isAutoMode
-            ?'AI가 토양 수분을 감지해 자동으로 물을 줍니다.'
+            ? 'AI가 토양 수분을 감지해 자동으로 물을 줍니다.'
             : '직접 버튼을 눌러 물을 줘야 합니다.'}
           </p>
 
+          {/* 수동 급수 버튼: 자동 모드일 경우 비활성화 처리 */}
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
@@ -176,6 +198,7 @@ function Menu() {
           </button>
         </div>
 
+        {/* 알림 목록 영역 */}
         <div className="card alert-box">
           <h3>🔔 알림</h3>
           <ul className="alert-list">
@@ -187,6 +210,7 @@ function Menu() {
           </ul>
         </div>
 
+        {/* AI 진단 페이지 이동 카드 */}
         <div className="card ai-diagnosis"
         onClick={() => navigate('/Chat', { state: { plant: currentPlant } })}
         style={{ cursor: 'pointer' }}>

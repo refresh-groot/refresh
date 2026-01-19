@@ -9,15 +9,22 @@ import AddPlantModal from './AddPlantModal';
 import EditPlantModal from './EditPlantModal';
 import api from '../../api/axios';
 
+// 식물 목록 조회, 등록, 수정, 삭제 및 필터링 기능을 제공하는 프로필 대시보드 컴포넌트
 function Profile() {
   const navigate = useNavigate();
+  // AuthContext에서 로그인한 사용자 정보와 인증 로딩 상태를 가져옴
   const { user, loading: authLoading } = useAuth();
-  const [editingPlant, setEditingPlant] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [plants, setPlants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentTab, setCurrentTab] = useState('all');
+  
+  // 모달 표시 및 데이터 관리를 위한 상태
+  const [editingPlant, setEditingPlant] = useState(null); // 수정 중인 식물 객체
+  const [isModalOpen, setIsModalOpen] = useState(false);  // 추가 모달 열림 여부
+  const [plants, setPlants] = useState([]);               // 전체 식물 목록
+  const [loading, setLoading] = useState(true);           // 데이터 로딩 상태
+  const [currentTab, setCurrentTab] = useState('all');    // 필터 탭 상태 (전체/생존/사망)
 
+  // 현재 탭 설정에 따라 식물 목록을 필터링하고 정렬하는 로직
+  // 1. 탭 기준(alive/dead)에 따라 필터링
+  // 2. 사망한 식물('archived')은 목록의 맨 아래로 정렬
   const filteredPlants = plants.filter(plant => {
     const dbStatus = plant.status || 'active';
     if (currentTab === 'alive') {return dbStatus === 'active';}
@@ -27,20 +34,25 @@ function Profile() {
   .sort((a,b) => {
     const statusA = a.status || 'active';
     const statusB = b.status || 'active';
+    // 사망한 식물은 우선순위를 낮게 설정하여 뒤로 보냄
     if (statusA === 'archived' && statusB !== 'archived') return 1;
     if (statusA !== 'archived' && statusB === 'archived') return -1;
-  return 0;
+    return 0;
   });
+
+  // 디버깅용 로그
   console.log('전체 식물 수:', plants.length);
   console.log('필터링된 식물 수:', filteredPlants.length);
   console.log('현재 탭:', currentTab);
 
   /* ===============================
-    로그인 체크 + 식물 목록 로드
+     초기화: 로그인 체크 및 데이터 로드
   =============================== */
   useEffect(() => {
+    // 인증 상태 확인이 끝날 때까지 대기
     if (authLoading) return;
 
+    // 비로그인 상태면 경고 후 로그인 페이지로 이동
     if (!user) {
       Swal.fire({
         icon: 'warning',
@@ -50,6 +62,7 @@ function Profile() {
       return;
     }
 
+    // 로그인 확인 후 식물 목록 조회
     fetchPlants();
   }, [user, authLoading, navigate]);
 
@@ -58,7 +71,7 @@ function Profile() {
   }
 
   /* ===============================
-    식물 목록 조회
+     API: 식물 목록 조회 (GET)
   =============================== */
   const fetchPlants = async () => {
     try {
@@ -66,6 +79,7 @@ function Profile() {
       const res = await api.get('/api/plants');
       const data = res.data;
 
+      // 서버 응답 구조(배열 또는 객체)에 따라 유연하게 상태 업데이트
       if (Array.isArray(data)) {
         setPlants(data);
       } else if (data?.plants) {
@@ -76,6 +90,7 @@ function Profile() {
     } catch (error) {
       console.error('식물 불러오기 실패:', error);
 
+      // 인증 토큰 만료 시 처리
       if (error.response?.status === 401) {
         Swal.fire('인증 만료', '다시 로그인해주세요.', 'error')
           .then(() => navigate('/login'));
@@ -88,12 +103,14 @@ function Profile() {
   };
 
   /* ===============================
-    식물 등록
+     API: 식물 등록 (POST)
   =============================== */
   const handleSavePlant = async (nickname, species, date, file) => {
     try {
       const safeSpecies =
         species && species.trim() !== '' ? species : '기타';
+      
+      // 이미지 파일 전송을 위해 FormData 객체 사용 (JSON 대신 multipart/form-data 형식 필요)
       const formData = new FormData();
       formData.append('plant_name', nickname);
       formData.append('species', safeSpecies);
@@ -109,6 +126,7 @@ function Profile() {
         showConfirmButton: false,
       });
 
+      // 목록 갱신
       fetchPlants();
     } catch (error) {
       console.error('식물 등록 실패:', error);
@@ -117,9 +135,10 @@ function Profile() {
   };
 
   /* ===============================
-    식물 삭제 (DB 연동)
+     API: 식물 삭제 (DELETE)
   =============================== */
   const handleDelete = async (id, e) => {
+    // 카드 클릭 이벤트(상세 페이지 이동)가 발생하지 않도록 이벤트 전파 중단
     e.stopPropagation();
 
     const result = await Swal.fire({
@@ -133,6 +152,7 @@ function Profile() {
     if (!result.isConfirmed) return;
 
     try {
+      // 영구 삭제 모드로 API 호출
       await api.delete(`/api/plants/${id}?mode=permanent`);
       await fetchPlants();
       Swal.fire('삭제 완료', '식물이 삭제되었습니다.', 'success');
@@ -142,16 +162,18 @@ function Profile() {
     }
   };
 
+  // 식물 카드 클릭 시 상세(메뉴) 페이지로 이동하며 식물 데이터 전달
   const handlePlantClick = (plant) => {
     navigate('/menu', { state: { plant } });
   };
 
 
   /* ===============================
-    렌더링
+     UI 렌더링
   =============================== */
   return (
     <div className="profile-container">
+      {/* 상단 헤더: 사용자 정보 표시 */}
       <header className="profile-header">
         <div className="user-info-row">
           <FaUserCircle className="user-avatar-icon" />
@@ -162,6 +184,7 @@ function Profile() {
         </div>
       </header>
 
+      {/* 필터 탭 메뉴 */}
       <div className="profile-tab-menu">
         <button className={currentTab === 'all' ?  'active' : ''}
         onClick={() => setCurrentTab('all')}>모두</button>
@@ -173,6 +196,7 @@ function Profile() {
 
       <hr className="divider" />
 
+      {/* 식물 목록 그리드 */}
       <div className="plant-list-wrapper">
   {loading ? (
     <div className="loading-message">식물 목록을 불러오는 중...</div>
@@ -182,15 +206,18 @@ function Profile() {
     filteredPlants.map((plant) => (
       <div
         key={plant.id}
+        // 사망한 식물은 시각적으로 구분하기 위해 dead 클래스 추가
         className={`plant-item solid-item ${plant.status === 'archived' ? 'dead' : ''}`}
         onClick={() => handlePlantClick(plant)}
       >
+        {/* 사망 뱃지 표시 */}
         {plant.status === 'archived' && (
           <div className="death-badge">
             {plant.death_reason || '사망'}
           </div>
         )}
         <div className="item-img-box">
+          {/* 백엔드 서버 주소를 포함하여 이미지 경로 설정 */}
           <img
             src={`http://localhost:8080${plant.photo_url}`}
             alt={plant.species}
@@ -210,6 +237,7 @@ function Profile() {
           </div>
         </div>
 
+        {/* 수정 및 삭제 버튼 (이벤트 전파 방지 처리됨) */}
         <button
           className="edit-btn-box"
           onClick={(e) => {
@@ -227,6 +255,7 @@ function Profile() {
     ))
   )}
 
+  {/* 식물 추가 버튼 카드 */}
   <div
     className="plant-item dashed-item"
     onClick={() => setIsModalOpen(true)}
@@ -238,6 +267,7 @@ function Profile() {
   </div>
 </div>
 
+      {/* 식물 추가 모달 */}
       {isModalOpen && (
         <AddPlantModal
           onClose={() => setIsModalOpen(false)}
@@ -245,6 +275,7 @@ function Profile() {
         />
       )}
 
+      {/* 식물 수정 모달 */}
       {editingPlant && (
   <EditPlantModal
     plant={editingPlant}
