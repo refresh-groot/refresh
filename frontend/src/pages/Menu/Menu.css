@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: minmax(0, 3fr) 1fr;
     gap: 20px;
-    padding: 20px;
+    padding-top: 80px;
     max-width: 1400px;
     margin: 0 auto;
 }
