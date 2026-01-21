@@ -1,8 +1,9 @@
 .profile-container{
     padding-top: 80px;
-    max-width: 600px;
+    max-width: 650px;
     margin: 0 auto;
     font-family: 'Noto Sans KR', sans-serif;
+    box-sizing: border-box;
 }
 
 .profile-tab-menu {

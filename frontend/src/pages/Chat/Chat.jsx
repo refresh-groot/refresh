@@ -116,7 +116,7 @@ function Chat() {
       const aiMessage = {
         id: Date.now() + 1,
         // 서버 응답값(진단명, 조치사항)을 포맷팅하여 표시
-        text: `[진단결과: ${serverData.result}]\n\n 조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
+        text: `[진단결과: ${serverData.result|| '분석중'}]\n\n 조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
         sender: 'ai',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
