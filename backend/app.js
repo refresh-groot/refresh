@@ -8,6 +8,7 @@ const db = require('./domain'); // 도메인 모델 및 데이터베이스 설�
 const userRouter = require('./domain/user/router'); // 라우터 불러오기
 const plantRouter = require('./domain/plant/router');
 const wateringRouter = require('./domain/wateringLog/router');
+const diagnosisLogRouter = require('./domain/diagnosisLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
