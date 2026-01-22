@@ -35,7 +35,13 @@ class WateringLog extends Sequelize.Model {
           allowNull: true,
           comment: '급수 직전 토양 수분값',
         },
-        // 5. 기록 시간 (ERD의 logged_at 역할)
+        // 5. 급수 당시 토양 온도
+        temperature: {
+          type: Sequelize.FLOAT, // 온도는 소수점이 있을 수 있으므로 FLOAT
+          allowNull: true,
+          comment: '급수 시점 토양 온도',
+        },
+        // 6. 기록 시간 (ERD의 logged_at 역할)
         watering_date: {
           type: Sequelize.DATE,
           allowNull: false,
@@ -57,7 +63,7 @@ class WateringLog extends Sequelize.Model {
   }
 
   static associate(db) {
-    // 식물 정보와 N:1 관계 설정 (어떤 식물의 기록인지 연결) [cite: 462, 465]
+    // 식물 정보와 N:1 관계 설정 (어떤 식물의 기록인지 연결)
     db.WateringLog.belongsTo(db.Plant, { 
         foreignKey: 'plant_id', 
         targetKey: 'id',
