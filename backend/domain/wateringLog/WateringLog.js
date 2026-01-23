@@ -35,12 +35,6 @@ class WateringLog extends Sequelize.Model {
           allowNull: true,
           comment: '급수 직전 토양 수분값',
         },
-        // 5. 급수 당시 토양 온도
-        temperature: {
-          type: Sequelize.FLOAT, // 온도는 소수점이 있을 수 있으므로 FLOAT
-          allowNull: true,
-          comment: '급수 시점 토양 온도',
-        },
         // 6. 기록 시간 (ERD의 logged_at 역할)
         watering_date: {
           type: Sequelize.DATE,
