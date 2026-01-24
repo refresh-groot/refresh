@@ -35,6 +35,18 @@ class WateringLog extends Sequelize.Model {
           allowNull: true,
           comment: '급수 직전 토양 수분값',
         },
+        // [추가] 물 줄 당시의 온도
+        temperature: {
+          type: Sequelize.FLOAT,
+          allowNull: true,
+          comment: '급수 시점 주변 온도',
+        },
+        // [추가] 물 줄 당시의 조도
+        light_level: {
+          type: Sequelize.INTEGER,
+          allow_null: true,
+          comment: '급수 시점 주변 조도',
+        },
         // 6. 기록 시간 (ERD의 logged_at 역할)
         watering_date: {
           type: Sequelize.DATE,

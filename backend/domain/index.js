@@ -29,7 +29,7 @@ const SpeciesInfo = require('./plant/SpeciesInfo'); // 1. 추가
 const Device = require('./device/Device');
 const DiagnosisLog = require('./diagnosisLog/DiagnosisLog');
 const WateringLog = require('./wateringLog/WateringLog');
-
+const EnvironmentLog = require('./EnvironmentLog/EnvironmentLog'); // [추가]
 // 5. db 객체에 담기
 db.User = User;
 db.Plant = Plant;
@@ -37,6 +37,7 @@ db.SpeciesInfo = SpeciesInfo; // 2. 추가
 db.Device = Device;
 db.DiagnosisLog = DiagnosisLog;
 db.WateringLog = WateringLog;
+db.EnvironmentLog = EnvironmentLog; // [추가]
 
 // 6. 모델 초기화 (init)
 User.init(sequelize);
@@ -45,6 +46,7 @@ SpeciesInfo.init(sequelize); // 3. 추가
 Device.init(sequelize);
 DiagnosisLog.init(sequelize);
 WateringLog.init(sequelize);
+EnvironmentLog.init(sequelize); // [추가]
 
 // 7. 관계 설정 (associate)
 User.associate(db);
@@ -55,6 +57,7 @@ if (SpeciesInfo.associate) SpeciesInfo.associate(db); // 4. 추가
 Device.associate(db);
 DiagnosisLog.associate(db);
 WateringLog.associate(db);
+EnvironmentLog.associate(db); // [추가]
 
 // 8. 내보내기
 db.sequelize = sequelize;
