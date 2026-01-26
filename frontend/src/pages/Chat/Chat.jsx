@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios'; // 백엔드 API 호출을 위한 설정된 axios 인스턴스
 import { FaPlus, FaHistory, FaPaperPlane, FaRobot, FaUser, FaTimes } from "react-icons/fa";
+import Typewriter from './Typewriter';
 
 function Chat() {
   const location = useLocation();
-  const navigate = useNavigate();
 
   // 사이드바 토글 상태 및 이전 페이지(Main)에서 전달받은 식물 데이터 (없으면 기본값 사용)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -18,17 +18,101 @@ function Chat() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectImage, setSelectImage] = useState(null);
+  const [chatHistory, setChatHistory] = useState([]);
   
   // DOM 직접 제어를 위한 Ref 설정
   const messagesEndRef = useRef(null); // 새 메시지 도착 시 스크롤 하단 이동용
   const fileInputRef = useRef(null);   // 숨겨진 input[type="file"]을 버튼으로 제어하기 위함
   const textareaRef = useRef(null);    // 입력 텍스트 양에 따라 높이를 자동 조절하기 위함
 
-  // (더미 데이터) 사이드바에 표시될 과거 진단 이력 및 초기 추천 질문 목록
-  const chatHistory = [
-    { id: 1, title: '지난주 잎마름 진단', date: '2025-05-01' },
-    { id: 2, title: '분갈이 시기 질문', date: '2025-04-20' },
-  ];
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
+  };
+
+  const handleNewChat = () => {
+      setMessages([]); //회면 초기화 (메세지, 이미지, 텍스트, 사이드바 오픈된거까지 닫기)
+      setSelectImage(null);
+      setInputText('');
+      setIsSidebarOpen(false);
+    };
+
+    const handleSelectChat = (log) => {
+      setMessages([]);
+
+      const confidenceScore = log.confidence 
+        ? Math.round(log.confidence * 100) 
+        : 0;
+      
+      let confidenceText = `(정확도: ${confidenceScore}%)`;
+      if (confidenceScore < 50) {
+        confidenceText += '결과가 불확실할 수 있습니다.';
+      }
+
+      const pastUserMessage ={
+        id: `user-${log.id}`,
+        text: log.question,
+        image: log.image,
+        sender: 'user',
+        timestamp: log.date
+      };
+
+      const pastAiMessage = {
+        id: `ai-${log.id}`,
+        text: `[진단 결과: ${log.answer}]\n ${confidenceText}\n\n  조치사항: \n${log.recommendation}`,
+        sender: 'ai',
+        timestamp: log.date
+      };
+
+      setMessages([pastUserMessage, pastAiMessage]);
+      setIsSidebarOpen(false);
+    }
+
+    const fetchChatHistory = async () => { //진단기록 api로 받아오는 코드
+      try{
+        const res = await axios.get(`/api/diagnosis-logs/${plant.id}`);
+        const serverlogs = res.data.logs || res.data || [];
+        
+        serverlogs.sort((a, b) => {
+      const dateA = new Date(a.diagnosis_date || a.created_at);
+      const dateB = new Date(b.diagnosis_date || b.created_at);
+      return dateB - dateA; 
+    });
+
+        if (!Array.isArray(serverlogs)) {
+      console.error("데이터 형식이 올바르지 않습니다:", serverlogs);
+      setChatHistory([]); // 빈 배열로 설정해서 에러 방지
+      return;
+    }
+
+        const formattedLogs = serverlogs.map(log => {
+          let displayTitle = '새로운 상담';
+          
+          if(log.result && log.result !== '상담' && log.result !== '통신 오류' && log.result !== '정상'){
+            displayTitle = log.result;
+          }
+
+          else if(log.question){
+            displayTitle = log.question.length > 5
+            ? log.question.substring(0, 10) + '...'
+            : log.question;
+          }
+
+          return{
+          id: log.id,  //db에서 상담 했던 id
+          title: displayTitle,  //상담한 내용 타이틀
+          date: (log.diagnosis_date || log.created_at || '').slice(0, 10), //상담 날짜
+          question: log.question,
+          answer: log.result,
+          recommendation: log.recommendation,
+          image: log.image_url,
+          confidence: log.confidence
+          };
+        });
+        setChatHistory(formattedLogs);
+      } catch(error){
+        console.error('기록 불러오기 실패', error);
+      }
+    };
 
   const suggestions = [
     "잎이 갈색으로 변해요",
@@ -39,7 +123,7 @@ function Chat() {
 
   // 메시지 목록이 업데이트되거나 로딩 상태가 변할 때마다 스크롤을 최하단으로 이동 (UX 편의성)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages, isLoading]);
 
   // 사용자가 텍스트를 입력할 때마다 textarea의 높이를 내용에 맞춰 자동으로 늘림 (UI 개선)
@@ -49,6 +133,12 @@ function Chat() {
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'; // 내용 높이만큼 설정
     }
   }, [inputText]);
+
+  useEffect(() => {
+    if(plant.id){
+      fetchChatHistory();
+    }
+  }, [plant.id]);
 
   // 이미지 파일 선택 핸들러
   const handleImageSelect = (e) => {
@@ -111,16 +201,27 @@ function Chat() {
       });
 
       // 4. 서버로부터 분석 결과 수신 및 AI 메시지 생성
-      const serverData = response.data; // { result, recommendation ... }
+      const serverData = response.data.data; // { result, recommendation ... }
+
+      const confidenceScore = serverData.confidence
+      ? Math.round(serverData.confidence * 100)
+      : 0;
+
+      let confidenceText = `(정확도: ${confidenceScore}%)`;
+
+      if (confidenceScore < 50){
+        confidenceText += '결과가 불확실할 수 있습니다.';
+      }
 
       const aiMessage = {
         id: Date.now() + 1,
         // 서버 응답값(진단명, 조치사항)을 포맷팅하여 표시
-        text: `[진단결과: ${serverData.result|| '분석중'}]\n\n 조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
+        text: `[진단결과: ${serverData.result|| '분석중'}]\n ${confidenceText}\n\n 조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
         sender: 'ai',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, aiMessage]);
+      fetchChatHistory();
 
     } catch (error) {
       console.error('진단 요청 실패:', error);
@@ -153,6 +254,8 @@ function Chat() {
         isOpen={isSidebarOpen} 
         chats={chatHistory} 
         onClose={() => setIsSidebarOpen(false)} 
+        onNewChat={handleNewChat}
+        onSelectChat={handleSelectChat}
       />
       
       {/* 사이드바 활성화 시 배경 딤(Dim) 처리 */}
@@ -196,22 +299,26 @@ function Chat() {
           ) : (
             // 주고받은 메시지 목록 렌더링
             <div className="message-list-area">
-              {messages.map((msg) => (
+              {messages.map((msg, index) => (
                 <div key={msg.id} className={`message-row ${msg.sender}`}>
                   {msg.sender === 'ai' && <div className="message-avatar"><FaRobot /></div>}
                   
                   <div className="message-bubble">
                     {/* 이미지가 포함된 메시지일 경우 이미지 렌더링 */}
+                    {/* 텍스트 줄바꿈(\n) 처리하여 렌더링 */}
                     {msg.image &&(
                       <img src = {msg.image} alt='전송된 사진' className='message-image'/>
                     )}
-                    {/* 텍스트 줄바꿈(\n) 처리하여 렌더링 */}
-                    {msg.text.split('\n').map((line, i) => (
+                    {msg.sender === 'ai' && index === messages.length -1 ? (
+                      <Typewriter text = {msg.text} speed ={30} onUpdate={scrollToBottom}/>
+                    ) : (
+                    msg.text.split('\n').map((line, i) => (
                       <React.Fragment key={i}>
                         {line}
                         {i !== msg.text.split('\n').length - 1 && <br />}
                       </React.Fragment>
-                    ))}
+                    ))
+                    )}
                     <span className="message-time">{msg.timestamp}</span>
                   </div>
                   {msg.sender === 'user' && <div className="message-avatar user"><FaUser /></div>}
