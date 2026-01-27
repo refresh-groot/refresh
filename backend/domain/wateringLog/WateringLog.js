@@ -47,6 +47,11 @@ class WateringLog extends Sequelize.Model {
           allow_null: true,
           comment: '급수 시점 주변 조도',
         },
+        image_url: {
+          type: Sequelize.STRING(255),
+          allowNull: true, // 사진은 선택 사항이므로 true
+          comment: '급수 시점 식물 상태 사진 경로',
+},
         // 6. 기록 시간 (ERD의 logged_at 역할)
         watering_date: {
           type: Sequelize.DATE,
