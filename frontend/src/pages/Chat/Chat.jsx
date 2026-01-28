@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios'; // 백엔드 API 호출을 위한 설정된 axios 인스턴스
@@ -7,7 +7,6 @@ import { FaPlus, FaHistory, FaPaperPlane, FaRobot, FaUser, FaTimes } from "react
 
 function Chat() {
   const location = useLocation();
-  const navigate = useNavigate();
 
   // 사이드바 토글 상태 및 이전 페이지(Main)에서 전달받은 식물 데이터 (없으면 기본값 사용)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

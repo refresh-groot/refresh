@@ -56,7 +56,6 @@ module.exports = {
       question: question, 
       result: aiResponse.result || '상담', // 혹시 비어있으면 기본값
       recommendation: aiResponse.recommendation || 'AI가 답변을 생성하지 못했습니다.',
-      
       confidence: aiResponse.confidence || 0.0
     });
 

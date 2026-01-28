@@ -1,14 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./controller');
-const upload = require('../../utils/multer'); // 파일 업로드를 도와주는 도구(미들웨어)
+const upload = require('../../utils/multer'); // 이미지 업로드 설정
 
-// 1. 진단 요청 (POST)
-// 이 코드가 사진을 받아서 서버 폴더에 저장해주고, 그 다음 controller.createDiagnosisLog로 넘깁니다.
-router.post('/:plantId', upload.single('image'), controller.createDiagnosisLog);
+// 1. 진단방 생성 (POST /api/diagnosis-logs/:plantId)
+router.post('/:plantId', upload.single('image'), controller.addDiagnosisLog);
 
-// 2. 기록 조회 (GET)
-// 특정 식물의 진단 기록을 가져오는 요청입니다.
+// 2. 진단방 목록 조회 (GET /api/diagnosis-logs/:plantId)
 router.get('/:plantId', controller.getDiagnosisLogs);
+
+// 3. 진단방 이름 변경 (PATCH /api/diagnosis-logs/:logId/title)
+router.patch('/:logId/title', controller.updateDiagnosisTitle);
+
+// 4. 진단방 삭제 (DELETE /api/diagnosis-logs/:logId)
+router.delete('/:logId', controller.deleteDiagnosisLog);
 
 module.exports = router;

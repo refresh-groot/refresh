@@ -41,11 +41,16 @@ class DiagnosisLog extends Sequelize.Model {
           defaultValue: Sequelize.NOW,
           comment: '진단 일시',
         },
+        title: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+          defaultValue: '진단 결과', 
+          comment: '진단방 제목',
+        },
       },
       {
         sequelize,
         timestamps: false,
-        updatedAt: false,
         underscored: true,
         modelName: 'DiagnosisLog',
         tableName: 'diagnosis_logs',
