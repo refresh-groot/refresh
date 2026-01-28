@@ -9,6 +9,7 @@ const userRouter = require('./domain/user/router'); // 라우터 불러오기
 const plantRouter = require('./domain/plant/router');
 const wateringRouter = require('./domain/wateringLog/router');
 const diagnosisLogRouter = require('./domain/diagnosisLog/router');
+const environmentLogRouter = require('./domain/EnvironmentLog/router');
 
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
@@ -78,6 +79,7 @@ db.sequelize.sync({ force: false, alter: false })//테이블 생성이 필요할
 app.use('/api/plants', plantRouter); //식물 API를 활성화
 app.use('/api/user', userRouter);
 app.use('/api/watering-log', wateringRouter);
+app.use('/api/environment-log', environmentLogRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
 app.use('/api/diagnosis-logs', diagnosisLogRouter);
 

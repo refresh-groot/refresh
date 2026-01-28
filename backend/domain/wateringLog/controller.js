@@ -26,5 +26,24 @@ module.exports = {
         } catch (error) {
             return res.status(500).json({ message: error.message });
         }
+    },
+
+    // 식물 사진 추가 함수
+uploadLogImage: async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!req.file) return res.status(400).json({ message: "파일이 업로드되지 않았습니다." });
+
+        // 저장된 파일의 접근 경로 생성 
+        const imageUrl = `/uploads/${req.file.filename}`;
+        const updatedLog = await service.updateImage(id, imageUrl);
+
+        return res.status(200).json({
+            message: '사진이 성공적으로 등록되었습니다.',
+            data: updatedLog
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
+}
 };
