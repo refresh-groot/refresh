@@ -195,13 +195,15 @@ function Chat() {
 
       // 3. 백엔드 API로 진단 요청 전송 (POST /api/diagnosis-logs/:plantId)
       const response = await axios.post(`/api/diagnosis-logs/${plant.id}`, formData, {
-        headers: {
-          'Content-Type' :'multipart/form-data', // 파일 전송 시 필수 헤더
-        },
+        // ❌ [삭제됨] 수동으로 헤더를 설정하면 브라우저가 boundary를 못 붙여서 에러가 납니다!
+        // headers: { 'Content-Type': 'multipart/form-data' },
+
+        // 🔥 [추가됨] 여기서 강제로 30초 기다리게 설정 (axios.js 파일 수정 없이도 적용됨)
+        timeout: 30000 
       });
 
       // 4. 서버로부터 분석 결과 수신 및 AI 메시지 생성
-      const serverData = response.data.data; // { result, recommendation ... }
+      const serverData = response.data.data || response.data; // (구조 안전하게 처리)
 
       const confidenceScore = serverData.confidence
       ? Math.round(serverData.confidence * 100)
