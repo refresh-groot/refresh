@@ -19,7 +19,7 @@ const GEN_AI_KEY = "AIzaSyAq17EFwI8gfJ3mAwItJvZQfhDxdPTseFE";
 const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
 
 const plantModel = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
+  model: "gemini-1.5-flash-latest",
   systemInstruction: {
     role: "system",
     parts: [{ text: `
