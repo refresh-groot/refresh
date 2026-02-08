@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "audit": "^0.0.6",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",

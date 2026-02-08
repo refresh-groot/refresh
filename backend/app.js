@@ -11,6 +11,37 @@ const wateringRouter = require('./domain/wateringLog/router');
 const diagnosisLogRouter = require('./domain/diagnosisLog/router');
 const environmentLogRouter = require('./domain/EnvironmentLog/router');
 
+// --- [Gemini AI 설정 시작] ---
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// API키 입력
+const GEN_AI_KEY = "AIzaSyAq17EFwI8gfJ3mAwItJvZQfhDxdPTseFE"; 
+const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
+
+const plantModel = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  systemInstruction: {
+    role: "system",
+    parts: [{ text: `
+역할: IoT 스마트팜 제어 데이터 생성기
+출력: 오직 JSON 데이터만 출력 (마크다운 금지)
+스키마:
+{
+  "plant_name": "식물 이름",
+  "min_moisture": 0~100 (정수),
+  "water_duration_ms": 펌프 작동 시간(ms),
+  "care_tip": "짧은 팁"
+}
+데이터 기준:
+- 건조 식물: min=10~20, duration=1000
+- 보통 식물: min=30~50, duration=2000~3000
+- 습윤 식물: min=60~70, duration=3000~5000
+    `}]
+  },
+  generationConfig: { responseMimeType: "application/json" }
+});
+// --- [Gemini AI 설정 끝] ---
+
 const app = express(); // 익스프레스 애플리케이션 객체 생성
 
 app.set('trust proxy', 1); // 추가: 프록시 환경에서 세션 쿠키가 잘 전달되도록 설정
@@ -82,6 +113,28 @@ app.use('/api/watering-log', wateringRouter);
 app.use('/api/environment-log', environmentLogRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
 app.use('/api/diagnosis-logs', diagnosisLogRouter);
+
+/**
+ * 스마트팜 식물 AI API 추가
+ */
+app.get('/plant/:plantName', async (req, res) => {
+  const plantName = req.params.plantName;
+  console.log(`[AI 요청] 식물: ${plantName}`);
+
+  try {
+    const result = await plantModel.generateContent(plantName);
+    const response = await result.response;
+    const text = response.text();
+    
+    console.log(`[AI 응답] ${text}`);
+    // AI가 준 JSON 문자열을 실제 객체로 변환하여 전송
+    res.json(JSON.parse(text));
+    
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    res.status(500).json({ error: "AI Processing Failed" });
+  }
+});
 
 /**
  * 기본 라우트
