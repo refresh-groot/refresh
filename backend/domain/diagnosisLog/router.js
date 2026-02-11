@@ -15,4 +15,10 @@ router.patch('/:logId/title', controller.updateDiagnosisTitle);
 // 4. 진단방 삭제 (DELETE /api/diagnosis-logs/:logId)
 router.delete('/:logId', controller.deleteDiagnosisLog);
 
+// 5. 방 이름 변경
+router.put('/session/:sessionId', controller.updateSessionTitle); 
+
+// 6. 방 삭제
+router.delete('/session/:sessionId', controller.deleteSession);   
+
 module.exports = router;

@@ -15,6 +15,7 @@ module.exports = {
                 recommendation: payload.recommendation,
                 confidence: payload.confidence,
                 title: title,
+                session_id: payload.session_id,
                 // diagnosis_date는 defaultValue가 있어서 생략 가능
             });
             
@@ -48,7 +49,7 @@ module.exports = {
         }
     },
 
-    // 4. 진단방 이름 변경
+    // 4. (구) 개별 로그 이름 변경
     updateTitle: async (logId, newTitle) => {
         try {
             const result = await DiagnosisLog.update(
@@ -61,11 +62,45 @@ module.exports = {
         }
     },
 
-    // 5. 진단방 삭제
+    // 5. (구) 개별 로그 삭제
     deleteById: async (logId) => {
         try {
             const result = await DiagnosisLog.destroy({
                 where: { id: logId }
+            });
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // ▼▼▼ [추가된 함수] 세션(채팅방) 기능 ▼▼▼
+
+    // 6. 세션(채팅방) 이름 변경 - 해당 세션의 모든 로그 제목 변경
+    updateSessionTitle: async (sessionId, newTitle) => {
+        try {
+            const result = await DiagnosisLog.update(
+                { title: newTitle }, 
+                { where: { session_id: sessionId } }
+            );
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // 7. 세션(채팅방) 삭제 - 해당 세션의 모든 로그 삭제
+    deleteSession: async (sessionId) => {
+        try {
+            if (sessionId === 'no_session' || sessionId === 'null') {
+                return await DiagnosisLog.destroy({
+                    where: { session_id: null } // NULL인 데이터들 삭제
+                });
+            }
+
+            // 일반적인 방 번호가 있는 경우
+            const result = await DiagnosisLog.destroy({
+                where: { session_id: sessionId }
             });
             return result;
         } catch (error) {

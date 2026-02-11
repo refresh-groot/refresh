@@ -4,18 +4,19 @@ const service = require('./service');
 const addDiagnosisLog = async (req, res) => {
     try {
         const { plantId } = req.params;
-        const { question, title } = req.body; 
+        // ▼ [수정] session_id 추가로 받기
+        const { question, title, session_id } = req.body; 
         const file = req.file;
 
-        // 서비스에게 "진단해줘!" 시키기
         const newLog = await service.addDiagnosisLog({
             plantId,
             file,
             question,
-            title
+            title,
+            sessionId: session_id // 서비스로 전달
         });
 
-        res.status(200).json(newLog); // 200 OK
+        res.status(200).json(newLog);
     } catch (error) {
         console.error('진단방 생성 실패:', error);
         res.status(500).json({ message: '진단 중 오류가 발생했습니다.' });
@@ -63,9 +64,42 @@ const deleteDiagnosisLog = async (req, res) => {
     }
 };
 
+// 5. 세션(채팅방) 이름 변경
+const updateSessionTitle = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const { title } = req.body;
+
+        if (!title) return res.status(400).json({ message: '이름을 입력해주세요.' });
+
+        // 서비스의 세션 이름 변경 함수 호출
+        await service.updateSessionTitle(sessionId, title);
+        res.status(200).json({ message: '채팅방 이름 변경 성공' });
+    } catch (error) {
+        console.error('세션 이름 변경 실패:', error);
+        res.status(500).json({ message: '이름 변경 실패' });
+    }
+};
+
+// 6. 세션(채팅방) 삭제
+const deleteSession = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        
+        // 서비스의 세션 삭제 함수 호출
+        await service.deleteSession(sessionId);
+        res.status(200).json({ message: '채팅방 삭제 성공' });
+    } catch (error) {
+        console.error('세션 삭제 실패:', error);
+        res.status(500).json({ message: '삭제 실패' });
+    }
+};
+
 module.exports = {
     addDiagnosisLog,
     getDiagnosisLogs,
     updateDiagnosisTitle,
-    deleteDiagnosisLog
+    deleteDiagnosisLog,
+    updateSessionTitle,
+    deleteSession
 };

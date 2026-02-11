@@ -35,6 +35,7 @@
   transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  overflow: visible !important;
 }
 
 .chat-list-container{
@@ -42,6 +43,7 @@
   flex-direction: column;
   flex: 1;
   overflow-y: auto;
+  overflow-x: visible !important;
   min-height: 0;
 }
 
@@ -543,6 +545,80 @@
   display: block;
 }
 
+.edit-container{
+  position: relative;
+}
+
+.edit-trigger{
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-trigger:hover{
+  background: rgba(0,0,0,0.08);
+}
+
+.edit-trigger:active {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.edit-menu{
+  min-width: 140px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 2000;
+  animation: fadeInRight 0.2s ease-out;
+  transform-origin: left center;
+}
+
+.edit-menu.up{
+  top: auto;
+  bottom: 0;
+}
+
+.edit-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 7px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.edit-menu button:hover {
+  background: #f2f2f2;
+}
+
+.delete-btn {
+  color: #e54848;
+}
+
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  background: transparent; 
+  cursor: default;
+}
+
+.edit-menu {
+  z-index: 1000; 
+}
+
 @keyframes slideUp {
   from{ opacity: 0; transform: translateY(10px);}
   to { opacity: 1; transform:  translateY(0);}
@@ -561,6 +637,17 @@
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {

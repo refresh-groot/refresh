@@ -10,14 +10,20 @@ class DiagnosisLog extends Sequelize.Model {
           autoIncrement: true,
           allowNull: false,
         },
+        // ▼ [추가] 세션 ID (채팅방 번호)
+        session_id: {
+            type: Sequelize.STRING(100),
+            allowNull: true, // 기존 데이터 호환을 위해 true (나중에 필수로 변경 가능)
+            comment: '대화 세션 ID (채팅방 식별자)',
+        },
         image_url: {
           type: Sequelize.STRING(255),
           allowNull: true,
           comment: '진단한 식물 이미지 경로(URL)',
         },
         question: {
-            type: Sequelize.TEXT, // 질문이 길 수 있으니 TEXT
-            allowNull: true,      // 질문 없이 사진만 보낼 수도 있으니 true
+            type: Sequelize.TEXT,
+            allowNull: true,
             comment: '사용자 질문 또는 채팅 내용',
         },
         result: {
@@ -26,7 +32,7 @@ class DiagnosisLog extends Sequelize.Model {
           comment: '진단 결과 (예: 잎마름병)',
         },
         recommendation: {
-            type: Sequelize.TEXT, // 내용이 길 수 있으니 TEXT 타입
+            type: Sequelize.TEXT,
             allowNull: true,
             comment: 'AI 권장 조치 사항',
         },
@@ -44,7 +50,7 @@ class DiagnosisLog extends Sequelize.Model {
         title: {
           type: Sequelize.STRING(255),
           allowNull: true,
-          defaultValue: '진단 결과', 
+          defaultValue: '새로운 상담',
           comment: '진단방 제목',
         },
       },

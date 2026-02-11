@@ -1,4 +1,6 @@
 const repository = require('./repository');
+// ▼ [추가] 세션 일괄 처리를 위해 Sequelize 모델을 직접 불러옵니다.
+const DiagnosisLog = require('./DiagnosisLog'); 
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
@@ -39,59 +41,75 @@ const requestAIAnalysis = async (file, question) => {
 
 module.exports = {
     // 1. 진단방 생성 (AI 분석 + DB 저장)
-    addDiagnosisLog: async ({ plantId, file, question, title }) => {
+    addDiagnosisLog: async ({ plantId, file, question, title, sessionId }) => {
         // (1) 이미지 경로 문자열 만들기
         const imageUrl = file ? `/uploads/${file.filename}` : null;
         
-        // (2) AI에게 물어보기
-        const aiResponse = await requestAIAnalysis(file, question);
+        // (2) AI에게 물어보기 (파일이 있거나 질문이 있을 때만)
+        let aiResponse = { result: '정상', recommendation: '', confidence: 0 };
+        if (file || question) {
+             aiResponse = await requestAIAnalysis(file, question);
+        }
 
-        // (3) 결과 + 제목 합쳐서 DB에 저장
-        // result가 비어있으면 '분석 중' 처리
-        const finalResult = aiResponse.result || '분석 중';
+        const finalResult = aiResponse.result || '상담';
 
+        // (3) 결과 + 제목 + ★세션ID 합쳐서 DB에 저장
         const newLog = await repository.create({
             plant_id: plantId,
             image_url: imageUrl,
             question: question,
             result: finalResult,
-            recommendation: aiResponse.recommendation || '내용 없음',
+            recommendation: aiResponse.recommendation || '',
             confidence: aiResponse.confidence || 0.0,
-            title: title 
+            title: title,
+            session_id: sessionId // DB에 저장!
         });
 
         return newLog;
     },
 
-    // 2. 진단방 목록 조회
+    // 2. 목록 조회
     getDiagnosisLogs: async (plantId) => {
         return await repository.findAllByPlantId(plantId);
     },
 
-    // 3. 진단방 제목 변경
+    // 3. (구) 개별 로그 이름 변경
     updateDiagnosisTitle: async (logId, title) => {
         return await repository.updateTitle(logId, title);
     },
 
-    // 4. 진단방 삭제 (파일 삭제 + DB 삭제 로직을 여기로 통합)
+    // 4. (구) 개별 로그 삭제
     deleteDiagnosisLog: async (logId) => {
-        // (1) 파일 경로 확인을 위해 먼저 조회
         const log = await repository.findById(logId);
-        if (!log) throw new Error('NOT_FOUND'); // 컨트롤러에게 에러 던짐
+        if (!log) throw new Error('NOT_FOUND');
 
-        // (2) 이미지 파일 있으면 삭제
         if (log.image_url) {
             const fileName = path.basename(log.image_url);
-            // service.js 위치 기준: ../../public/uploads
             const filePath = path.join(__dirname, '../../public/uploads', fileName);
-
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
-                console.log(`🗑️ 파일 삭제 완료: ${filePath}`);
             }
         }
-
-        // (3) DB 삭제
         return await repository.deleteById(logId);
+    },
+
+    // ▼▼▼ [새로 추가된 함수] 세션(채팅방) 기능 ▼▼▼
+
+    // 5. 세션 이름 변경 (채팅방 이름 바꾸기)
+    updateSessionTitle: async (sessionId, title) => {
+        // 해당 session_id를 가진 모든 기록의 title을 한 번에 변경합니다.
+        return await DiagnosisLog.update(
+            { title: title }, 
+            { where: { session_id: sessionId } }
+        );
+    },
+
+    // 6. 세션 삭제 (채팅방 나가기)
+    deleteSession: async (sessionId) => {
+        // (심화) 이미지를 깔끔하게 지우려면 먼저 조회를 해야 하지만, 
+        // 일단 DB 데이터부터 삭제하여 기능을 작동시키는 데 집중합니다.
+        return await DiagnosisLog.destroy(
+            { where: { session_id: sessionId } }
+        );
     }
 };

@@ -1,15 +1,67 @@
-import React from 'react'
-import { FaTimes, FaPlus } from 'react-icons/fa';
+import React, { useState } from 'react'
+import { FaTimes, FaPlus, FaPen, FaTrash, FaEllipsisV } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 
-// 사이드바 컴포넌트: 열림 상태(isOpen)와 채팅 기록 데이터(chats)를 받아 렌더링
-const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat}) => {
+const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteChat, onRenameChat}) => {
 
+    const [activeMenuId, setActiveMenuId] = useState(null);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const [menuDirection, setMenuDirection] = useState('down');
+
+    const handleMenuClick = (e, chatId) => {
+        e.stopPropagation();
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+
+        const isUp = windowHeight - rect.bottom < 150;
+        setMenuDirection(isUp ? 'up' : 'down');
+
+        // 버튼 오른쪽에 메뉴가 붙도록 fixed 좌표 계산
+        setMenuPosition({
+            top: isUp ? rect.top - 70 : rect.top,
+            left: rect.right + 10,
+        });
+
+        setActiveMenuId(activeMenuId === chatId ? null : chatId);
+    };
+    
+    const handleDelete = (e, chatId) => {
+        e.stopPropagation();
+        Swal.fire({
+            title: '삭제하시겠습니까?',
+            text: '삭제 후 복구할 수 없습니다.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '삭제',
+            cancelButtonText: '취소',
+            confirmButtonColor: '#d33',
+        }).then((res) => {
+            if(res.isConfirmed) onDeleteChat(chatId);
+            setActiveMenuId(null);
+        });
+    };
+    
+    const handleRename = (e, chatId) => {
+        e.stopPropagation();
+        Swal.fire({
+            title: '이름 변경',
+            input: 'text',
+            inputValue: null,
+            showCancelButton: true,
+            confirmButtonText: '변경',
+            cancelButtonText: '취소',
+        }).then((res) => {
+            if(res.isConfirmed && res.value){
+                onRenameChat(chatId, res.value);
+            }
+            setActiveMenuId(null);
+        });
+    };
 
     return (
-    // isOpen이 true일 때만 'open' 클래스를 추가하여 CSS로 화면에 표시 (슬라이드 효과)
     <div className={`chat-sidebar ${isOpen ? 'open' : ''}`}>
         
-        {/* 상단 헤더: 제목과 닫기 버튼 배치 */}
         <div className='sidebar-header'>
             <h3>진단 기록</h3>
             <button className='close-btn' onClick={onClose}>
@@ -17,29 +69,60 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat}) => {
             </button>
         </div>
 
-        {/* 새 진단 시작 버튼 영역 */}
         <div className="new-chat-wrapper">
-        <button className="new-chat-btn" onClick={onNewChat}>
-            <FaPlus /> 새 진단 시작
-        </button>
-    </div>
+            <button className="new-chat-btn" onClick={onNewChat}>
+                <FaPlus /> 새 진단 시작
+            </button>
+        </div>
 
-    {/* 채팅 기록 리스트 영역 */}
-    <div className="chat-list-container">
-        <p className='list-label'>최근 기록</p>
-        <ul className='chat-list'>
-            {/* 부모 컴포넌트에서 받은 배열 데이터를 순회하며 리스트 아이템 생성 */}
-            {chats.map((chat) => (
-                // 리액트 리스트 렌더링 성능 최적화를 위해 고유 key 필수
+        <div className="chat-list-container">
+            <p className='list-label'>최근 기록</p>
+            <ul className='chat-list'>
+                {chats.map((chat) => (
                 <li key={chat.id} className='chat-item' onClick={() => onSelectChat(chat)}>
                     <span className='chat-title'>{chat.title}</span>
                     <span className='chat-date'>{chat.date}</span>
+
+                    <div className="edit-container" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="edit-trigger"
+                            onClick={(e) => handleMenuClick(e, chat.id)}
+                        >
+                            <FaEllipsisV/>
+                        </button>
+                    </div>
                 </li>
-            ))}
-        </ul>
+                ))}
+            </ul>
         </div>
+
+        {/* 메뉴를 사이드바 밖, Portal처럼 fixed로 렌더링 */}
+        {activeMenuId !== null && (
+            <>
+                <div 
+                    className="menu-overlay" 
+                    onClick={() => setActiveMenuId(null)} 
+                />
+                <div 
+                    className={`edit-menu ${menuDirection}`}
+                    style={{
+                        position: 'fixed',
+                        top: menuPosition.top,
+                        left: menuPosition.left,
+                        zIndex: 9999,
+                    }}
+                >
+                    <button className='rename-btn' onClick={(e) => handleRename(e, activeMenuId)}>
+                        <FaPen/> 이름 변경
+                    </button>
+                    <button className='delete-btn' onClick={(e) => handleDelete(e, activeMenuId)}>
+                        <FaTrash/> 삭제
+                    </button>
+                </div>
+            </>
+        )}
     </div>
     );
 };
 
-export default ChatSidebar
+export default ChatSidebar;
