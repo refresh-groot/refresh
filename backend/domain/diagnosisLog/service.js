@@ -7,11 +7,13 @@ const fs = require('fs');
 const path = require('path');
 
 // AI 서버 통신 함수 
-const requestAIAnalysis = async (file, question) => {
+const requestAIAnalysis = async (files, question) => {
     try {
         const formData = new FormData();
-        if (file) {
+        if (files && files.length > 0) {
+            files.forEach((file) => {
             formData.append('image', fs.createReadStream(file.path));
+            });
         }
         if (question) {
             formData.append('question', question);
@@ -41,38 +43,57 @@ const requestAIAnalysis = async (file, question) => {
 
 module.exports = {
     // 1. 진단방 생성 (AI 분석 + DB 저장)
-    addDiagnosisLog: async ({ plantId, file, question, title, sessionId }) => {
-        // (1) 이미지 경로 문자열 만들기
-        const imageUrl = file ? `/uploads/${file.filename}` : null;
-        
-        // (2) AI에게 물어보기 (파일이 있거나 질문이 있을 때만)
-        let aiResponse = { result: '정상', recommendation: '', confidence: 0 };
-        if (file || question) {
-             aiResponse = await requestAIAnalysis(file, question);
-        }
+    addDiagnosisLog: async ({ plantId, files, question, title, sessionId }) => {
+    const imageUrls = files && files.length > 0 
+        ? files.map(f => `/uploads/${f.filename}`).join(',') 
+        : null;
+    
+    const aiResponse = await requestAIAnalysis(files, question);
+    const finalResult = aiResponse.result || '상담';
 
-        const finalResult = aiResponse.result || '상담';
+    const newLog = await repository.create({
+        plant_id: plantId,
+        image_url: imageUrls,
+        question: question,
+        result: finalResult,
+        recommendation: aiResponse.recommendation || '',
+        confidence: aiResponse.confidence || 0.0,
+        title: title,
+        session_id: sessionId
+    });
 
-        // (3) 결과 + 제목 + ★세션ID 합쳐서 DB에 저장
-        const newLog = await repository.create({
-            plant_id: plantId,
-            image_url: imageUrl,
-            question: question,
-            result: finalResult,
-            recommendation: aiResponse.recommendation || '',
-            confidence: aiResponse.confidence || 0.0,
-            title: title,
-            session_id: sessionId // DB에 저장!
-        });
-
-        return newLog;
-    },
+    // [중요] image_url을 배열로 변환해서 응답
+    return {
+        ...newLog.toJSON(),
+        image_url: imageUrls ? imageUrls.split(',') : []
+    };
+},
 
     // 2. 목록 조회
     getDiagnosisLogs: async (plantId) => {
-        return await repository.findAllByPlantId(plantId);
-    },
-
+    const logs = await repository.findAllByPlantId(plantId);
+    
+    // [추가] 로그 데이터 변환
+    const formattedLogs = logs.map(log => {
+        // Sequelize 모델을 plain object로 변환
+        const plainLog = log.toJSON ? log.toJSON() : { ...log };
+        
+        // image_url을 배열로 변환
+        if (plainLog.image_url) {
+            plainLog.image_url = plainLog.image_url
+                .split(',')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+        } else {
+            plainLog.image_url = [];
+        }
+        
+        return plainLog;
+    });
+    
+    console.log('📋 전송할 로그 데이터:', formattedLogs[0]); // 디버깅용
+    return formattedLogs;
+},
     // 3. (구) 개별 로그 이름 변경
     updateDiagnosisTitle: async (logId, title) => {
         return await repository.updateTitle(logId, title);
@@ -84,11 +105,15 @@ module.exports = {
         if (!log) throw new Error('NOT_FOUND');
 
         if (log.image_url) {
-            const fileName = path.basename(log.image_url);
-            const filePath = path.join(__dirname, '../../public/uploads', fileName);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+            // 쉼표로 구분된 경로들을 배열로 다시 나눔
+            const urlList = log.image_url.split(',');
+            urlList.forEach(url => {
+                const fileName = path.basename(url);
+                const filePath = path.join(__dirname, '../../public/uploads', fileName);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath); // 실제 파일 삭제
+                }
+            });
         }
         return await repository.deleteById(logId);
     },
@@ -106,10 +131,18 @@ module.exports = {
 
     // 6. 세션 삭제 (채팅방 나가기)
     deleteSession: async (sessionId) => {
-        // (심화) 이미지를 깔끔하게 지우려면 먼저 조회를 해야 하지만, 
-        // 일단 DB 데이터부터 삭제하여 기능을 작동시키는 데 집중합니다.
-        return await DiagnosisLog.destroy(
-            { where: { session_id: sessionId } }
-        );
+        const logs = await DiagnosisLog.findAll({ where: { session_id: sessionId } });
+        
+        logs.forEach(log => {
+            if (log.image_url) {
+                log.image_url.split(',').forEach(url => {
+                    const fileName = path.basename(url);
+                    const filePath = path.join(__dirname, '../../public/uploads', fileName);
+                    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                });
+            }
+        });
+
+        return await DiagnosisLog.destroy({ where: { session_id: sessionId } });
     }
 };

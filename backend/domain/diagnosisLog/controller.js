@@ -6,11 +6,11 @@ const addDiagnosisLog = async (req, res) => {
         const { plantId } = req.params;
         // ▼ [수정] session_id 추가로 받기
         const { question, title, session_id } = req.body; 
-        const file = req.file;
+        const files = req.files;
 
         const newLog = await service.addDiagnosisLog({
             plantId,
-            file,
+            files,
             question,
             title,
             sessionId: session_id // 서비스로 전달

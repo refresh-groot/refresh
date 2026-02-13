@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FaTimes, FaPlus, FaPen, FaTrash, FaEllipsisV } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
@@ -7,6 +7,14 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [menuDirection, setMenuDirection] = useState('down');
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [isClosing, setIsClosing] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleMenuClick = (e, chatId) => {
         e.stopPropagation();
@@ -37,8 +45,12 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
             cancelButtonText: '취소',
             confirmButtonColor: '#d33',
         }).then((res) => {
-            if(res.isConfirmed) onDeleteChat(chatId);
-            setActiveMenuId(null);
+            if(res.isConfirmed) {
+            onDeleteChat(chatId);
+            handleCloseMenu();
+        }else{
+            handleCloseMenu();
+        }
         });
     };
     
@@ -54,12 +66,23 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
         }).then((res) => {
             if(res.isConfirmed && res.value){
                 onRenameChat(chatId, res.value);
+                handleCloseMenu();
+            }else{
+                handleCloseMenu();
             }
-            setActiveMenuId(null);
         });
     };
 
+    const handleCloseMenu = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setActiveMenuId(null);
+            setIsClosing(false);
+        }, 300);
+    }
+
     return (
+        <>
     <div className={`chat-sidebar ${isOpen ? 'open' : ''}`}>
         
         <div className='sidebar-header'>
@@ -95,33 +118,42 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
                 ))}
             </ul>
         </div>
+        </div>
 
         {/* 메뉴를 사이드바 밖, Portal처럼 fixed로 렌더링 */}
         {activeMenuId !== null && (
             <>
                 <div 
-                    className="menu-overlay" 
-                    onClick={() => setActiveMenuId(null)} 
+                    className={`menu-overlay ${isMobile ? 'mobile-dim' : ''} `} 
+                    onClick={handleCloseMenu} 
                 />
                 <div 
-                    className={`edit-menu ${menuDirection}`}
-                    style={{
+                    className={`edit-menu ${isMobile ? 'bottom-sheet' : 'pc-menu'} ${isClosing ? 'closing' : ''}`}
+                    style={!isMobile ? {
                         position: 'fixed',
                         top: menuPosition.top,
                         left: menuPosition.left,
                         zIndex: 9999,
+                    } : {
+                        zIndex: 9999,
                     }}
                 >
+                    {isMobile && <div className='sheet-handle' />}
                     <button className='rename-btn' onClick={(e) => handleRename(e, activeMenuId)}>
                         <FaPen/> 이름 변경
                     </button>
                     <button className='delete-btn' onClick={(e) => handleDelete(e, activeMenuId)}>
                         <FaTrash/> 삭제
                     </button>
+                    {isMobile && (
+                        <button className='sheet-close' onClick={handleCloseMenu}>
+                            취소
+                        </button>
+                    )}
                 </div>
             </>
         )}
-    </div>
+    </>
     );
 };
 

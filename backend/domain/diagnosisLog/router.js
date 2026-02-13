@@ -4,7 +4,7 @@ const controller = require('./controller');
 const upload = require('../../utils/multer'); // 이미지 업로드 설정
 
 // 1. 진단방 생성 (POST /api/diagnosis-logs/:plantId)
-router.post('/:plantId', upload.single('image'), controller.addDiagnosisLog);
+router.post('/:plantId', upload.array('images', 5), controller.addDiagnosisLog);
 
 // 2. 진단방 목록 조회 (GET /api/diagnosis-logs/:plantId)
 router.get('/:plantId', controller.getDiagnosisLogs);
