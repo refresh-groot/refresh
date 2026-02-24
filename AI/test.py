@@ -14,7 +14,7 @@ genai.configure(api_key=MY_KEY)        #api 키 받아오기
 #-------------------------------------------------------------------------------------------------------
 
 # 2. 모델 설정 (추후에 결제 연동하여 모델 다시 선정해야 할 수도 있음)
-model = genai.GenerativeModel('gemini-flash-latest')
+model = genai.GenerativeModel('gemini-2.0-flash')
 def get_plant_diagnosis(image_path, user_message, history):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
