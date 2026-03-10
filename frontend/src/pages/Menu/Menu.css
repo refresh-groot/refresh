@@ -223,9 +223,32 @@
     border: 1px solid #c8e6c9;
 }
 
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tab-buttons button {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tab-buttons button.active {
+    background: #333; /* 또는 테마 색상 */
+    color: white;
+    border-color: #333;
+}
+
 @media (max-width: 768px) {
     .menu-dashboard {
         grid-template-columns: 1fr; 
+        padding: 80px 15px 15px 15px;
+        gap: 0;
     }
     .sensor-grid {
         grid-template-columns: repeat(2, 1fr); 

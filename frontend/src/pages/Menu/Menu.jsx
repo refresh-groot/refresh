@@ -6,14 +6,26 @@ import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
 import Swal from 'sweetalert2';
+import PlantChart from './Chart';
 
 function Menu() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState('soil');
+
+
+
   // 5초마다 센서 데이터(온도, 습도, 조도 등)를 갱신하는 커스텀 훅 사용
-  const { sensorData, loading: sensorLoading } = useSensorData(5000);
+  const { sensorData: realTimeData, loading: sensorLoading } = useSensorData(5000);
   
+  const mockHistoryData = {
+  soil: [40, 35, 38, 45, 42, 30, realTimeData.soil],
+  temp: [22, 23, 24, 25, 24, 23, realTimeData.temp],
+  humid: [50, 55, 52, 58, 60, 55, realTimeData.humid],
+  light: [700, 750, 800, 720, 780, 810, realTimeData.light],
+};
+
   // 자동 급수 모드 상태 (True: AI 자동 제어, False: 사용자 수동 제어)
   const [isAutoMode, setIsAutoMode] = useState(true);
 
@@ -98,7 +110,7 @@ function Menu() {
   ];
 
   // 센서 데이터 로딩 중 표시
-  if (sensorLoading && sensorData.temp === 0) {
+  if (sensorLoading && realTimeData.temp === 0) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
 
@@ -122,7 +134,7 @@ function Menu() {
               현재 상태: {
               currentPlant.status === 'archived' || currentPlant.status === 'dead'
               ? `${currentPlant.death_reason || '원인 미상'}(으)로 사망 ☠️`
-              : (sensorData.soil < 30 ? '목마름 💧' : '양호함 😊')}
+              : (realTimeData.soil < 30 ? '목마름 💧' : '양호함 😊')}
             </p>
             
             {/* 함께한 날짜 표시 */}
@@ -149,10 +161,10 @@ function Menu() {
               {/* 토양 수분이 낮을 경우 경고 스타일 적용 */}
               <div
                 className={`sensor-value ${
-                  sensor.id === 'soil' && sensorData[sensor.id] <= 30 ? 'warning' : ''
+                  sensor.id === 'soil' && realTimeData[sensor.id] <= 30 ? 'warning' : ''
                 }`}
               >
-                {sensorData[sensor.id]} {sensor.unit}
+                {realTimeData[sensor.id]} {sensor.unit}
               </div>
 
               <div className="sensor-label">{sensor.label}</div>
@@ -163,8 +175,24 @@ function Menu() {
         {/* 성장 리포트 차트 영역 (Chart.js 연동 예정) */}
         <h3 className="section-title">주간 성장 리포트</h3>
         <div className="card chart-card">
-          <p>📊 그래프가 들어갈 자리입니다 (Chart.js 예정)</p>
+          <div className='tab-buttons'>
+            {['soil', 'temp', 'humid', 'light'].map(id => (
+              <button
+              key = {id}
+              className={activeTab === id ? 'active' : ''}
+              onClick={() => setActiveTab(id)}>
+                {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id === 'humid' ? '습도' : '조도'}
+              </button>
+            ))}
+          </div>
+          <div className='chart-wrapper' style={{height: '300px'}}>
+            <PlantChart
+            type={activeTab}
+            dataList={mockHistoryData[activeTab]}
+            />
+          </div>
         </div>
+        
       </section>
 
       <section className="dashboard-right">

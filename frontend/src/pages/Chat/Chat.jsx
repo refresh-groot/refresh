@@ -43,7 +43,7 @@ function Chat() {
   // AI 응답을 기다리는 중인지 여부 (true이면 로딩 애니메이션 표시)
   const [isLoading, setIsLoading] = useState(false);
 
-  // [수정] 사용자가 선택한 이미지들을 담는 배열: { file: File 객체, preview: 로컬 미리보기 URL }[]
+  // 사용자가 선택한 이미지들을 담는 배열: { file: File 객체, preview: 로컬 미리보기 URL }[]
   const [selectImage, setSelectImage] = useState([]);
 
   // ─── 사이드바 / 세션 상태 ──────────────────────────────────────────────────
@@ -138,7 +138,7 @@ function Chat() {
       
       if (log.image_url) {
         if (Array.isArray(log.image_url)) {
-          // 배열로 온 경우 (현재 상황)
+          // 배열로 온 경우
           imageUrls = log.image_url.filter(url => url);
         } else if (typeof log.image_url === 'string') {
           // 만약 문자열로 온 경우 대비
@@ -342,9 +342,6 @@ function Chat() {
 
     const serverData = response.data.data || response.data;
     
-    console.log('📥 서버 응답:', serverData); // 디버깅
-    console.log('🖼️ 서버에서 받은 image_url:', serverData.image_url); // 디버깅
-    
     // [추가] 서버에서 받은 실제 이미지 URL로 업데이트
     if (serverData.image_url && serverData.image_url.length > 0) {
       const serverImageUrls = Array.isArray(serverData.image_url) 
@@ -360,8 +357,6 @@ function Chat() {
         }
         return `http://localhost:8080/uploads/${url}`;
       });
-
-      console.log('🌐 변환된 절대 URLs:', absoluteUrls); // 디버깅
 
       // 사용자 메시지의 Blob URL을 서버 URL로 교체
       setMessages((prev) => prev.map(msg => 
