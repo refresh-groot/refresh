@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify # 웹 서버 구축
 import os                                 # 운영체제/파일 경로 관리
 import json                               # 데이터 형식 변환
-import google.generativeai as genai       # 구글 AI 사용을 위한 라이브러리
+from google import genai       # 구글 AI 사용을 위한 라이브러리
 from dotenv import load_dotenv            # env파일을 위한 라이브러리
 import PIL.Image                          # 이미지 읽어오는 라이브러리
 
@@ -10,10 +10,7 @@ import PIL.Image                          # 이미지 읽어오는 라이브러�
 # ==============================================================================
 load_dotenv("api.env", override=True) # 방금 수정한 api.env 파일을 강제로 다시 읽음
 MY_KEY = os.getenv("GOOGLE_API_KEY") 
-genai.configure(api_key=MY_KEY)        # api 키 받아오기
-
-# 모델 설정 (현재 2.0-flash 사용)
-model = genai.GenerativeModel('gemini-2.0-flash')
+client = genai.Client(api_key=MY_KEY)        # api 키 받아오기
 
 # ==============================================================================
 # 2. Flask 서버 및 폴더 설정
@@ -85,7 +82,11 @@ def get_plant_diagnosis(image_path, user_message, history):
 
     # --- AI 실행 (깔끔한 버전) ---
     try:
-        response = model.generate_content(inputs) # 구글에 요청을 보내 답을 받기
+        # 새 라이브러리 방식으로 요청 보내기 (여기서 모델 이름을 지정합니다)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', 
+            contents=inputs
+        )
         result_text = response.text
         
         # AI가 가끔 ```json 같은 마크다운 기호를 붙여서 줄 때가 있음 -> 제거해서 순수 JSON만 남김

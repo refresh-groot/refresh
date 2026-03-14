@@ -1,9 +1,13 @@
+# --------------------------------------------------------------------------
+#               테스트용 코드 (streamlit run dashboard.py)
+# --------------------------------------------------------------------------
+
 import streamlit as st
 import os
 import json
 from PIL import Image
-# test.py에서 함수 가져오기
-from test import get_plant_diagnosis 
+# main.py에서 함수 가져오기
+from main import get_plant_diagnosis 
 
 st.set_page_config(page_title="식물 AI 챗봇", page_icon="🌿", layout="wide")
 
