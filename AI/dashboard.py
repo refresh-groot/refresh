@@ -7,7 +7,7 @@ import os
 import json
 from PIL import Image
 # main.py에서 함수 가져오기
-from main import get_plant_diagnosis 
+from app import get_plant_diagnosis 
 
 st.set_page_config(page_title="식물 AI 챗봇", page_icon="🌿", layout="wide")
 
