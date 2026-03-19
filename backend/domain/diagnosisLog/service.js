@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // AI 서버 통신 함수 
-const requestAIAnalysis = async (file, question) => {
+const requestAIAnalysis = async (files, question) => {
     try {
         // [방어 로직] 파일이나 질문 둘 중 하나는 있어야 통신
         if (!file && !question) {
@@ -14,8 +14,10 @@ const requestAIAnalysis = async (file, question) => {
         }
 
         const formData = new FormData();
-        if (file) {
+        if (files && files.length > 0) {
+            files.forEach((file) => {
             formData.append('image', fs.createReadStream(file.path));
+            });
         }
         if (question) {
             formData.append('message', question);
@@ -65,7 +67,7 @@ module.exports = {
             finalRecommendation += `\n\n💧 물주기 팁: ${aiResponse.ui_water_msg}`;
         }
 
-        // 🔥 [수정됨] AI 점수 스케일(10점 만점 vs 100점 만점) 유연하게 대처
+        //  AI 점수 스케일(10점 만점 vs 100점 만점) 
         let finalConfidence = parseFloat(aiResponse.confidence);
         
         if (isNaN(finalConfidence)) {
@@ -80,7 +82,7 @@ module.exports = {
                 finalConfidence = finalConfidence / 100.0;
             }
             
-            // 마지막으로 안전하게 0.0 ~ 1.0 사이로 철벽 방어! (1.0 = 100%)
+            //  0.0 ~ 1.0 사이 (1.0 = 100%)
             finalConfidence = Math.min(1.0, Math.max(0.0, finalConfidence));
         }
 
@@ -100,9 +102,29 @@ module.exports = {
 
     // 2. 목록 조회
     getDiagnosisLogs: async (plantId) => {
-        return await repository.findAllByPlantId(plantId);
-    },
-
+    const logs = await repository.findAllByPlantId(plantId);
+    
+    // [추가] 로그 데이터 변환
+    const formattedLogs = logs.map(log => {
+        // Sequelize 모델을 plain object로 변환
+        const plainLog = log.toJSON ? log.toJSON() : { ...log };
+        
+        // image_url을 배열로 변환
+        if (plainLog.image_url) {
+            plainLog.image_url = plainLog.image_url
+                .split(',')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+        } else {
+            plainLog.image_url = [];
+        }
+        
+        return plainLog;
+    });
+    
+    console.log('📋 전송할 로그 데이터:', formattedLogs[0]); // 디버깅용
+    return formattedLogs;
+},
     // 3. (구) 개별 로그 이름 변경
     updateDiagnosisTitle: async (logId, title) => {
         return await repository.updateTitle(logId, title);
@@ -137,7 +159,7 @@ module.exports = {
 
     // 6. 세션 삭제
     deleteSession: async (sessionId) => {
-        // [수정됨] 세션 삭제 시 해당 세션에 묶인 이미지도 함께 삭제 (용량 확보)
+        // 세션 삭제 시 해당 세션에 묶인 이미지도 함께 삭제 (용량 확보)
         try {
             const logsInSession = await DiagnosisLog.findAll({
                 where: { session_id: sessionId }

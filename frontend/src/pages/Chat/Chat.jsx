@@ -34,7 +34,7 @@ function Chat() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // 채팅창에 표시되는 메시지 배열
-  // 각 항목 형태: { id, text, image, sender('user'|'ai'), timestamp, isNew }
+  // 각 항목 형태: { id, text, images: [], sender('user'|'ai'), timestamp, isNew }
   const [messages, setMessages] = useState([]);
 
   // 하단 입력창의 텍스트 값
@@ -43,8 +43,8 @@ function Chat() {
   // AI 응답을 기다리는 중인지 여부 (true이면 로딩 애니메이션 표시)
   const [isLoading, setIsLoading] = useState(false);
 
-  // 사용자가 선택한 이미지: { file: File 객체, preview: 로컬 미리보기 URL } 또는 null
-  const [selectImage, setSelectImage] = useState(null);
+  // 사용자가 선택한 이미지들을 담는 배열: { file: File 객체, preview: 로컬 미리보기 URL }[]
+  const [selectImage, setSelectImage] = useState([]);
 
   // ─── 사이드바 / 세션 상태 ──────────────────────────────────────────────────
 
@@ -76,19 +76,18 @@ function Chat() {
 
   // ─── 초기화: 컴포넌트 첫 마운트 시 (plant.id가 있을 때만 실행) ─────────────
   useEffect(() => {
-    if (plant.id) {
-      fetchChatHistory().then((history) => {
-        if (history && history.length > 0 && !currentSessionId) {
-          // 저장된 기록이 있으면 가장 최근 대화를 자동으로 불러옴
-          const latestSession = history[0];
-          handleSelectChat(latestSession);
-        } else if (!currentSessionId) {
-          // 기록이 없으면 새 세션 ID를 발급해 빈 화면으로 시작
-          setCurrentSessionId(generateSessionId());
-        }
-      });
-    }
-  }, [plant.id]);
+  if (plant.id && !currentSessionId) {
+    fetchChatHistory().then((history) => {
+      if (history && history.length > 0) {
+        const latestSession = history[0];
+        handleSelectChat(latestSession);
+      } else {
+        setCurrentSessionId(generateSessionId());
+      }
+    });
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [plant.id]);
 
   // messages 배열 또는 isLoading 상태가 바뀔 때마다 스크롤을 맨 아래로 내림
   useEffect(() => {
@@ -111,7 +110,7 @@ function Chat() {
    */
   const handleNewChat = () => {
     setMessages([]);
-    setSelectImage(null);
+    setSelectImage([]); // [수정] 배열 초기화
     setInputText('');
     setIsSidebarOpen(false);
     setCurrentSessionId(generateSessionId());
@@ -126,63 +125,79 @@ function Chat() {
    * @param {object} sessionData - 사이드바 목록의 대화 항목 데이터 (logs 배열 포함)
    */
   const handleSelectChat = (sessionData) => {
-    const sessionLogs = sessionData.logs || [];
+  const sessionLogs = sessionData.logs || [];
 
-    // 시간 오름차순(오래된 것 → 최신) 정렬
-    sessionLogs.sort((a, b) =>
-      new Date(a.created_at || a.diagnosis_date) - new Date(b.created_at || b.diagnosis_date)
-    );
-
-    const convertedMessages = [];
-    sessionLogs.forEach(log => {
-      // 사용자 질문이 있으면 user 말풍선 추가
-      if (log.question) {
-        convertedMessages.push({
-          id: `user-${log.id}`,
-          text: log.question,
-          image: log.image_url,                               // 당시 첨부 이미지 URL
-          sender: 'user',
-          timestamp: (log.diagnosis_date || '').slice(11, 16), // "HH:MM" 형식
-          isNew: false                                        // 과거 메시지 → 타이핑 애니메이션 없음
-        });
+  sessionLogs.sort((a, b) =>
+    new Date(a.created_at || a.diagnosis_date) - new Date(b.created_at || b.diagnosis_date)
+  );
+  const convertedMessages = [];
+  sessionLogs.forEach(log => {
+    if (log.question) {
+      // image_url 처리
+      let imageUrls = [];
+      
+      if (log.image_url) {
+        if (Array.isArray(log.image_url)) {
+          // 배열로 온 경우
+          imageUrls = log.image_url.filter(url => url);
+        } else if (typeof log.image_url === 'string') {
+          // 만약 문자열로 온 경우 대비
+          imageUrls = log.image_url
+            .split(',')
+            .map(url => url.trim())
+            .filter(url => url);
+        }
       }
 
-      // AI 진단 결과가 있으면 ai 말풍선 추가
-      if (log.result) {
-        const confidenceScore = log.confidence ? Math.round(log.confidence * 100) : 0;
-        let confidenceText = `(정확도: ${confidenceScore}%)`;
-        if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
+      // 상대 경로를 절대 URL로 변환
+      const absoluteUrls = imageUrls.map(url => {
+        // 이미 전체 URL이면 그대로
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url;
+        }
+        // /uploads로 시작하면 baseURL 추가
+        if (url.startsWith('/uploads')) {
+          return `http://localhost:8080${url}`;
+        }
+        // 파일명만 있으면 전체 경로 추가
+        return `http://localhost:8080/uploads/${url}`;
+      });
 
-        convertedMessages.push({
-          id: `ai-${log.id}`,
-          text: `[진단 결과: ${log.result}]\n${confidenceText}\n\n조치사항: \n${log.recommendation}`,
-          sender: 'ai',
-          timestamp: (log.diagnosis_date || '').slice(11, 16),
-          isNew: false
-        });
-      }
-    });
-
-    setMessages(convertedMessages);
-
-    // 선택한 대화의 세션 ID로 교체 → 이 대화에 이어서 메시지를 보낼 수 있음
-    if (sessionData.raw_session_id) {
-      setCurrentSessionId(sessionData.raw_session_id);
+      convertedMessages.push({
+        id: `user-${log.id}`,
+        text: log.question,
+        images: absoluteUrls, // 절대 URL 배열
+        sender: 'user',
+        timestamp: (log.diagnosis_date || '').slice(11, 16),
+        isNew: false
+      });
     }
-    setIsSidebarOpen(false);
-  };
+
+    if (log.result) {
+      const confidenceScore = log.confidence ? Math.round(log.confidence * 100) : 0;
+      let confidenceText = `(정확도: ${confidenceScore}%)`;
+      if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
+
+      convertedMessages.push({
+        id: `ai-${log.id}`,
+        text: `[진단 결과: ${log.result}]\n${confidenceText}\n\n조치사항: \n${log.recommendation}`,
+        sender: 'ai',
+        timestamp: (log.diagnosis_date || '').slice(11, 16),
+        isNew: false
+      });
+    }
+  });
+
+  setMessages(convertedMessages);
+
+  if (sessionData.raw_session_id) {
+    setCurrentSessionId(sessionData.raw_session_id);
+  }
+  setIsSidebarOpen(false);
+};
 
   /**
    * 서버에서 해당 식물의 전체 대화 기록을 불러와 사이드바 목록을 구성하는 함수
-   *
-   * 처리 흐름:
-   *   1. 서버에서 로그 배열을 받아옴
-   *   2. session_id 기준으로 로그를 그룹화 (한 대화 = 한 그룹)
-   *   3. 각 그룹의 제목을 결정 (사용자 지정 이름 > 첫 번째 질문 > 기본값)
-   *   4. 최신 대화가 먼저 오도록 내림차순 정렬
-   *   5. chatHistory 상태를 업데이트하고, 가공된 목록을 반환
-   *
-   * @returns {array} 가공된 대화 기록 목록
    */
   const fetchChatHistory = async () => {
     if (!plant.id) return [];
@@ -198,12 +213,11 @@ function Chat() {
       // ── session_id 기준으로 로그를 그룹화 ────────────────────────────────
       const grouped = {};
       serverlogs.forEach(log => {
-        // session_id가 없는 레거시 로그는 id로 개별 그룹 처리
         const sKey = log.session_id || `legacy_${log.id}`;
         if (!grouped[sKey]) {
           grouped[sKey] = {
             id: sKey,
-            raw_session_id: log.session_id, // 실제 세션 ID (이어쓰기에 사용)
+            raw_session_id: log.session_id,
             title: null,
             latestDate: log.diagnosis_date || log.created_at,
             logs: []
@@ -211,7 +225,6 @@ function Chat() {
         }
         grouped[sKey].logs.push(log);
 
-        // 그룹 내 가장 최신 날짜 갱신 (목록 정렬 기준)
         const logDate = new Date(log.diagnosis_date || log.created_at);
         if (logDate > new Date(grouped[sKey].latestDate)) {
           grouped[sKey].latestDate = log.diagnosis_date || log.created_at;
@@ -220,14 +233,11 @@ function Chat() {
 
       // ── 각 그룹의 제목 결정 ────────────────────────────────────────────────
       Object.values(grouped).forEach(group => {
-        // 시간 오름차순 정렬 후 첫 번째 로그를 제목 기준으로 사용
         group.logs.sort((a, b) =>
           new Date(a.diagnosis_date || a.created_at) - new Date(b.diagnosis_date || b.created_at)
         );
         const firstLog = group.logs[0];
 
-        // 사용자가 직접 변경한 제목이 있으면 그것을 사용
-        // 없으면 첫 번째 질문을 제목으로 사용
         if (firstLog.title && firstLog.title !== '새로운 상담') {
           group.title = firstLog.title;
         } else {
@@ -235,12 +245,10 @@ function Chat() {
         }
       });
 
-      // ── 최신 대화가 맨 위에 오도록 내림차순 정렬 ─────────────────────────
       const historyList = Object.values(grouped).sort((a, b) =>
         new Date(b.latestDate) - new Date(a.latestDate)
       );
 
-      // 날짜를 "YYYY-MM-DD" 형식으로 가공해 사이드바에 표시
       const finalHistory = historyList.map(item => ({
         ...item,
         date: (item.latestDate || '').slice(0, 10)
@@ -265,113 +273,128 @@ function Chat() {
 
   /**
    * 파일 입력에서 이미지를 선택했을 때 호출되는 핸들러
-   * - 선택한 파일로 로컬 미리보기 URL을 만들어 상태에 저장
-   * - 같은 파일을 다시 선택할 수 있도록 input value를 초기화
+   * [수정] 여러 파일을 배열로 처리하도록 변수 이름 및 로직 수정
    */
   const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file); // 브라우저 메모리의 임시 URL 생성
-      setSelectImage({ file: file, preview: imageUrl });
-      if (fileInputRef.current) fileInputRef.current.value = ''; // input 초기화
+    const selectedFiles = Array.from(e.target.files); // [수정] 변수명 명확화
+    if (selectedFiles.length > 0) {
+      const newImages = selectedFiles.map(file => ({
+        file: file,
+        preview: URL.createObjectURL(file)
+      }));
+
+      // [수정] setSelectImage (기존 state 변수명 사용)
+      setSelectImage((prev) => [...prev, ...newImages].slice(0, 5)); 
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  /**
+   * [수정] 개별 이미지 삭제 기능 수정
+   */
+  const removeImage = (index) => {
+    setSelectImage(prev => prev.filter((_, i) => i !== index));
   };
 
   /**
    * 메시지 전송 핸들러
-   * - 텍스트 또는 이미지를 서버로 전송하고 AI 진단 결과를 받아옴
-   *
-   * @param {string} [textOverride] - 제안 카드 클릭 시 넘겨받는 텍스트
-   *                                  없으면 inputText 상태 값을 사용
-   *
-   * 처리 흐름:
-   *   1. 빈 입력 방어 (텍스트도 없고 이미지도 없으면 전송 안 함)
-   *   2. 사용자 말풍선을 즉시 화면에 추가 (서버 응답 전에 먼저 보여줌)
-   *   3. 입력창 초기화 + 로딩 시작
-   *   4. FormData로 서버에 POST 요청 (세션 ID + 질문 텍스트 + 이미지)
-   *   5. 응답 받으면 AI 말풍선 추가 + 사이드바 기록 갱신
-   *   6. 오류 발생 시 에러 안내 말풍선 추가
-   *   7. 성공·실패 무관하게 로딩 상태 해제 (finally)
+   * [수정] 여러 장의 이미지를 FormData에 담아 전송하도록 수정
    */
   const handleSendMessage = async (textOverride) => {
-    const textToSend = (typeof textOverride === 'string' ? textOverride : inputText);
+  const textToSend = (typeof textOverride === 'string' ? textOverride : inputText);
 
-    // 텍스트도 이미지도 없으면 전송하지 않음
-    if (!textToSend.trim() && !selectImage) return;
+  if (!textToSend.trim() && selectImage.length === 0) return;
 
-    // 사용자 말풍선 데이터 구성
-    const userMessage = {
-      id: Date.now(),
-      text: textToSend,
-      image: selectImage ? selectImage.preview : null, // 로컬 미리보기 URL
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+  // 임시 ID 생성
+  const tempMessageId = Date.now();
 
-    // 서버 응답 전에 사용자 말풍선 먼저 추가 (낙관적 업데이트)
-    setMessages((prev) => [...prev, userMessage]);
-
-    setInputText('');
-    setSelectImage(null);
-    setIsLoading(true);
-
-    try {
-      // FormData로 멀티파트 요청 구성 (텍스트 + 이미지 동시 전송 가능)
-      const formData = new FormData();
-      if (currentSessionId) {
-        formData.append('session_id', currentSessionId); // 같은 대화 스레드에 기록
-      }
-      formData.append('question', textToSend);
-      if (selectImage?.file) {
-        formData.append('image', selectImage.file);
-      }
-
-      const response = await axios.post(`/api/diagnosis-logs/${plant.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 30000 // 30초 내 응답 없으면 에러 처리
-      });
-
-      // 서버 응답 데이터에서 진단 결과 파싱
-      const serverData = response.data.data || response.data;
-      const confidenceScore = serverData.confidence ? Math.round(serverData.confidence * 100) : 0;
-      let confidenceText = `(정확도: ${confidenceScore}%)`;
-      if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
-
-      // AI 말풍선 데이터 구성
-      const aiMessage = {
-        id: Date.now() + 1,
-        text: `[진단결과: ${serverData.result || '분석중'}]\n${confidenceText}\n\n조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isNew: true, // 새로 받은 응답 → 타이핑 애니메이션 적용
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-      fetchChatHistory(); // 사이드바 기록 목록을 최신 상태로 갱신
-
-    } catch (error) {
-      console.error('진단 요청 실패:', error);
-
-      // 에러 발생 시 사용자에게 안내 말풍선 표시
-      const errorMessage = {
-        id: Date.now() + 2,
-        text: "진단 서버와 연결할 수 없습니다.",
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-
-    } finally {
-      // 성공·실패 여부와 관계없이 로딩 상태 해제
-      setIsLoading(false);
-    }
+  // [수정] 일단 임시로 Blob URL로 표시 (즉시 보여주기 위해)
+  const userMessage = {
+    id: tempMessageId,
+    text: textToSend,
+    images: selectImage.map(img => img.preview), // 임시 미리보기
+    sender: 'user',
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   };
 
-  /**
-   * 입력창 키다운 이벤트 핸들러
-   * - Enter 단독 입력: 메시지 전송 (기본 줄바꿈 방지)
-   * - Shift + Enter: 줄바꿈 (기본 동작 유지)
-   */
+  setMessages((prev) => [...prev, userMessage]);
+  
+  const imagesToUpload = [...selectImage];
+  setInputText('');
+  setSelectImage([]);
+  setIsLoading(true);
+
+  try {
+    const formData = new FormData();
+    if (currentSessionId) {
+      formData.append('session_id', currentSessionId);
+    }
+    formData.append('question', textToSend);
+    
+    imagesToUpload.forEach(img => {
+      formData.append('images', img.file); 
+    });
+
+    const response = await axios.post(`/api/diagnosis-logs/${plant.id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 35000 
+    });
+
+    const serverData = response.data.data || response.data;
+    
+    // [추가] 서버에서 받은 실제 이미지 URL로 업데이트
+    if (serverData.image_url && serverData.image_url.length > 0) {
+      const serverImageUrls = Array.isArray(serverData.image_url) 
+        ? serverData.image_url 
+        : [serverData.image_url];
+      
+      const absoluteUrls = serverImageUrls.map(url => {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url;
+        }
+        if (url.startsWith('/uploads')) {
+          return `http://localhost:8080${url}`;
+        }
+        return `http://localhost:8080/uploads/${url}`;
+      });
+
+      // 사용자 메시지의 Blob URL을 서버 URL로 교체
+      setMessages((prev) => prev.map(msg => 
+        msg.id === tempMessageId 
+          ? { ...msg, images: absoluteUrls }
+          : msg
+      ));
+    }
+
+    const confidenceScore = serverData.confidence ? Math.round(serverData.confidence * 100) : 0;
+    let confidenceText = `(정확도: ${confidenceScore}%)`;
+    if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
+
+    const aiMessage = {
+      id: Date.now() + 1,
+      text: `[진단결과: ${serverData.result || '분석중'}]\n${confidenceText}\n\n조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
+      sender: 'ai',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isNew: true, 
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
+    fetchChatHistory();
+
+  } catch (error) {
+    console.error('진단 요청 실패:', error);
+    const errorMessage = {
+      id: Date.now() + 2,
+      text: "진단 서버와 연결할 수 없습니다.",
+      sender: 'ai',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -379,61 +402,31 @@ function Chat() {
     }
   };
 
-  /**
-   * 대화 이름 변경 핸들러
-   * - 서버에 PUT 요청으로 세션 제목을 업데이트
-   * - 성공 시 로컬 chatHistory 상태도 즉시 반영 (전체 재요청 없이)
-   *
-   * @param {string} sessionId - 이름을 바꿀 대화의 세션 ID
-   * @param {string} newName   - 새로 지정할 제목
-   */
   const handleRenameChat = async (sessionId, newName) => {
     try {
       await axios.put(`/api/diagnosis-logs/session/${sessionId}`, { title: newName });
-
-      // 해당 항목의 title만 교체 (나머지 항목은 그대로 유지)
       setChatHistory(prev =>
         prev.map(chat => chat.id === sessionId ? { ...chat, title: newName } : chat)
       );
     } catch (error) {
       console.error("이름 변경 실패", error);
-      alert("이름 변경 중 오류가 발생했습니다.");
     }
   };
 
-  /**
-   * 대화 삭제 핸들러
-   * - 서버에 DELETE 요청으로 해당 세션의 모든 로그를 삭제
-   * - 성공 시 서버에서 최신 기록을 다시 불러와 사이드바 목록을 동기화
-   * - 현재 보고 있는 대화가 삭제된 경우 새 대화 화면으로 전환
-   *
-   * @param {string} sessionId - 삭제할 대화의 세션 ID
-   */
   const handleDeleteChat = async (sessionId) => {
     try {
       await axios.delete(`/api/diagnosis-logs/session/${sessionId}`);
-
-      // 삭제 후 서버 기록을 다시 불러와 목록을 최신 상태로 동기화
       await fetchChatHistory();
-
-      // 지금 보고 있던 대화가 삭제된 경우 새 대화로 전환
-      // currentSessionId === null 이고 sessionId가 'no_session'인 엣지 케이스도 처리
       if (currentSessionId === sessionId || (currentSessionId === null && sessionId === 'no_session')) {
         handleNewChat();
       }
-      console.log('삭제 완료');
-
     } catch (error) {
       console.error("삭제 실패", error);
-      alert("삭제 중 오류가 발생했습니다.");
     }
   };
 
-  // ─── 렌더링 ─────────────────────────────────────────────────────────────────
   return (
     <div className="chat-container">
-
-      {/* 왼쪽 슬라이드 사이드바: 대화 기록 목록 + 편집 기능 */}
       <ChatSidebar
         isOpen={isSidebarOpen}
         chats={chatHistory}
@@ -444,15 +437,11 @@ function Chat() {
         onDeleteChat={handleDeleteChat}
       />
 
-      {/* 사이드바가 열릴 때 뒤를 어둡게 덮는 오버레이 — 클릭 시 사이드바 닫기 */}
       {isSidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      {/* ── 채팅 뷰 영역 ─────────────────────────────────────────────────────── */}
       <div className="chat-view">
-
-        {/* 좌상단 "기록 보기" 버튼 — 클릭 시 사이드바 열기 */}
         <div className="chat-header-toolbar">
           <button className="history-toggle-btn" onClick={() => setIsSidebarOpen(true)}>
             <FaHistory /> <span className="btn-text">기록 보기</span>
@@ -461,44 +450,40 @@ function Chat() {
 
         <div className="content-width full-height-content">
           {messages.length === 0 ? (
-            /* ── 빈 화면: 환영 메시지 + 빠른 질문 제안 카드 ── */
             <div className="empty-state">
               <div className="ai-logo">🌱</div>
               <h2>안녕하세요, {plant.plant_name} 진단 AI입니다.</h2>
               <p>식물 사진을 올리거나, 궁금한 증상을 물어보세요.</p>
               <div className="suggestion-grid">
                 {suggestions.map((text, index) => (
-                  /* 제안 카드 클릭 시 해당 텍스트로 즉시 메시지 전송 */
-                  <button
-                    key={index}
-                    className="suggestion-card"
-                    onClick={() => handleSendMessage(text)}
-                  >
+                  <button key={index} className="suggestion-card" onClick={() => handleSendMessage(text)}>
                     {text}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            /* ── 메시지 목록 ──────────────────────────────────────────────── */
             <div className="message-list-area">
               {messages.map((msg) => (
                 <div key={msg.id} className={`message-row ${msg.sender}`}>
-
-                  {/* AI 메시지일 때만 왼쪽에 로봇 아이콘 아바타 표시 */}
                   {msg.sender === 'ai' && (
                     <div className="message-avatar"><FaRobot /></div>
                   )}
 
                   <div className="message-bubble">
-                    {/* 이미지가 첨부된 경우 말풍선 상단에 표시 */}
-                    {msg.image && (
-                      <img src={msg.image} alt='전송된 사진' className='message-image'/>
+                    {msg.images && msg.images.length > 0 && (
+                      <div className="message-images-grid">
+                        {msg.images.map((img, idx) => (
+                          <img 
+                          key={idx} 
+                          src={img} 
+                          alt='전송된 사진' 
+                          className='message-image'
+                          />
+                        ))}
+                      </div>
                     )}
 
-                    {/* 새로 받은 AI 응답이면 타이핑 애니메이션(Typewriter) 적용
-                        과거 메시지이거나 사용자 메시지이면 일반 텍스트로 렌더링
-                        줄바꿈 문자(\n)는 <br /> 태그로 변환 */}
                     {msg.sender === 'ai' && msg.isNew ? (
                       <Typewriter text={msg.text} speed={30} onUpdate={scrollToBottom}/>
                     ) : (
@@ -513,14 +498,12 @@ function Chat() {
                     <span className="message-time">{msg.timestamp}</span>
                   </div>
 
-                  {/* 사용자 메시지일 때만 오른쪽에 사람 아이콘 아바타 표시 */}
                   {msg.sender === 'user' && (
                     <div className="message-avatar user"><FaUser /></div>
                   )}
                 </div>
               ))}
 
-              {/* AI 응답 대기 중 로딩 말풍선 (점 3개 깜빡임 애니메이션) */}
               {isLoading && (
                 <div className="message-row ai">
                   <div className="message-avatar"><FaRobot /></div>
@@ -529,46 +512,42 @@ function Chat() {
                   </div>
                 </div>
               )}
-
-              {/* 스크롤 기준점: 새 메시지 도착 시 여기로 scrollIntoView 호출 */}
               <div ref={messagesEndRef} />
             </div>
           )}
-
-          {/* 하단 입력 영역이 메시지를 가리지 않도록 아래쪽 여백 확보 */}
           <div className="bottom-spacer"></div>
         </div>
       </div>
 
-      {/* ── 하단 입력 영역 ────────────────────────────────────────────────────── */}
       <div className="input-section">
         <div className="content-width">
           <div className="input-box">
-
-            {/* 이미지 선택 시 미리보기 + X(취소) 버튼 표시 */}
-            {selectImage && (
-              <div className="inner-image-preview">
-                <img src={selectImage.preview} alt='미리보기'/>
-                <button onClick={() => setSelectImage(null)}><FaTimes/></button>
+            {/* [수정] 여러 이미지 미리보기 영역 */}
+            {selectImage.length > 0 && (
+              <div className="multi-image-preview-area">
+                {selectImage.map((img, index) => (
+                  <div key={index} className="inner-image-preview">
+                    <img src={img.preview} alt='미리보기'/>
+                    <button onClick={() => removeImage(index)}><FaTimes/></button>
+                  </div>
+                ))}
               </div>
             )}
 
             <div className="input-row">
-              {/* 숨겨진 파일 입력 — 아래 + 버튼의 click()으로 트리거됨 */}
               <input
                 type="file"
                 accept='image/*'
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 onChange={handleImageSelect}
+                multiple // [수정] 다중 선택 허용
               />
 
-              {/* 이미지 첨부 버튼 (+) — 클릭 시 숨겨진 파일 입력 열기 */}
               <button className='icon-btn' onClick={() => fileInputRef.current.click()}>
                 <FaPlus />
               </button>
 
-              {/* 텍스트 입력 영역 (내용 길이에 따라 높이 자동 조절, Shift+Enter로 줄바꿈) */}
               <textarea
                 ref={textareaRef}
                 placeholder={`${plant.plant_name}에 대해 물어보세요.`}
@@ -578,18 +557,11 @@ function Chat() {
                 rows={1}
               />
 
-              {/* 전송 버튼 — 로딩 중에는 비활성화 */}
-              <button
-                className='send-btn'
-                onClick={() => handleSendMessage()}
-                disabled={isLoading}
-              >
+              <button className='send-btn' onClick={() => handleSendMessage()} disabled={isLoading}>
                 <FaPaperPlane />
               </button>
             </div>
           </div>
-
-          {/* 하단 면책 문구 */}
           <p className='disclaimer'>AI는 실수를 할 수 있습니다. 정확한 정보는 전문가와 상담하세요.</p>
         </div>
       </div>
