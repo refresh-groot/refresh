@@ -244,6 +244,59 @@
     border-color: #333;
 }
 
+.chart-wrapper {
+    height: 300px;
+}
+
+.Chart-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.Chart-header {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.Chart-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.Chart-btn:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.Chart-btn.loading {
+    cursor: wait;
+    opacity: 0.5;
+    background-color: #e9ecef;
+}
+
+.Chart-canvas {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.chart-controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.chart-controls-container .tab-buttons {
+    margin: 0;
+}
+
 @media (max-width: 768px) {
     .menu-dashboard {
         grid-template-columns: 1fr; 
@@ -252,5 +305,11 @@
     }
     .sensor-grid {
         grid-template-columns: repeat(2, 1fr); 
+    }
+    .tab-buttons button {
+        font-size: 0.7rem;
+    }
+    .Chart-btn{
+        font-size: 0.7rem;
     }
 }

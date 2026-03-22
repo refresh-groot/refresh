@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 // 기본 메뉴화면 카드 4개 관리
-export const useSensorData = (intervalTime = 5000) => {
+export const useSensorData = (plantId, intervalTime = 600000) => {
 const [sensorData, setSensorData] = useState({
     temp: 0,
     humid: 0,
@@ -10,16 +11,23 @@ const [sensorData, setSensorData] = useState({
 const [loading, setLoading] = useState(true);
 
 const fetchData = async () => {
+    if(!plantId) {
+        setLoading(false);
+        return;
+    }
     try {
-    const mockData = {
-        temp: (Math.random() * 2 + 23).toFixed(1),
-        humid: Math.floor(Math.random() * 10 + 50), 
-        soil: Math.floor(Math.random() * 20 + 30), 
-        light: Math.floor(Math.random() * 100 + 700)
-    };
+        const response = await axios.get(`http://223.130.157.123:8080/api/environment-log/${plantId}`);
+        const serverData = Array.isArray(response.data) ? response.data[0] : response.data;
 
-    setSensorData(mockData);
-        console.log("실시간 데이터 동기화 완료:", mockData);
+    const newData = ({
+        temp: serverData?.temperature ?? 0,
+        soil: serverData?.moisture_level ?? 0,
+        light: serverData?.light_level ?? 0,
+        humid: 50
+    });
+
+    setSensorData(newData);
+        console.log("실시간 데이터 동기화 완료:", newData);
     } catch (error) {
         console.error("데이터 로드 실패:", error);
     } finally {
@@ -32,7 +40,7 @@ const fetchData = async () => {
     const timer = setInterval(fetchData, intervalTime); 
 
     return () => clearInterval(timer);
-    }, [intervalTime]);
+    }, [plantId, intervalTime]);
 
     return { sensorData, loading };
 };

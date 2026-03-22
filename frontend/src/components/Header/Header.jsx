@@ -14,10 +14,6 @@ const [isOpen, setIsOpen] = useState(false);
 
 if(!isLoggedIn) return null;
 
-const toggleMenu =() =>{
-setIsOpen(!isOpen);
-}
-
 const closeMenu = () => {
   setIsOpen(false);
 }
@@ -42,9 +38,6 @@ const handleRefresh = (e) =>{
         <img src={RefreshLogo} alt="Refresh_Logo" className="logo-img"/>
         {APP_NAME}
         </a>
-      </div>
-      <div className="navbar-toggle" onClick={toggleMenu}>
-        <FaBars/>
       </div>
       <div className={`navbar-menu ${isOpen ? 'active' : ''}`}>
         <ul>

@@ -1,0 +1,20 @@
+.layout {
+    display: flex;
+    flex-direction: column; 
+    height: 100vh; 
+    background-color: #f9fbfa; 
+    overflow: hidden; 
+}
+
+
+.main-content {
+    flex: 1; 
+    overflow-y: auto; 
+    padding-bottom: 70px;
+}
+
+@media screen and (min-width: 769px) {
+    .main-content {
+        padding-bottom: 0;
+    }
+}
