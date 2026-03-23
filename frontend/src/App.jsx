@@ -17,6 +17,10 @@ const LoadingFallback = () => (
 );
 
 function App() {
+  const location = useLocation();
+  const currentPath = location.pathname.toLowerCase();
+  const hideBottomPaths = ['/', '/chat'];
+  const shouldHideBottom = hideBottomPaths.includes(currentPath);
 
   return (
     <div className="app-container">
@@ -35,6 +39,7 @@ function App() {
         {/* 3. 잘못된 경로 처리 (404 예방): 정의되지 않은 주소로 접속 시 로그인 페이지로 리다이렉트 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Bottom hidden={shouldHideBottom} />
     </Suspense>
     </div>
   );

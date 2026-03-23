@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './Menu.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/fa';
+import { FcSynchronize } from "react-icons/fc";
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
 import Swal from 'sweetalert2';
 import PlantChart from './Chart';
+
 
 function Menu() {
   const location = useLocation();
@@ -236,7 +238,7 @@ function Menu() {
       onClick={handleReLoading}
       disabled={isReLoading}
       >
-        {isReLoading ? '갱신중' : '새로고침'}
+        {isReLoading ? '갱신중' : <FcSynchronize />}
       </button>
           </div>
           <div className='chart-wrapper'>
