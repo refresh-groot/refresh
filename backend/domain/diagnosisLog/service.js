@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // AI 서버 통신 함수 
-const requestAIAnalysis = async (files, question) => {
+const requestAIAnalysis = async (file, question) => {
     try {
         // [방어 로직] 파일이나 질문 둘 중 하나는 있어야 통신
         if (!file && !question) {
@@ -14,11 +14,15 @@ const requestAIAnalysis = async (files, question) => {
         }
 
         const formData = new FormData();
-        if (files && files.length > 0) {
-            files.forEach((file) => {
-            formData.append('image', fs.createReadStream(file.path));
+        
+        // 단일 파일일 경우와 배열일 경우를 모두 안전하게 처리
+        if (file) {
+            const files = Array.isArray(file) ? file : [file];
+            files.forEach((f) => {
+                formData.append('image', fs.createReadStream(f.path));
             });
         }
+        
         if (question) {
             formData.append('message', question);
         }
@@ -67,7 +71,7 @@ module.exports = {
             finalRecommendation += `\n\n💧 물주기 팁: ${aiResponse.ui_water_msg}`;
         }
 
-        //  AI 점수 스케일(10점 만점 vs 100점 만점) 
+        // AI 점수 스케일(10점 만점 vs 100점 만점) 
         let finalConfidence = parseFloat(aiResponse.confidence);
         
         if (isNaN(finalConfidence)) {
@@ -82,7 +86,7 @@ module.exports = {
                 finalConfidence = finalConfidence / 100.0;
             }
             
-            //  0.0 ~ 1.0 사이 (1.0 = 100%)
+            // 0.0 ~ 1.0 사이 (1.0 = 100%)
             finalConfidence = Math.min(1.0, Math.max(0.0, finalConfidence));
         }
 
@@ -102,29 +106,30 @@ module.exports = {
 
     // 2. 목록 조회
     getDiagnosisLogs: async (plantId) => {
-    const logs = await repository.findAllByPlantId(plantId);
-    
-    // [추가] 로그 데이터 변환
-    const formattedLogs = logs.map(log => {
-        // Sequelize 모델을 plain object로 변환
-        const plainLog = log.toJSON ? log.toJSON() : { ...log };
+        const logs = await repository.findAllByPlantId(plantId);
         
-        // image_url을 배열로 변환
-        if (plainLog.image_url) {
-            plainLog.image_url = plainLog.image_url
-                .split(',')
-                .map(url => url.trim())
-                .filter(url => url.length > 0);
-        } else {
-            plainLog.image_url = [];
-        }
+        // [추가] 로그 데이터 변환
+        const formattedLogs = logs.map(log => {
+            // Sequelize 모델을 plain object로 변환
+            const plainLog = log.toJSON ? log.toJSON() : { ...log };
+            
+            // image_url을 배열로 변환
+            if (plainLog.image_url) {
+                plainLog.image_url = plainLog.image_url
+                    .split(',')
+                    .map(url => url.trim())
+                    .filter(url => url.length > 0);
+            } else {
+                plainLog.image_url = [];
+            }
+            
+            return plainLog;
+        });
         
-        return plainLog;
-    });
-    
-    console.log('📋 전송할 로그 데이터:', formattedLogs[0]); // 디버깅용
-    return formattedLogs;
-},
+        console.log('📋 전송할 로그 데이터:', formattedLogs[0]); // 디버깅용
+        return formattedLogs;
+    },
+
     // 3. (구) 개별 로그 이름 변경
     updateDiagnosisTitle: async (logId, title) => {
         return await repository.updateTitle(logId, title);

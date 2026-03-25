@@ -23,5 +23,6 @@ router.patch('/alert', validator.UpdateAlert, controller.updateAlert);
 router.delete('/withdraw', validator.Withdraw, controller.withdraw);
 
 router.get('/check', controller.check);
+router.get('/auth/kakao/callback', controller.kakaoLogin);
 
 module.exports = router;

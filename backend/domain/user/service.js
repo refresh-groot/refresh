@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const repository = require('./repository');
 const mailer = require('../../utils/mailer'); 
 const { User } = require('../index');
+const axios = require('axios');
 
 // 인증번호 임시 저장소
 let verificationCodes = {}; 
@@ -141,5 +142,57 @@ module.exports = {
 
     // (3) 삭제 (Hard Delete + Cascade)
     await User.destroy({ where: { id } });
+  },
+
+  // 12. 카카오 소셜 로그인 비즈니스 로직
+  kakaoLogin: async (code) => {
+    const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; // REST API 키 입력
+    const KAKAO_REDIRECT_URI = 'http://localhost:8080/api/user/auth/kakao/callback';
+
+    // 카카오 서버로 토큰 요청
+    const tokenResponse = await axios.post(
+      'https://kauth.kakao.com/oauth/token',
+      {
+        grant_type: 'authorization_code',
+        client_id: KAKAO_CLIENT_ID,
+        redirect_uri: KAKAO_REDIRECT_URI,
+        code: code,
+      },
+      { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
+    );
+
+    const kakaoToken = tokenResponse.data.access_token;
+
+    // 카카오 유저 정보 요청
+    const userInfoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
+      headers: {
+        Authorization: `Bearer ${kakaoToken}`,
+        'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+      },
+    });
+
+    const userInfo = userInfoResponse.data;
+    const snsId = userInfo.id.toString(); 
+    const nickname = userInfo.kakao_account.profile.nickname;
+    
+    // DB 제약조건에 맞게 가짜 이메일/아이디 생성
+    const email = userInfo.kakao_account.email || `${snsId}@kakao.com`; 
+    const loginId = `kakao_${snsId}`; 
+
+    // DB 조회 (Repository 사용)
+    let user = await repository.findBySnsIdAndProvider(snsId, 'kakao');
+
+    // 강제 회원가입 (Repository 사용)
+    if (!user) {
+      user = await repository.createSocialUser({
+        loginId,
+        email,
+        nickname,
+        provider: 'kakao',
+        snsId
+      });
+    }
+    // 컨트롤러에게 완성된 유저 정보만 딱 넘겨줌
+    return user; 
   }
 };

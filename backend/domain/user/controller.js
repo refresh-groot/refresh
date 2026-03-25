@@ -193,5 +193,25 @@ module.exports = {
       console.error("유저 검증 중 에러:", error);
       next();
     }
+  },
+
+  // 12. 카카오 로그인
+  kakaoLogin: async (req, res) => {
+    try {
+      const { code } = req.query; // 요청(URL)에서 코드만 쏙 뽑음
+      const user = await service.kakaoLogin(code);
+
+      // 리턴받은 user 정보로 세션 저장
+      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
+
+      req.session.save(() => {
+        // 성공 시 메인화면으로 리다이렉트
+        return res.redirect('http://localhost:5173/');
+      });
+
+    } catch (error) {
+      console.error('❌ 카카오 로그인 에러:', error.response?.data || error.message);
+      return res.redirect('http://localhost:5173/login?error=kakao_failed');
+    }
   }
 };

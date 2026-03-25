@@ -29,4 +29,21 @@ module.exports = {
       nickname,
     });
   },
+
+  // 소셜 ID와 가입 경로(provider)로 유저 찾기
+  findBySnsIdAndProvider: async (snsId, provider) => {
+    return await User.findOne({ where: { sns_id: snsId, provider: provider } });
+  },
+
+  // 소셜 유저 전용 생성 (비밀번호 없음)
+  createSocialUser: async ({ loginId, email, nickname, provider, snsId }) => {
+    return await User.create({
+      loginId,
+      password: null, // 소셜은 비밀번호 null
+      email,
+      nickname,
+      provider,
+      sns_id: snsId,
+    });
+  }
 };

@@ -18,7 +18,7 @@ class User extends Sequelize.Model {
         },
         password: {
           type: Sequelize.STRING(255), 
-          allowNull: false,
+          allowNull: true,
           comment: '암호화된 비밀번호',
         },
         nickname: {
@@ -44,6 +44,17 @@ class User extends Sequelize.Model {
           defaultValue: '안녕하세요.',            // 기본값
           comment: '한 줄 소개',
         },
+        provider: {
+          type: Sequelize.STRING(50),
+          allowNull: false,
+          defaultValue: 'local', // 일반가입은 local, 소셜은 kakao
+          comment: '가입 경로',
+        },
+        sns_id: {
+          type: Sequelize.STRING(255),
+          allowNull: true,
+          comment: '소셜 로그인 고유 식별자',
+        }
       },
       {
         sequelize,
