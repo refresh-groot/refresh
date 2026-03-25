@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useMemo} from 'react';
 // 필요한 부품들 불러오기
 import {
   Chart as ChartJS,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   layouts,
+  Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import annotationPlugin from 'chartjs-plugin-annotation';
@@ -23,6 +24,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  Filler,
   annotationPlugin,
 );
 
@@ -33,20 +35,19 @@ const THEME = {
   light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 200},
 }
 
-// 리액트 컴포넌트 정의
-// 'props'를 통해 부모가 주는 데이터를 받을 준비
-function PlantChart({ type = 'soil', dataList = []}) {
-  const config = THEME[type];
-  const last7Days = () => {
+function PlantChart({activeTab = 'soil', dataList = []}) {
+
+  const config = THEME[activeTab];
+  const labels = useMemo(() => {
     return Array.from({ length: 7}, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       return `${d.getMonth() + 1}/${d.getDate()}`;
     });
-  };
+  }, []);
   
-  const data = {
-    labels: last7Days(),
+  const data = useMemo(() => ({
+    labels: labels,
     datasets: [{
       label: config.label,
       data: dataList,
@@ -55,16 +56,12 @@ function PlantChart({ type = 'soil', dataList = []}) {
       tension: 0.4,
       fill: true,
     }]
-  };
+  }), [config, dataList, labels]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
-    maintainAspectRatio: false, // 카드 크기에 맞게 조절
-    layout: {
-      padding: {
-        right: 20
-      }
-    },
+    maintainAspectRatio: false,
+    layout: { padding: { right: 20 } },
     plugins: {
       legend: { display: false },
       annotation: {
@@ -87,10 +84,13 @@ function PlantChart({ type = 'soil', dataList = []}) {
         title: { display: true, text: config.unit } 
       }
     }
-  };
+  }), [config]);
 
-  // 부모가 준 데이터가 있으면 쓰고, 없으면 기본값 사용
-  return <Line data={data} options={options} />;
+  return (
+<div className='Chart-canvas'>
+        <Line data={data} options={options} />
+      </div>
+  );
 }
 
-export default PlantChart;
+export default React.memo(PlantChart);

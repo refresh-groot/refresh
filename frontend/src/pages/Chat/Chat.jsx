@@ -307,8 +307,7 @@ function Chat() {
 
   // 임시 ID 생성
   const tempMessageId = Date.now();
-
-  // [수정] 일단 임시로 Blob URL로 표시 (즉시 보여주기 위해)
+  
   const userMessage = {
     id: tempMessageId,
     text: textToSend,
