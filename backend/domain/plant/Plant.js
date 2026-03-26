@@ -68,20 +68,27 @@ class Plant extends Sequelize.Model {
   }
 
   static associate(db) {
-    db.Plant.belongsTo(db.User, { foreignKey: 'user_id', targetKey: 'id' });
-    
-    // 추가: 식물 종 정보를 통해 가이드(SpeciesInfo)를 가져올 수 있게 연결
-    db.Plant.belongsTo(db.SpeciesInfo, { 
-      foreignKey: 'species',   // Plant의 species 컬럼 사용
-      targetKey: 'species_name', // SpeciesInfo의 PK 사용
-      as: 'guide', // 데이터 조회 시 'guide'라는 이름으로 붙여줌
-      constraints: false//constraints: false 를 추가하여 DB 수준의 강제 제약 조건을 제거
-    });
+  // 1. 유저와의 관계: onDelete: 'CASCADE'를 추가해서 연쇄 삭제를 활성화
+  db.Plant.belongsTo(db.User, { 
+    foreignKey: 'user_id', 
+    targetKey: 'id',
+    onDelete: 'CASCADE' //CASCADE 추가
+  });
+  
+  // 2. 식물 종 정보 연결
+  db.Plant.belongsTo(db.SpeciesInfo, { 
+    foreignKey: 'species', 
+    targetKey: 'species_name', 
+    as: 'guide', 
+    constraints: false
+  });
 
-    db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id' });
-    db.Plant.hasMany(db.DiagnosisLog, { foreignKey: 'plant_id', sourceKey: 'id' });
-    db.Plant.hasMany(db.WateringLog, { foreignKey: 'plant_id', sourceKey: 'id' });
-  }
+  // 3. 자식 로그들과의 관계 (여기도 CASCADE를 넣는 것이 안전)
+  db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+  db.Plant.hasMany(db.DiagnosisLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+  db.Plant.hasMany(db.WateringLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+  db.Plant.hasMany(db.EnvironmentLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+}
 }
 
 module.exports = Plant;

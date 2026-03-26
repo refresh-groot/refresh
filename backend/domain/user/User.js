@@ -18,7 +18,7 @@ class User extends Sequelize.Model {
         },
         password: {
           type: Sequelize.STRING(255), 
-          allowNull: true,
+          allowNull: false,
           comment: '암호화된 비밀번호',
         },
         nickname: {
@@ -44,17 +44,6 @@ class User extends Sequelize.Model {
           defaultValue: '안녕하세요.',            // 기본값
           comment: '한 줄 소개',
         },
-        provider: {
-          type: Sequelize.STRING(50),
-          allowNull: false,
-          defaultValue: 'local', // 일반가입은 local, 소셜은 kakao
-          comment: '가입 경로',
-        },
-        sns_id: {
-          type: Sequelize.STRING(255),
-          allowNull: true,
-          comment: '소셜 로그인 고유 식별자',
-        }
       },
       {
         sequelize,
@@ -71,13 +60,12 @@ class User extends Sequelize.Model {
   
 
   static associate(db) {
-    // User는 여러 Plant를 가질 수 있다 (1:N)
     db.User.hasMany(db.Plant, { 
-      foreignKey: 'userId', 
+      foreignKey: 'user_id', // 'userId'에서 'user_id'로 수정 
       sourceKey: 'id',
       // 연쇄 삭제 설정 (Cascade)
       onDelete: 'CASCADE', // DB에서 유저 삭제 시 식물 데이터 자동 삭제
-      hooks: true          // Sequelize 메모리 상에서도 연관 관계 정리
+      hooks: true
     });
   }
 }
