@@ -187,7 +187,7 @@ function Profile() {
       {/* 필터 탭 메뉴 */}
       <div className="profile-tab-menu">
         <button className={currentTab === 'all' ?  'active' : ''}
-        onClick={() => setCurrentTab('all')}>모두</button>
+        onClick={() => setCurrentTab('all')}>전체</button>
       <button className={currentTab === 'alive' ? 'active' : ''}
       onClick={() => setCurrentTab('alive')}>생존</button>
       <button className={currentTab === 'dead' ? 'active' : ''}

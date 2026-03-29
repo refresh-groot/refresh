@@ -80,6 +80,7 @@
 }
 
 .close-btn {
+  margin-top: 8.5px;
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -142,8 +143,8 @@
 .new-chat-btn {
   width: 100%;
   padding: 12px;
-  background-color: #62ad48;
-  color: white;
+  background-color: white;
+  color: black;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -159,7 +160,7 @@
 }
 
 .new-chat-btn:hover {
-  background-color: #1b5e20;
+  background-color: #888;
 }
 
 .sidebar-overlay {
@@ -765,5 +766,10 @@
   .menu-overlay.mobile-dim {
     background: rgba(0,0,0,0.5);
     backdrop-filter: blur(2px);
+  }
+  .chat-container{
+    padding: 0;
+    margin-top: 50px;
+    height: 94%;
   }
 }
