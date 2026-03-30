@@ -49,6 +49,7 @@ function Menu() {
             NewChartData.humid.unshift(0);
           }
           setChartData(NewChartData);
+          console.log(NewChartData);
         } catch (error) {
           console.error('차트 연동 에러: ', error);
         }
@@ -274,17 +275,20 @@ function Menu() {
           </p>
 
           {/* 수동 급수 버튼: 자동 모드일 경우 비활성화 처리 */}
+          <div className="quick-btn">
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
           onClick={() => Swal.fire('성공', '급수를 완료했습니다.', 'success')}>
-            💧 물 주기
+            급수
           </button>
+          <button className='water-history-btn'>급수 이력</button>
+          </div>
         </div>
 
         {/* 알림 목록 영역 */}
         <div className="card alert-box">
-          <h3>🔔 알림</h3>
+          <h3>알림</h3>
           <ul className="alert-list">
             {alerts.map((alert) => (
               <li key={alert.id} className={`alert-item ${alert.type}`}>

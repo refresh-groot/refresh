@@ -16,8 +16,9 @@
     margin-bottom: 20px;
 }
 
+
 .section-title {
-    margin: 20px 0 10px 0;
+    margin: 10px 0 10px 0;
     font-size: 1.1rem;
     color: #555;
     font-weight: bold;
@@ -27,7 +28,6 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%);
     overflow: hidden;
 }
 
@@ -185,7 +185,13 @@
     padding-left: 5px;
 }
 
+.quick-btn {
+    display: flex;
+    gap: 10px;
+}
+
 .water-btn{
+    flex: 1;
     background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
     color: white;
     border: none;
@@ -196,6 +202,10 @@
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
     transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.water-history-btn {
+    flex: 1;
 }
 
 .water-btn:active{
@@ -245,7 +255,7 @@
 }
 
 .chart-wrapper {
-    height: 300px;
+    height: 250px;
 }
 
 .Chart-container {
@@ -300,14 +310,20 @@
 @media (max-width: 768px) {
     .menu-dashboard {
         grid-template-columns: 1fr; 
-        padding: 80px 15px 15px 15px;
+        padding-top: 0;
+        padding: 15px 15px 0 15px;
         gap: 0;
+        margin-top: 45px;
+        width: 100%;
     }
     .sensor-grid {
         grid-template-columns: repeat(2, 1fr); 
     }
     .tab-buttons button {
         font-size: 0.7rem;
+    }
+    .chart-wrapper{
+        height:300px;
     }
     .Chart-btn{
         font-size: 0.7rem;
