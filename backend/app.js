@@ -14,12 +14,17 @@ const environmentLogRouter = require('./domain/EnvironmentLog/router');
 // --- [Gemini AI 설정 시작] ---
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// API키 입력
-const GEN_AI_KEY = "AIzaSyAq17EFwI8gfJ3mAwItJvZQfhDxdPTseFE"; 
+// 보안을 위해 .env 파일에서 키를 읽어옴
+const GEN_AI_KEY = process.env.GEMINI_API_KEY; 
+
+if (!GEN_AI_KEY) {
+  console.error("경고: .env 파일에 GEMINI_API_KEY가 설정되지 않았습니다.");
+}
+
 const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
 
 const plantModel = genAI.getGenerativeModel({
-  model: "gemini-3-flash-preview",
+  model: "gemini-3-flash-preview", // 모델명은 기존 그대로 유지
   systemInstruction: {
     role: "system",
     parts: [{ text: `
