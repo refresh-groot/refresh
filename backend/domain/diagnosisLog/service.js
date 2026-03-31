@@ -56,12 +56,17 @@ const requestAIAnalysis = async (file, question) => {
 
 module.exports = {
     // 1. 진단방 생성 (AI 분석 + DB 저장)
-    addDiagnosisLog: async ({ plantId, file, question, title, sessionId }) => {
-        const imageUrl = file ? `/uploads/${file.filename}` : null;
+    addDiagnosisLog: async ({ plantId, files, question, title, sessionId }) => {
+        // [수정] 여러 장의 파일(files) 경로를 콤마(,)로 합쳐서 저장하도록 변경
+        const imageUrl = (files && files.length > 0) 
+            ? files.map(f => `/uploads/${f.filename}`).join(',') 
+            : null;
         
         let aiResponse = {};
-        if (file || question) {
-             aiResponse = await requestAIAnalysis(file, question);
+        // [수정] file 대신 files 배열 존재 여부 확인
+        if ((files && files.length > 0) || question) {
+             // [수정] AI 분석 함수로 파일 배열 전달
+             aiResponse = await requestAIAnalysis(files, question);
         }
 
         const finalResult = aiResponse.ui_status || '상담 완료';
