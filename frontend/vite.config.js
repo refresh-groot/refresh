@@ -12,6 +12,9 @@ export default defineConfig({
   '/api': {
     target: 'http://223.130.157.123:8080',
     changeOrigin: true,
+    headers: {
+      Origin: 'http://localhost:5173'
+    }
   },
   '/uploads': {
     target: 'http://223.130.157.123:8080',

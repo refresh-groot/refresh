@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Menu.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaRobot } from 'react-icons/fa';
+import { FaTemperatureHigh, FaTint, FaSun, FaLeaf } from 'react-icons/fa';
 import { FcSynchronize } from "react-icons/fc";
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
@@ -55,7 +55,7 @@ function Menu() {
         }
       };
 
-      
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleReLoading = async () => {
     setIsReLoading(true);
@@ -103,6 +103,45 @@ function Menu() {
           status: 'active',
         };
   });
+
+  const [wateringHistory, setWateringHistory] = useState([]);
+  const [openDateTab, setOpenDateTab] = useState(null);
+
+  const groupedHistory = wateringHistory.reduce((acc,log) => {
+    if(!log.watering_date) return acc;
+    const date = new Date(log.watering_date);
+    const dateKey = `${String(date.getMonth() + 1).padStart(2,'0')}월 ${String(date.getDate()).padStart(2,'0')}일`;
+
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(log);
+    return acc;
+  }, {});
+
+  const formatTimeOnly = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const hours = String(date.getHours()).padStart(2,'0');
+    const minutes = String(date.getMinutes()).padStart(2,'0');
+    return `${hours}:${minutes}`;
+  };
+
+  const fetchWateringHistory = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/watering-log/${currentPlant.id}`);
+      if(!response.ok) throw new Error('급수 이력을 불러오지 못했습니다.');
+      
+      const data = await response.json();
+      setWateringHistory(data);
+    } catch (error) {
+      console.error('급수 이력 연동 에러: ', error);
+    }
+  };
+
+  useEffect (() => {
+    if(showHistory && currentPlant?.id) {
+      fetchWateringHistory();
+    }
+  }, [showHistory, currentPlant?.id]);
 
   const { sensorData: newData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
 
@@ -284,33 +323,77 @@ function Menu() {
           onClick={() => Swal.fire('성공', '급수를 완료했습니다.', 'success')}>
             급수
           </button>
-          <button className='water-history-btn'>급수 이력</button>
+          <button 
+            className='water-history-btn'
+            onClick={() => setShowHistory(!showHistory)}>
+              {showHistory ? '알림 보기' : '급수 이력'}
+              </button>
           </div>
         </div>
 
-        {/* 알림 목록 영역 */}
-        <div className="card alert-box">
-          <h3>알림</h3>
-          <ul className="alert-list">
-            {alerts.map((alert) => (
-              <li key={alert.id} className={`alert-item ${alert.type}`}>
-                {alert.msg}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {showHistory ? (
+          <div className="history-list">
+              {Object.keys(groupedHistory).length > 0 ? (
+                Object.entries(groupedHistory).map(([dateKey, logs]) => (
+                  <div className="history-group" key={dateKey}>
+                  <div 
+                    className={`group-header ${openDateTab === dateKey ? 'open' : ''}`}
+                    onClick={() => setOpenDateTab(openDateTab === dateKey ? null : dateKey)}
+                  >
+                    <span className="group-date">{dateKey} ({logs.length}건)</span>
+                    <span className="group-arrow">{openDateTab === dateKey ? '▲' : '▼'}</span>
+                  </div>
+                  {openDateTab === dateKey && (
+                  <div className="group-content">
+                    {logs.map((log) => (
+                    <div className="history-item" key={log.id}>
+                      <span className='time'>{formatTimeOnly(log.watering_date)}</span>
+                      <span className={`status ${log.is_auto ? 'auto' : 'manual'}`}>
+                      {log.is_auto ? '자동 급수' : '수동 급수'}
+                      <span style={{ fontSize: '0.85em', color: '#888', marginLeft: '4px' }}>
+                      ({log.duration_sec}초)
+                      </span>
+                      </span>
+                      </div>
+                      ))}
+                  </div>
+                  )}
+                  </div>
+                ))
+              ) : (
+                <div className="history-item" style={{ justifyContent: 'center', color: '#999', border: 'none' }}>
+                  최근 급수 이력이 없습니다. 🌱
+                </div>
+              )}
+            </div>
+          
+        ) : (
+          <>
+            {/* 알림 목록 영역 */}
+            <div className="card alert-box">
+              <h3>알림</h3>
+              <ul className="alert-list">
+                {alerts.map((alert) => (
+                  <li key={alert.id} className={`alert-item ${alert.type}`}>
+                    {alert.msg}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-        {/* AI 진단 페이지 이동 카드 */}
-        <div className="card ai-diagnosis"
-        onClick={() => navigate('/Chat', { state: { plant: currentPlant } })}
-        style={{ cursor: 'pointer' }}>
-          <FaRobot size={30} />
-          <p>
-            내 식물 아픈 곳은 없을까?
-            <br />
-            <strong>AI 진단 받기</strong>
-          </p>
-        </div>
+            {/* AI 진단 페이지 이동 카드 */}
+            <div className="card ai-diagnosis"
+            onClick={() => navigate('/Chat', { state: { plant: currentPlant } })}
+            style={{ cursor: 'pointer' }}>
+              
+              <p>
+                내 식물 아픈 곳은 없을까?
+                <br />
+                <strong>AI 진단 받기</strong>
+              </p>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
