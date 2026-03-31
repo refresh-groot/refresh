@@ -151,17 +151,17 @@ function Chat() {
 
       // 상대 경로를 절대 URL로 변환
       const absoluteUrls = imageUrls.map(url => {
-        // 이미 전체 URL이면 그대로
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-          return url;
-        }
-        // /uploads로 시작하면 baseURL 추가
-        if (url.startsWith('/uploads')) {
-          return `http://localhost:8080${url}`;
-        }
-        // 파일명만 있으면 전체 경로 추가
-        return `http://localhost:8080/uploads/${url}`;
-      });
+  // 이미 전체 URL이면 그대로 유지
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // [수정] 하드코딩된 주소를 지우고 상대 경로만 반환 (Vite Proxy 활용)
+  if (url.startsWith('/uploads')) {
+    return `${url}`; // [cite: 2097, 2099] 가이드 적용
+  }
+  // 파일명만 있는 경우
+  return `/uploads/${url}`;
+});
 
       convertedMessages.push({
         id: `user-${log.id}`,
@@ -343,20 +343,21 @@ function Chat() {
     
     // [추가] 서버에서 받은 실제 이미지 URL로 업데이트
     if (serverData.image_url && serverData.image_url.length > 0) {
-      const serverImageUrls = Array.isArray(serverData.image_url) 
-        ? serverData.image_url 
-        : [serverData.image_url];
-      
-      const absoluteUrls = serverImageUrls.map(url => {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-          return url;
-        }
-        if (url.startsWith('/uploads')) {
-          return `http://localhost:8080${url}`;
-        }
-        return `http://localhost:8080/uploads/${url}`;
-      });
-
+  const serverImageUrls = Array.isArray(serverData.image_url) 
+    ? serverData.image_url 
+    : [serverData.image_url];
+  
+  const absoluteUrls = serverImageUrls.map(url => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // [수정] 상대 경로 방식으로 변경
+    if (url.startsWith('/uploads')) {
+      return `${url}`;
+    }
+    return `/uploads/${url}`;
+  });
+  
       // 사용자 메시지의 Blob URL을 서버 URL로 교체
       setMessages((prev) => prev.map(msg => 
         msg.id === tempMessageId 

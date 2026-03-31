@@ -219,7 +219,7 @@ function Profile() {
         <div className="item-img-box">
           {/* 백엔드 서버 주소를 포함하여 이미지 경로 설정 */}
           <img
-            src={`http://localhost:8080${plant.photo_url}`}
+            src={`${plant.photo_url}`}
             alt={plant.species}
           />
         </div>

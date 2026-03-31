@@ -145,21 +145,22 @@ module.exports = {
   },
 
   // 12. 카카오 소셜 로그인 비즈니스 로직
-  kakaoLogin: async (code) => {
-    const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; // REST API 키 입력
-    const KAKAO_REDIRECT_URI = 'http://localhost:8080/api/user/auth/kakao/callback';
+kakaoLogin: async (code) => {
+  const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; 
+  // [수정] localhost:8080을 서버 IP 주소로 변경
+  const KAKAO_REDIRECT_URI = 'http://223.130.157.123:8080/api/user/auth/kakao/callback';
 
-    // 카카오 서버로 토큰 요청
-    const tokenResponse = await axios.post(
-      'https://kauth.kakao.com/oauth/token',
-      {
-        grant_type: 'authorization_code',
-        client_id: KAKAO_CLIENT_ID,
-        redirect_uri: KAKAO_REDIRECT_URI,
-        code: code,
-      },
-      { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
-    );
+  const tokenResponse = await axios.post(
+    'https://kauth.kakao.com/oauth/token',
+    {
+      grant_type: 'authorization_code',
+      client_id: KAKAO_CLIENT_ID,
+      redirect_uri: KAKAO_REDIRECT_URI,
+      code: code,
+    },
+    { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
+  );
+  // ... 이후 로직 동일
 
     const kakaoToken = tokenResponse.data.access_token;
 
