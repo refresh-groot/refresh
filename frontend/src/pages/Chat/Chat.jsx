@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios';
-import { FaPlus, FaHistory, FaPaperPlane, FaRobot, FaUser, FaTimes } from "react-icons/fa";
+import { FaPlus, FaHistory, FaPaperPlane, FaUser, FaTimes } from "react-icons/fa";
 import Typewriter from './Typewriter';
 
 /**
@@ -467,7 +467,7 @@ function Chat() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`message-row ${msg.sender}`}>
                   {msg.sender === 'ai' && (
-                    <div className="message-avatar"><FaRobot /></div>
+                    <div className="message-avatar"></div>
                   )}
 
                   <div className="message-bubble">
@@ -506,7 +506,7 @@ function Chat() {
 
               {isLoading && (
                 <div className="message-row ai">
-                  <div className="message-avatar"><FaRobot /></div>
+                  <div className="message-avatar"></div>
                   <div className="message-bubble loading">
                     <div className="dot-flashing"></div>
                   </div>
@@ -522,7 +522,6 @@ function Chat() {
       <div className="input-section">
         <div className="content-width">
           <div className="input-box">
-            {/* [수정] 여러 이미지 미리보기 영역 */}
             {selectImage.length > 0 && (
               <div className="multi-image-preview-area">
                 {selectImage.map((img, index) => (
@@ -541,7 +540,7 @@ function Chat() {
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 onChange={handleImageSelect}
-                multiple // [수정] 다중 선택 허용
+                multiple 
               />
 
               <button className='icon-btn' onClick={() => fileInputRef.current.click()}>

@@ -109,3 +109,87 @@
   cursor: pointer;
   margin-top: 10px;
 }
+
+.datepicker-container {
+    width: 100%; 
+    display: flex; 
+}
+
+.datepicker-container .react-datepicker-wrapper {
+    width: 100%;
+}
+
+.modal-datepicker-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    transition: all 0.2s;
+}
+
+.modal-datepicker-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background-color: #fff;
+}
+
+.react-datepicker {
+    border: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+    overflow: hidden;
+}
+
+.react-datepicker__header {
+    background-color: #fff !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+.react-datepicker__day--selected {
+    background-color: #4CAF50 !important;
+    border-radius: 50% !important;
+}
+
+.react-datepicker-popper {
+    z-index: 1000 !important;
+}
+
+.ble-group {
+    margin-top: 5px; 
+}
+
+.ble-connect-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #f0f4ff; 
+    border: 1px dashed #0082FC; 
+    border-radius: 8px;
+    color: #0082FC;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.ble-connect-btn:hover {
+    background-color: #e6eeff;
+    border-style: solid;
+}
+
+.ble-status-badge.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    border: 1px solid #c8e6c9;
+}

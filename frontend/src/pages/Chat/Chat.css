@@ -177,7 +177,7 @@
 
 .chat-header-toolbar {
   position: absolute;
-  top: 10px;
+  top: 20px;
   left: 10px;
   z-index: 10;
 }
@@ -205,8 +205,8 @@
 
 .chat-view {
   flex: 1;
-  overflow-y: auto;
-  padding-top: 40px;
+  overflow: hidden;
+  padding-top: 0;
   position: relative;
 }
 
@@ -272,7 +272,7 @@
 }
 
 .bottom-spacer {
-  height: 160px;
+  height: 100px;
   flex-shrink: 0;
 }
 
@@ -282,20 +282,20 @@
   left: 0;
   width: 100%;
   background: linear-gradient(to top, #f8f9fa 85%, rgba(248, 249, 250, 0));
-  padding-bottom: 20px;
-  padding-top: 20px;
+  padding-bottom: 0;
+  padding-top: 5px;
   z-index: 10;
 }
 
 .input-box {
   background-color: white;
-  border: 1px solid #e0e0e0;
+  border: none !important;
   border-radius: 20px;
-  padding: 10px;
+  padding: 10px 15px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
   transition: box-shadow 0.3s ease;
   border-color: #e0e0e0;
 }
@@ -396,12 +396,14 @@
 .send-btn {
   background: none;
   border: none;
+  border-radius: 50%;
   font-size: 1.2rem;
   cursor: pointer;
   color: #2e7d32;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 6px 3px 0 0;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
@@ -423,8 +425,8 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
-    margin-top: 60px;
+    padding: 60px 0 20px 0;
+    margin-top: 0;
     gap: 20px;
     overflow-y: auto;
     -ms-overflow-style: none;
@@ -450,20 +452,6 @@
 
 .message-row.ai {
     align-self: flex-start;
-}
-
-.message-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-    border: 1px solid #c8e6c9;
 }
 
 .message-avatar.user {

@@ -204,12 +204,94 @@
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.water-history-btn {
-    flex: 1;
-}
-
 .water-btn:active{
     transform: scale(0.98);
+}
+
+.water-history-btn {
+    flex: 1;
+    background-color: rgb(241, 238, 238);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(177, 174, 174, 0.1);
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.water-history-btn:active{
+    transform: scale(0.98);
+}
+
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.history-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto; 
+    padding-right: 8px; 
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+    background-color: #e0e0e0; 
+    border-radius: 10px;
+}
+
+.history-list::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.9rem;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item .status.auto { color: #26A69A; font-weight: 600; }
+.history-item .status.manual { color: #5c6bc0; font-weight: 600; }
+
+
+
+.history-card {
+    animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    display: flex;
+    flex-direction: column;
+    max-height: 550px; 
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.alert-box {
+    animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .alert-list {
@@ -231,6 +313,9 @@
     text-align: center;
     cursor: pointer;
     border: 1px solid #c8e6c9;
+    animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation-delay: 0.1s;
+    opacity: 0;
 }
 
 .tab-buttons {
@@ -305,6 +390,79 @@
 
 .chart-controls-container .tab-buttons {
     margin: 0;
+}
+
+.history-group {
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f9f9f9; 
+    overflow: hidden;
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    background-color: #f0f4f8; /* 살짝 푸른빛 도는 세련된 회색 */
+    transition: background-color 0.2s ease;
+    font-weight: 600;
+    color: #333;
+}
+
+.group-header:hover {
+    background-color: #e2e8f0;
+}
+
+.group-header.open {
+    background-color: #e2e8f0;
+    border-bottom: 1px solid #d1d5db;
+}
+
+.group-date {
+    
+    font-size: 0.95rem;
+}
+
+.group-arrow {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.group-content {
+    animation: fadeInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    padding: 0 16px;
+    background-color: #ffffff;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item .time {
+    color: #666;
+    font-weight: 500;
+}
+
+@keyframes fadeInUp {
+    from {
+    opacity: 0;
+    transform: translateY(15px); 
+    }
+    to {
+    opacity: 1;
+    transform: translateY(0); 
+    }
 }
 
 @media (max-width: 768px) {

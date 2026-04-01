@@ -1,5 +1,9 @@
 import React, { useState } from 'react'
 import './AddPlantModal.css';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { ko } from 'date-fns/locale';
+import { Bluetooth } from '../../hooks/Bluetooth';
 import { FaTimes, FaCamera } from 'react-icons/fa';
 import defaultImg from '../../assets/img/default.png';
 import { showAlert } from '../../app/alert';
@@ -10,11 +14,12 @@ function AddPlantModal({onClose, onSave}) {
     // 폼 입력값 상태 관리 (이름, 종, 등록일)
     const [nickname, setNickname] =useState('');
     const [species, setSpecies] = useState(''); 
-    const [date, setDate] = useState(''); 
+    const [date, setDate] = useState(new Date()); 
     
     // 이미지 업로드 관련 상태 (화면 표시용 미리보기 URL, 실제 전송용 파일 객체)
     const [preview, setPreview] = useState(defaultImg);
     const [file, setFile] = useState(null);
+    const [deviceId, setDeviceId] = useState(null);
 
     // 이미지 파일 선택 시 실행되는 핸들러
     const handleFileChange = (e) => {
@@ -34,6 +39,7 @@ function AddPlantModal({onClose, onSave}) {
         if(!nickname || !species || !date){
             return showAlert('warning', '정보 부족', '모든 정보를 입력해주세요.');
         }
+        const formattedDate = date.toISOString().split('T')[0];
 
     // 부모 컴포넌트의 저장 함수 호출 (데이터 전달)
     onSave(nickname, species, date, file);
@@ -80,18 +86,33 @@ function AddPlantModal({onClose, onSave}) {
                 </div>
 
                 <div className="modal-input-group">
-            <label>등록 날짜</label>
-            <input 
-              type="date" 
-              value={date} 
-              onChange={(e) => setDate(e.target.value)} 
-            />
-          </div>
-          <button type="submit" className="modal-submit-btn">등록하기</button>
+                    <label>등록 날짜</label>
+                    <div className="datepicker-container">
+                        <DatePicker
+                            selected={date}
+                            onChange={(selectedDate) => setDate(selectedDate)}
+                            locale={ko}
+                            dateFormat="yyyy.MM.dd"
+                            maxDate={new Date()}
+                            className="modal-datepicker-input"
+                            shouldCloseOnSelect={true}
+                        />
+                    </div>
+                </div>
+
+                <div className="modal-input-group ble-group">
+    <label>기기 연동</label>
+    <Bluetooth onConnectSuccess={(device) => {
+        console.log("연결된 기기 정보:", device);
+        // 여기서 필요하다면 setDeviceId(device.id) 등으로 상태를 저장하세요!
+    }} />
+</div>
+
+                <button type="submit" className="modal-submit-btn">등록하기</button>
             </form>
         </div>
     </div>
   );
 }
 
-export default AddPlantModal
+export default AddPlantModal;
