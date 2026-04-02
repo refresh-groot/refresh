@@ -24,5 +24,8 @@ router.delete('/withdraw', validator.Withdraw, controller.withdraw);
 
 router.get('/check', controller.check);
 router.get('/auth/kakao/callback', controller.kakaoLogin);
+router.get('/auth/google/callback', controller.googleLogin);
+router.get('/auth/naver/callback', controller.naverLogin);
+router.get('/auth/github/callback', controller.githubLogin);
 
 module.exports = router;
