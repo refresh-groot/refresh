@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Bottom.css';
-import { BsPersonFill, BsPeopleFill, BsGearFill, BsBoxArrowRight } from "react-icons/bs";
+import { MdHome, MdEco, MdGroup, MdSettings } from "react-icons/md";
 
 const Bottom = ({hidden}) => {
     const navigate = useNavigate();
@@ -9,10 +9,10 @@ const Bottom = ({hidden}) => {
     const location = useLocation();
 
     const NAV_ITEMS = [
-        {id: 'profile', label: '프로필', path: '/menu', icon: <BsPersonFill />},
-        {id: 'community', label: '커뮤니티', path: '/community', icon: <BsPeopleFill />},
-        {id: 'setting', label: '설정', path: '/setting', icon: <BsGearFill />},
-        {id: 'logout', label: '로그아웃', path: '/logout', icon: <BsBoxArrowRight/>}
+        {id: 'menu', label: '홈', path: '/menu', icon: <MdHome />},
+        {id: 'profile', label: '내 식물', path: '/profile', icon: <MdEco />},
+        {id: 'community', label: '커뮤니티', path: '/community', icon: <MdGroup />},
+        {id: 'setting', label: '설정', path: '/setting', icon: <MdSettings/>}
     ];
 
     const handleNavClick = (item) => {

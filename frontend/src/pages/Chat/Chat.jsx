@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios';
-import { FaPlus, FaHistory, FaPaperPlane, FaRobot, FaUser, FaTimes } from "react-icons/fa";
+import { FaPlus, FaHistory, FaPaperPlane, FaUser, FaTimes } from "react-icons/fa";
 import Typewriter from './Typewriter';
 
 /**
@@ -151,17 +151,17 @@ function Chat() {
 
       // 상대 경로를 절대 URL로 변환
       const absoluteUrls = imageUrls.map(url => {
-        // 이미 전체 URL이면 그대로
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-          return url;
-        }
-        // /uploads로 시작하면 baseURL 추가
-        if (url.startsWith('/uploads')) {
-          return `http://localhost:8080${url}`;
-        }
-        // 파일명만 있으면 전체 경로 추가
-        return `http://localhost:8080/uploads/${url}`;
-      });
+  // 이미 전체 URL이면 그대로 유지
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // [수정] 하드코딩된 주소를 지우고 상대 경로만 반환 (Vite Proxy 활용)
+  if (url.startsWith('/uploads')) {
+    return `${url}`; // [cite: 2097, 2099] 가이드 적용
+  }
+  // 파일명만 있는 경우
+  return `/uploads/${url}`;
+});
 
       convertedMessages.push({
         id: `user-${log.id}`,
@@ -343,20 +343,21 @@ function Chat() {
     
     // [추가] 서버에서 받은 실제 이미지 URL로 업데이트
     if (serverData.image_url && serverData.image_url.length > 0) {
-      const serverImageUrls = Array.isArray(serverData.image_url) 
-        ? serverData.image_url 
-        : [serverData.image_url];
-      
-      const absoluteUrls = serverImageUrls.map(url => {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-          return url;
-        }
-        if (url.startsWith('/uploads')) {
-          return `http://localhost:8080${url}`;
-        }
-        return `http://localhost:8080/uploads/${url}`;
-      });
-
+  const serverImageUrls = Array.isArray(serverData.image_url) 
+    ? serverData.image_url 
+    : [serverData.image_url];
+  
+  const absoluteUrls = serverImageUrls.map(url => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // [수정] 상대 경로 방식으로 변경
+    if (url.startsWith('/uploads')) {
+      return `${url}`;
+    }
+    return `/uploads/${url}`;
+  });
+  
       // 사용자 메시지의 Blob URL을 서버 URL로 교체
       setMessages((prev) => prev.map(msg => 
         msg.id === tempMessageId 
@@ -466,7 +467,7 @@ function Chat() {
               {messages.map((msg) => (
                 <div key={msg.id} className={`message-row ${msg.sender}`}>
                   {msg.sender === 'ai' && (
-                    <div className="message-avatar"><FaRobot /></div>
+                    <div className="message-avatar"></div>
                   )}
 
                   <div className="message-bubble">
@@ -505,7 +506,7 @@ function Chat() {
 
               {isLoading && (
                 <div className="message-row ai">
-                  <div className="message-avatar"><FaRobot /></div>
+                  <div className="message-avatar"></div>
                   <div className="message-bubble loading">
                     <div className="dot-flashing"></div>
                   </div>
@@ -521,7 +522,6 @@ function Chat() {
       <div className="input-section">
         <div className="content-width">
           <div className="input-box">
-            {/* [수정] 여러 이미지 미리보기 영역 */}
             {selectImage.length > 0 && (
               <div className="multi-image-preview-area">
                 {selectImage.map((img, index) => (
@@ -540,7 +540,7 @@ function Chat() {
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 onChange={handleImageSelect}
-                multiple // [수정] 다중 선택 허용
+                multiple 
               />
 
               <button className='icon-btn' onClick={() => fileInputRef.current.click()}>

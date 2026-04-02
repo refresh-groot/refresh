@@ -18,7 +18,7 @@ class User extends Sequelize.Model {
         },
         password: {
           type: Sequelize.STRING(255), 
-          allowNull: true,
+          allowNull: false,
           comment: '암호화된 비밀번호',
         },
         nickname: {
@@ -70,13 +70,12 @@ class User extends Sequelize.Model {
   }
   
   static associate(db) {
-    // User는 여러 Plant를 가질 수 있다 (1:N)
     db.User.hasMany(db.Plant, { 
       foreignKey: 'user_id', //  Plant.js와 똑같이 'user_id'로
       sourceKey: 'id',
       // 연쇄 삭제 설정 (Cascade)
       onDelete: 'CASCADE', // DB에서 유저 삭제 시 식물 데이터 자동 삭제
-      hooks: true          // Sequelize 메모리 상에서도 연관 관계 정리
+      hooks: true
     });
   }
 }

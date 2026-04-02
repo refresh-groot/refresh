@@ -187,7 +187,7 @@ function Profile() {
       {/* 필터 탭 메뉴 */}
       <div className="profile-tab-menu">
         <button className={currentTab === 'all' ?  'active' : ''}
-        onClick={() => setCurrentTab('all')}>모두</button>
+        onClick={() => setCurrentTab('all')}>전체</button>
       <button className={currentTab === 'alive' ? 'active' : ''}
       onClick={() => setCurrentTab('alive')}>생존</button>
       <button className={currentTab === 'dead' ? 'active' : ''}
@@ -219,7 +219,7 @@ function Profile() {
         <div className="item-img-box">
           {/* 백엔드 서버 주소를 포함하여 이미지 경로 설정 */}
           <img
-            src={`http://localhost:8080${plant.photo_url}`}
+            src={`${plant.photo_url}`}
             alt={plant.species}
           />
         </div>

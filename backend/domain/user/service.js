@@ -117,7 +117,7 @@ module.exports = {
   // 12. 카카오 로그인
   kakaoLogin: async (code) => {
     const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; 
-    const KAKAO_REDIRECT_URI = 'http://localhost:8080/api/user/auth/kakao/callback';
+    const KAKAO_REDIRECT_URI = 'http://223.130.157.123:8080/api/user/auth/kakao/callback';
 
     const tokenResponse = await axios.post(
       'https://kauth.kakao.com/oauth/token',
@@ -146,7 +146,7 @@ module.exports = {
   googleLogin: async (code) => {
     const GOOGLE_CLIENT_ID = '구글_클라이언트_ID_입력';
     const GOOGLE_CLIENT_SECRET = '구글_클라이언트_비밀번호_입력';
-    const GOOGLE_REDIRECT_URI = 'http://localhost:8080/api/user/auth/google/callback';
+    const GOOGLE_REDIRECT_URI = 'http://223.130.157.123:8080/api/user/auth/google/callback';
 
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
       client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, code, grant_type: 'authorization_code', redirect_uri: GOOGLE_REDIRECT_URI

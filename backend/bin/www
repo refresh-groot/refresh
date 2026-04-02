@@ -24,6 +24,8 @@ app.set('port', port); // 애플리케이션 내부 설정에 포트 등록
  */
 const server = http.createServer(app); // 익스프레스 로직 포함 서버 생성
 
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`SmartPlant 서버가 ${port}번 포트에서 가동 중입니다.`);
+  console.log(`로컬 접속: http://localhost:${port}`);
+  console.log(`외부 접속: http://192.168.0.8:${port}`); // 본인 IP 확인용
 });

@@ -202,10 +202,10 @@ module.exports = {
       const user = await service.kakaoLogin(code);
 
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://localhost:5173/'));
+      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
     } catch (error) {
       console.error('❌ 카카오 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://localhost:5173/login?error=kakao_failed');
+      return res.redirect('http://223.130.157.123:5173/login?error=kakao_failed');
     }
   },
 
@@ -216,10 +216,10 @@ module.exports = {
       const user = await service.googleLogin(code);
 
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://localhost:5173/'));
+      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
     } catch (error) {
       console.error('❌ 구글 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://localhost:5173/login?error=google_failed');
+      return res.redirect('http://223.130.157.123:5173/login?error=google_failed');
     }
   },
 
@@ -230,10 +230,10 @@ module.exports = {
       const user = await service.naverLogin(code, state);
 
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://localhost:5173/'));
+      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
     } catch (error) {
       console.error('❌ 네이버 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://localhost:5173/login?error=naver_failed');
+      return res.redirect('http://223.130.157.123:5173/login?error=naver_failed');
     }
   },
 
@@ -244,10 +244,10 @@ module.exports = {
       const user = await service.githubLogin(code);
 
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://localhost:5173/'));
+      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
     } catch (error) {
       console.error('❌ 깃허브 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://localhost:5173/login?error=github_failed');
+      return res.redirect('http://223.130.157.123:5173/login?error=github_failed');
     }
   }
 };

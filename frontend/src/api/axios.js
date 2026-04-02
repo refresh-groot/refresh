@@ -2,12 +2,10 @@ import axios from 'axios';
 import { SERVER_URL } from '../app/constants';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',   
-  
-  withCredentials: true, // 세션 쿠키
-
-  
-  timeout: 30000, // 30초
+  // [수정] 하드코딩된 localhost 주소를 constants에서 가져온 변수로 교체
+  baseURL: SERVER_URL, 
+  withCredentials: true, // 세션 쿠키 필수
+  timeout: 30000 // 30초
 });
 
 export default api;

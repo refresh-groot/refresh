@@ -67,8 +67,12 @@ class DiagnosisLog extends Sequelize.Model {
   }
 
   static associate(db) {
-    db.DiagnosisLog.belongsTo(db.Plant, { foreignKey: 'plant_id', targetKey: 'id' });
-  }
+  db.DiagnosisLog.belongsTo(db.Plant, { 
+    foreignKey: 'plant_id', 
+    targetKey: 'id',
+    onDelete: 'CASCADE'
+  });
+}
 }
 
 module.exports = DiagnosisLog;

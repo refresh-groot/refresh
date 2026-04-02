@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { SERVER_URL } from '../app/constants';
 // 기본 메뉴화면 카드 4개 관리
 export const useSensorData = (plantId, intervalTime = 600000) => {
 const [sensorData, setSensorData] = useState({
@@ -16,7 +17,7 @@ const fetchData = async () => {
         return;
     }
     try {
-        const response = await axios.get(`http://223.130.157.123:8080/api/environment-log/${plantId}`);
+        const response = await axios.get(`${SERVER_URL}/api/environment-log/${plantId}`);
         const serverData = Array.isArray(response.data) ? response.data[0] : response.data;
 
     const newData = ({
