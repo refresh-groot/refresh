@@ -28,9 +28,7 @@ module.exports = {
 
   // 3. 이메일 인증 번호 발송 
   sendEmailCode: async (email) => {
-    // 바로 인증번호 생성 및 발송
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-
     verificationCodes[email] = code;
     console.log(`[메일발송] ${email} -> 번호: ${code}`); 
 
@@ -46,14 +44,8 @@ module.exports = {
   // 4. 이메일 인증 번호 검증 
   verifyEmailCode: async (email, code) => {
     const savedCode = verificationCodes[email];
-
-    if (!savedCode) {
-      throw new Error('인증 번호가 만료되었거나 요청하지 않았습니다.');
-    }
-
-    if (savedCode !== code) {
-      throw new Error('인증 번호가 일치하지 않습니다.');
-    }
+    if (!savedCode) throw new Error('인증 번호가 만료되었거나 요청하지 않았습니다.');
+    if (savedCode !== code) throw new Error('인증 번호가 일치하지 않습니다.');
 
     delete verificationCodes[email];
     return { verified: true };
@@ -61,18 +53,14 @@ module.exports = {
 
   // 5. 회원가입 
   signup: async ({ loginId, password, email, nickname }) => {
-    // (1) 아이디 중복 체크 
     const existingId = await repository.findByLoginId(loginId);
     if (existingId) throw new Error('이미 존재하는 아이디입니다.');
 
-    // (2) 닉네임 중복 체크 
     const existingNickname = await repository.findByNickname(nickname);
     if (existingNickname) throw new Error('이미 존재하는 닉네임입니다.');
 
-    // (3) 비밀번호 암호화
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // (4) DB 저장 (같은 이메일이어도 아이디만 다르면 저장됨)
     const newUser = await repository.createUser({
       loginId,
       password: hashedPassword,
@@ -81,47 +69,32 @@ module.exports = {
     });
     return newUser;
   },
-  // 6. 로그인 (중요: signup 함수 밖에 독립적으로 있어야 함)
+
+  // 6. 로그인 
   login: async (loginId, password) => {
     const user = await repository.findByLoginId(loginId);
-  
-    if (!user) {
-      throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
-    }
+    if (!user) throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
-    }
+    if (!isMatch) throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
 
-    return {
-      id: user.id,
-      loginId: user.loginId,
-      nickname: user.nickname,
-      email: user.email
-    };
+    return { id: user.id, loginId: user.loginId, nickname: user.nickname, email: user.email };
   },
-// 7. ID로 사용자 정보 조회 (세션 검증용)
+
+  // 7. ID로 사용자 정보 조회
   getUserById: async (id) => {
-    // repository의 findById 기능을 사용하여 DB에 해당 ID가 있는지 확인
     return await repository.findById(id); 
   },
+
   // 8. 프로필 조회 서비스
   getProfile: async (id) => {
     const user = await repository.findById(id);
     if (!user) throw new Error('유저를 찾을 수 없습니다.');
-    // 필요한 정보만 리턴
-    return { 
-      nickname: user.nickname, 
-      email: user.email, 
-      bio: user.bio,
-      isAlertOn: user.is_alert_on 
-    };
+    return { nickname: user.nickname, email: user.email, bio: user.bio, isAlertOn: user.is_alert_on };
   },
   
   // 9. 프로필 수정 서비스
   updateProfile: async (id, bio) => {
-    // repository에 update 기능이 없으므로 User 모델 직접 사용
     await User.update({ bio }, { where: { id } });
   },
 
@@ -132,67 +105,129 @@ module.exports = {
 
   // 11. 회원 탈퇴 서비스
   withdraw: async (id, password) => {
-    // (1) 유저 찾기
     const user = await repository.findById(id);
     if (!user) throw new Error('유저를 찾을 수 없습니다.');
 
-    // (2) 비밀번호 검증
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
 
-    // (3) 삭제 (Hard Delete + Cascade)
     await User.destroy({ where: { id } });
   },
 
-  // 12. 카카오 소셜 로그인 비즈니스 로직
+  // 12. 카카오 로그인
   kakaoLogin: async (code) => {
-    const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; // REST API 키 입력
+    const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; 
     const KAKAO_REDIRECT_URI = 'http://localhost:8080/api/user/auth/kakao/callback';
 
-    // 카카오 서버로 토큰 요청
     const tokenResponse = await axios.post(
       'https://kauth.kakao.com/oauth/token',
-      {
-        grant_type: 'authorization_code',
-        client_id: KAKAO_CLIENT_ID,
-        redirect_uri: KAKAO_REDIRECT_URI,
-        code: code,
-      },
+      { grant_type: 'authorization_code', client_id: KAKAO_CLIENT_ID, redirect_uri: KAKAO_REDIRECT_URI, code: code },
       { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
     );
 
-    const kakaoToken = tokenResponse.data.access_token;
-
-    // 카카오 유저 정보 요청
     const userInfoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
-      headers: {
-        Authorization: `Bearer ${kakaoToken}`,
-        'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-      },
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}`, 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
     });
 
     const userInfo = userInfoResponse.data;
     const snsId = userInfo.id.toString(); 
     const nickname = userInfo.kakao_account.profile.nickname;
-    
-    // DB 제약조건에 맞게 가짜 이메일/아이디 생성
     const email = userInfo.kakao_account.email || `${snsId}@kakao.com`; 
     const loginId = `kakao_${snsId}`; 
 
-    // DB 조회 (Repository 사용)
     let user = await repository.findBySnsIdAndProvider(snsId, 'kakao');
-
-    // 강제 회원가입 (Repository 사용)
     if (!user) {
-      user = await repository.createSocialUser({
-        loginId,
-        email,
-        nickname,
-        provider: 'kakao',
-        snsId
-      });
+      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'kakao', snsId });
     }
-    // 컨트롤러에게 완성된 유저 정보만 딱 넘겨줌
     return user; 
+  },
+
+  // 13. 구글 로그인
+  googleLogin: async (code) => {
+    const GOOGLE_CLIENT_ID = '구글_클라이언트_ID_입력';
+    const GOOGLE_CLIENT_SECRET = '구글_클라이언트_비밀번호_입력';
+    const GOOGLE_REDIRECT_URI = 'http://localhost:8080/api/user/auth/google/callback';
+
+    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
+      client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, code, grant_type: 'authorization_code', redirect_uri: GOOGLE_REDIRECT_URI
+    });
+
+    const userInfoResponse = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
+    });
+
+    const userInfo = userInfoResponse.data;
+    const snsId = userInfo.id.toString();
+    const email = userInfo.email;
+    const nickname = userInfo.name || `구글_${snsId.substring(0, 5)}`;
+    const loginId = `google_${snsId}`;
+
+    let user = await repository.findBySnsIdAndProvider(snsId, 'google');
+    if (!user) {
+      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'google', snsId });
+    }
+    return user;
+  },
+
+  // 14. 네이버 로그인
+  naverLogin: async (code, state) => {
+    const NAVER_CLIENT_ID = '네이버_클라이언트_ID_입력';
+    const NAVER_CLIENT_SECRET = '네이버_클라이언트_비밀번호_입력';
+
+    const tokenUrl = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_CLIENT_SECRET}&code=${code}&state=${state}`;
+    const tokenResponse = await axios.get(tokenUrl);
+
+    const userInfoResponse = await axios.get('https://openapi.naver.com/v1/nid/me', {
+      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
+    });
+
+    const userInfo = userInfoResponse.data.response;
+    const snsId = userInfo.id.toString();
+    const email = userInfo.email;
+    const nickname = userInfo.nickname || `네이버_${snsId.substring(0, 5)}`;
+    const loginId = `naver_${snsId}`;
+
+    let user = await repository.findBySnsIdAndProvider(snsId, 'naver');
+    if (!user) {
+      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'naver', snsId });
+    }
+    return user;
+  },
+
+  // 15. 깃허브 로그인
+  githubLogin: async (code) => {
+    const GITHUB_CLIENT_ID = '깃허브_클라이언트_ID_입력';
+    const GITHUB_CLIENT_SECRET = '깃허브_클라이언트_비밀번호_입력';
+
+    const tokenResponse = await axios.post('https://github.com/login/oauth/access_token', {
+      client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code
+    }, { headers: { Accept: 'application/json' } });
+
+    const accessToken = tokenResponse.data.access_token;
+
+    const userInfoResponse = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const userInfo = userInfoResponse.data;
+    const snsId = userInfo.id.toString();
+    const nickname = userInfo.login || `깃허브_${snsId.substring(0, 5)}`;
+    const loginId = `github_${snsId}`;
+
+    // 깃허브 이메일 비공개 방어 로직
+    let email = userInfo.email;
+    if (!email) {
+      const emailResponse = await axios.get('https://api.github.com/user/emails', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const primaryEmail = emailResponse.data.find(e => e.primary);
+      email = primaryEmail ? primaryEmail.email : `${snsId}@github.com`;
+    }
+
+    let user = await repository.findBySnsIdAndProvider(snsId, 'github');
+    if (!user) {
+      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'github', snsId });
+    }
+    return user;
   }
 };

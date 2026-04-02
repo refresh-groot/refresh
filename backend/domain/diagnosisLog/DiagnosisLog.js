@@ -10,7 +10,7 @@ class DiagnosisLog extends Sequelize.Model {
           autoIncrement: true,
           allowNull: false,
         },
-        // ▼ [추가] 세션 ID (채팅방 번호)
+        //  세션 ID (채팅방 번호)
         session_id: {
             type: Sequelize.STRING(100),
             allowNull: true, // 기존 데이터 호환을 위해 true (나중에 필수로 변경 가능)

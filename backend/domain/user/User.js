@@ -47,7 +47,7 @@ class User extends Sequelize.Model {
         provider: {
           type: Sequelize.STRING(50),
           allowNull: false,
-          defaultValue: 'local', // 일반가입은 local, 소셜은 kakao
+          defaultValue: 'local', // 일반가입은 local, 소셜은 kakao, google, naver, github
           comment: '가입 경로',
         },
         sns_id: {
@@ -69,11 +69,10 @@ class User extends Sequelize.Model {
     );
   }
   
-
   static associate(db) {
     // User는 여러 Plant를 가질 수 있다 (1:N)
     db.User.hasMany(db.Plant, { 
-      foreignKey: 'userId', 
+      foreignKey: 'user_id', //  Plant.js와 똑같이 'user_id'로
       sourceKey: 'id',
       // 연쇄 삭제 설정 (Cascade)
       onDelete: 'CASCADE', // DB에서 유저 삭제 시 식물 데이터 자동 삭제

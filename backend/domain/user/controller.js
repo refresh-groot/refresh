@@ -195,23 +195,59 @@ module.exports = {
     }
   },
 
-  // 12. 카카오 로그인
+// 12. 카카오 로그인
   kakaoLogin: async (req, res) => {
     try {
-      const { code } = req.query; // 요청(URL)에서 코드만 쏙 뽑음
+      const { code } = req.query; 
       const user = await service.kakaoLogin(code);
 
-      // 리턴받은 user 정보로 세션 저장
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-
-      req.session.save(() => {
-        // 성공 시 메인화면으로 리다이렉트
-        return res.redirect('http://localhost:5173/');
-      });
-
+      req.session.save(() => res.redirect('http://localhost:5173/'));
     } catch (error) {
       console.error('❌ 카카오 로그인 에러:', error.response?.data || error.message);
       return res.redirect('http://localhost:5173/login?error=kakao_failed');
+    }
+  },
+
+  // 13. 구글 로그인 컨트롤러
+  googleLogin: async (req, res) => {
+    try {
+      const { code } = req.query; 
+      const user = await service.googleLogin(code);
+
+      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
+      req.session.save(() => res.redirect('http://localhost:5173/'));
+    } catch (error) {
+      console.error('❌ 구글 로그인 에러:', error.response?.data || error.message);
+      return res.redirect('http://localhost:5173/login?error=google_failed');
+    }
+  },
+
+  // 14. 네이버 로그인 컨트롤러
+  naverLogin: async (req, res) => {
+    try {
+      const { code, state } = req.query; // 네이버는 state 값도 같이 옵니다
+      const user = await service.naverLogin(code, state);
+
+      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
+      req.session.save(() => res.redirect('http://localhost:5173/'));
+    } catch (error) {
+      console.error('❌ 네이버 로그인 에러:', error.response?.data || error.message);
+      return res.redirect('http://localhost:5173/login?error=naver_failed');
+    }
+  },
+
+  // 15. 깃허브 로그인 컨트롤러
+  githubLogin: async (req, res) => {
+    try {
+      const { code } = req.query; 
+      const user = await service.githubLogin(code);
+
+      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
+      req.session.save(() => res.redirect('http://localhost:5173/'));
+    } catch (error) {
+      console.error('❌ 깃허브 로그인 에러:', error.response?.data || error.message);
+      return res.redirect('http://localhost:5173/login?error=github_failed');
     }
   }
 };
