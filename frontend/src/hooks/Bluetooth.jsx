@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaBluetooth } from 'react-icons/fa';
+import { showToast } from '../app/alert';
 
 export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
   const [connectedDevice, setConnectedDevice] = useState(null);
@@ -19,16 +20,27 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
 
   const connectBluetooth = async () => {
     setIsConnecting(true);
+    console.log("--- 블루투스 연동 시작 ---");
     try {
-      if (!navigator.bluetooth) throw new Error("NOT_SUPPORTED");
+      if (!navigator.bluetooth){ 
+        console.error("결과: 이 브라우저는 블루투스를 지원하지 않음");
+        throw new Error("NOT_SUPPORTED");
+      }
 
       // 1. 기기 요청 (이름 접두사로 필터링)
+      console.log("단계: 기기 선택 팝업 대기 중...");
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: "ESP32_PUMP" }],  // "ESP32_PUMP"로 시작하는 모든 기기 검색 할수있도록(1) (2)처럼 여러개  받아오기 위한거
         optionalServices: [SERVICE_UUID]
       });
 
+      console.log("성공: 기기 선택 완료 ->", {
+      name: device.name,
+      id: device.id
+    });
+
       // 2. GATT 서버 연결
+      console.log("단계: GATT 서버 연결 시도...");
       const server = await device.gatt.connect();
       
       // 3. 서비스 가져오기
@@ -55,6 +67,7 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
         if (onMessageReceived) onMessageReceived(receivedText);
       });
 
+      console.log("성공: GATT 서버 연결 완료! 상태:", device.gatt.connected);
       device.addEventListener('gattserverdisconnected', handleDisconnect);
       
       setConnectedDevice(device);
@@ -67,13 +80,16 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
           deviceName: device.name 
         });
       }
+      showToast('success', '블루투스 연동 성공!');
       
     } catch (error) {
       if (error.name === 'NotFoundError') return;
+      console.warn("결과: 사용자가 기기 선택을 취소함");
       alert(error.message === "NOT_SUPPORTED" ? "블루투스 미지원 브라우저입니다." : "연결 오류가 발생했습니다.");
       console.error(error);
     } finally {
       setIsConnecting(false);
+      console.log("--- 블루투스 프로세스 종료 ---");
     }
   };
 

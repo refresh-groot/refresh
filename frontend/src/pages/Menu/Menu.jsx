@@ -36,7 +36,8 @@ function Menu() {
           const NewChartData = {soil: [], temp: [], humid: [], light: []};
 
           recentLogs.forEach(log => {
-            NewChartData.soil.push(log.moisture_level || 0);
+            const rawMoisture = log.moisture_level ?? 0;
+            NewChartData.soil.push(Math.round(Math.max(0, Math.min(100, rawMoisture / 40.95))));
             NewChartData.temp.push(log.temperature || 0);
             NewChartData.light.push(log.light_level || 0);
             NewChartData.humid.push(50);

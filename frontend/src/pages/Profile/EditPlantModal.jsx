@@ -39,7 +39,7 @@ function EditPlantModal({ plant, onClose, onSaved }) {
     <div className="modal-overlay" onClick={onClose}>
       {/* 모달 내부 컨텐츠 클릭 시에는 닫기 이벤트(onClick)가 상위로 전파되지 않도록 방지 */}
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h3>🪦 식물 사망 처리</h3>
+        <h3>식물 상태 수정</h3>
         
         {/* 수정 대상 식물의 이름과 종 정보 표시 */}
         <p className="plant-name-display">
