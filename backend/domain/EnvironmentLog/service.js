@@ -71,6 +71,41 @@ module.exports = {
         return savedLog;
     },
 
+    // [신규 추가] 주간 차트용 통계 데이터 및 기준값 가져오기
+    getWeeklyChartData: async (plantId) => {
+        // 1. 레포지토리에서 최근 7일치 데이터와 에러 목록 가져오기
+        const stats = await repository.getWeeklyStats(plantId);
+        const errorLogs = await repository.getWeeklyErrors(plantId);
+        
+        // 2. 해당 식물의 기준값(차트의 빨간 점선) 조회
+        const plant = await Plant.findOne({
+            where: { id: plantId },
+            include: [{ model: SpeciesInfo, as: 'guide' }]
+        });
+
+        // [추가] 날짜별로 에러 메시지 그룹화
+        const errorMap = {};
+        errorLogs.forEach(err => {
+            if (!errorMap[err.date]) errorMap[err.date] = [];
+            errorMap[err.date].push(err.message);
+        });
+
+        // 3. 프론트엔드의 labels와 dataList에 바로 사용할 수 있도록 가공하여 반환
+        return {
+            dateLabels: stats.map(s => s.date), 
+            moistureData: stats.map(s => Math.round(s.avg_moisture)), 
+            tempData: stats.map(s => parseFloat(s.avg_temp.toFixed(1))),
+            lightData: stats.map(s => Math.round(s.avg_light)),
+            // 날짜별 에러 목록 배열
+            dailyErrors: stats.map(s => errorMap[s.date] || []),
+            thresholds: { 
+                moisture: plant?.guide?.min_moisture ?? 30,
+                temp: plant?.guide?.max_temp ?? 35,
+                light: plant?.guide?.min_light ?? 100
+            }
+        };
+    },
+
     // 특정 식물의 환경 이력 가져오기
     getEnvHistory: async (plantId) => {
         return await repository.findAllByPlantId(plantId);
