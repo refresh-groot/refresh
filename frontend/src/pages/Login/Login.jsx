@@ -212,7 +212,7 @@ function Login() {
           const nickname = userData.nickname || '사용자';
           
           // 알림창 확인 버튼을 누르면 그때 프로필로 이동
-          await showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`);
+          await showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`, 1500);
           navigate('/profile'); 
           
         } else {
@@ -255,7 +255,7 @@ function Login() {
         await signupApi(signupData);
 
         // 회원가입 성공 시 로그인 탭으로 자동 전환
-        await showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.');
+        await showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.', 1000);
         handleTabChange('signin');
 
       } catch (err) {

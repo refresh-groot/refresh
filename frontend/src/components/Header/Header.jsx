@@ -20,7 +20,7 @@ const closeMenu = () => {
 
 
 const handleLogout = () =>{
-  showAlert('success', '성공', '로그아웃에 성공했습니다.');
+  showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
   logout();
   navigate('/login');
 }

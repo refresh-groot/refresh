@@ -1,11 +1,14 @@
 import { MAIN_COLOR } from './constants';
 import Swal from 'sweetalert2';
 
-export const showAlert = (icon, title, text) => {
+export const showAlert = (icon, title, text, timer) => {
   return Swal.fire({
     icon: icon, // 'success', 'error', 'warning', 'info'
     title: title,
     text: text,
+    timer: timer,
+    timerProgressBar: timer ? true : false,
+    showConfirmButton: timer ? true : false,
     confirmButtonColor: MAIN_COLOR,
   });
 };
