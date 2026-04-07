@@ -79,25 +79,49 @@ module.exports = {
         
         // 2. 해당 식물의 기준값(차트의 빨간 점선) 조회
         const plant = await Plant.findOne({
-            where: { id: plantId },
+            where: { id: plant_id },
             include: [{ model: SpeciesInfo, as: 'guide' }]
         });
 
-        // 날짜별로 에러 메시지 그룹화
+        // 날짜별 데이터 매핑을 위한 Map 생성 (빠른 조회를 위함)
+        const statMap = {};
+        stats.forEach(s => { statMap[s.date] = s; });
+
         const errorMap = {};
         errorLogs.forEach(err => {
             if (!errorMap[err.date]) errorMap[err.date] = [];
             errorMap[err.date].push(err.message);
         });
 
-        // 3. 프론트엔드의 labels와 dataList에 바로 사용할 수 있도록 가공하여 반환
-        // [수정] s.avg_temp가 null인 경우를 대비해 예외 처리 추가
+        // 3. 최근 7일 날짜를 생성하며 데이터가 없는 날은 0 또는 빈 배열로 채우기
+        const finalLabels = [];
+        const finalMoisture = [];
+        const finalTemp = [];
+        const finalLight = [];
+        const finalErrors = [];
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD 형식 추출
+
+            finalLabels.push(dateStr); // 차트 라벨 추가
+
+            const dayData = statMap[dateStr];
+            // 데이터가 존재하면 사용하고, 없으면 0(또는 null)으로 채움
+            finalMoisture.push(dayData ? Math.round(dayData.avg_moisture || 0) : 0);
+            finalTemp.push(dayData && dayData.avg_temp ? parseFloat(Number(dayData.avg_temp).toFixed(1)) : 0);
+            finalLight.push(dayData ? Math.round(dayData.avg_light || 0) : 0);
+            finalErrors.push(errorMap[dateStr] || []);
+        }
+
+        // 4. 프론트엔드의 labels와 dataList에 바로 사용할 수 있도록 가공하여 반환
         return {
-            dateLabels: stats.map(s => s.date),
-            moistureData: stats.map(s => Math.round(s.avg_moisture || 0)),
-            tempData: stats.map(s => s.avg_temp ? parseFloat(Number(s.avg_temp).toFixed(1)) : 0),
-            lightData: stats.map(s => Math.round(s.avg_light || 0)),
-            dailyErrors: stats.map(s => errorMap[s.date] || []),
+            dateLabels: finalLabels,
+            moistureData: finalMoisture,
+            tempData: finalTemp,
+            lightData: finalLight,
+            dailyErrors: finalErrors,
             thresholds: {
                 moisture: plant?.guide?.min_moisture ?? 30,
                 temp: plant?.guide?.max_temp ?? 35,
