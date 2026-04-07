@@ -79,18 +79,22 @@ module.exports = {
         
         // 2. 해당 식물의 기준값(차트의 빨간 점선) 조회
         const plant = await Plant.findOne({
-            where: { id: plant_id },
+            where: { id: plantId }, // [수정] plant_id -> plantId 로 오타 수정
             include: [{ model: SpeciesInfo, as: 'guide' }]
         });
 
         // 날짜별 데이터 매핑을 위한 Map 생성 (빠른 조회를 위함)
         const statMap = {};
-        stats.forEach(s => { statMap[s.date] = s; });
+        stats.forEach(s => { 
+            const dStr = String(s.date); // DB 날짜를 문자열로 변환
+            statMap[dStr] = s; 
+        });
 
         const errorMap = {};
         errorLogs.forEach(err => {
-            if (!errorMap[err.date]) errorMap[err.date] = [];
-            errorMap[err.date].push(err.message);
+            const dStr = String(err.date);
+            if (!errorMap[dStr]) errorMap[dStr] = [];
+            errorMap[dStr].push(err.message);
         });
 
         // 3. 최근 7일 날짜를 생성하며 데이터가 없는 날은 0 또는 빈 배열로 채우기
@@ -103,16 +107,21 @@ module.exports = {
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD 형식 추출
+            
+            // [보완] 타임존 문제 없는 한국 날짜(YYYY-MM-DD) 생성
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${day}`;
 
-            finalLabels.push(dateStr); // 차트 라벨 추가
+            finalLabels.push(`${month}-${day}`); // 차트 라벨 (MM-DD)
 
-            const dayData = statMap[dateStr];
+            const dayData = statMap[dateKey];
             // 데이터가 존재하면 사용하고, 없으면 0(또는 null)으로 채움
             finalMoisture.push(dayData ? Math.round(dayData.avg_moisture || 0) : 0);
             finalTemp.push(dayData && dayData.avg_temp ? parseFloat(Number(dayData.avg_temp).toFixed(1)) : 0);
             finalLight.push(dayData ? Math.round(dayData.avg_light || 0) : 0);
-            finalErrors.push(errorMap[dateStr] || []);
+            finalErrors.push(errorMap[dateKey] || []);
         }
 
         // 4. 프론트엔드의 labels와 dataList에 바로 사용할 수 있도록 가공하여 반환
@@ -123,7 +132,7 @@ module.exports = {
             lightData: finalLight,
             dailyErrors: finalErrors,
             thresholds: {
-                moisture: plant?.guide?.min_moisture ?? 30,
+                moisture: plant?.guide?.min_moisture ?? 30, // [cite: 2]
                 temp: plant?.guide?.max_temp ?? 35,
                 light: plant?.guide?.min_light ?? 100
             }
