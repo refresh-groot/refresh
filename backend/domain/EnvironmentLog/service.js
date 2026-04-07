@@ -79,7 +79,7 @@ module.exports = {
         
         // 2. 해당 식물의 기준값(차트의 빨간 점선) 조회
         const plant = await Plant.findOne({
-            where: { id: plantId }, // [수정] plant_id -> plantId 로 오타 수정
+            where: { id: plantId }, 
             include: [{ model: SpeciesInfo, as: 'guide' }]
         });
 
@@ -114,7 +114,8 @@ module.exports = {
             const day = String(d.getDate()).padStart(2, '0');
             const dateKey = `${year}-${month}-${day}`;
 
-            finalLabels.push(`${month}-${day}`); // 차트 라벨 (MM-DD)
+            // [수정] 프론트엔드의 .slice(5)를 고려하여 YYYY-MM-DD 전체를 보냄
+            finalLabels.push(dateKey); // 예: "2026-04-08"
 
             const dayData = statMap[dateKey];
             // 데이터가 존재하면 사용하고, 없으면 0(또는 null)으로 채움
@@ -132,7 +133,7 @@ module.exports = {
             lightData: finalLight,
             dailyErrors: finalErrors,
             thresholds: {
-                moisture: plant?.guide?.min_moisture ?? 30, // [cite: 2]
+                moisture: plant?.guide?.min_moisture ?? 30, 
                 temp: plant?.guide?.max_temp ?? 35,
                 light: plant?.guide?.min_light ?? 100
             }
