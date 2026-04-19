@@ -27,18 +27,34 @@ def run_diagnosis(user_input, img_path):
     
     # 2. AI 호출
     with st.spinner("AI가 식물을 분석 중입니다..."):
-        # test.py의 함수가 (이미지, 질문, 히스토리)를 받도록 되어 있어야 함
-        response_text = get_plant_diagnosis(img_path, user_input, st.session_state.chat_history)
+        # ✨ [핵심 수정] 4번째 인자로 사이드바에서 적은 user_plant_species를 넘겨줍니다!
+        response_text = get_plant_diagnosis(
+            img_path, 
+            user_input, 
+            st.session_state.chat_history, 
+            user_plant_species  # <--- 이 녀석 추가!
+        )
         
         # 3. AI 답변 기록
         st.session_state.chat_history.append({"role": "model", "parts": [response_text]})
-
 # ==========================================
 # 1. 사이드바: 설정 및 사진 업로드
 # ==========================================
 with st.sidebar:
     st.header("⚙️ 설정")
     if st.button("🗑️ 대화 기록 초기화"):
+        st.session_state.chat_history = []
+        st.session_state.uploaded_img_path = None
+        st.rerun()
+
+    # [핵심 추가] AI에게 알려줄 식물 종 입력칸!
+    st.header("🌱 식물 정보")
+    user_plant_species = st.text_input("어떤 식물인가요?", value="알 수 없는 식물", help="예: 몬스테라, 다육이, 스투키")
+    st.markdown("---")
+
+with st.sidebar:
+    st.header("⚙️ 설정")
+    if st.button("🗑️ 대화 기록 초기화", key="reset_chat_btn"):
         st.session_state.chat_history = []
         st.session_state.uploaded_img_path = None
         st.rerun()
