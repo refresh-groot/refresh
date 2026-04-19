@@ -32,7 +32,7 @@ const requestAIAnalysis = async (file, question) => {
         console.log(`🚀 AI 서버(${pythonServerUrl})로 요청 보냄...`);
         const response = await axios.post(pythonServerUrl, formData, {
             headers: { ...formData.getHeaders() },
-            timeout: 10000 // AI 서버 응답 지연 시 10초 타임아웃
+            timeout: 30000 // AI 서버 응답 지연 시 30초 타임아웃
         });
 
         console.log("✅ AI 응답 도착:", response.data);
