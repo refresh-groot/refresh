@@ -17,43 +17,18 @@ function Menu() {
   const [activeTab, setActiveTab] = useState('soil');
   const [isReLoading, setIsReLoading] = useState(false);
 
-    const [chartData, setChartData] = useState({ // 기본 차트 데이터값 0으로 고정
-      soil: [0, 0, 0, 0, 0, 0, 0],               // 연동 후 차트에는 측정된 값이 보일 예정
-      temp: [0, 0, 0, 0, 0, 0, 0],
-      humid: [0, 0, 0, 0, 0, 0, 0],
-      light: [0, 0, 0, 0, 0, 0, 0],
-      });
+  const [statsData, setStatsData] = useState({});
 
-      const fetchChartData = async () => {
-        try {
-          const response = await fetch(`${SERVER_URL}/api/environment-log/${currentPlant.id}`);
-          if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
-
-          const data = await response.json();
-
-          const recentLogs = data.slice(-7);
-
-          const NewChartData = {soil: [], temp: [], humid: [], light: []};
-
-          recentLogs.forEach(log => {
-            NewChartData.soil.push(log.moisture_level || 0);
-            NewChartData.temp.push(log.temperature || 0);
-            NewChartData.light.push(log.light_level || 0);
-            NewChartData.humid.push(50);
-          });
-
-          while (NewChartData.soil.length <7) {
-            NewChartData.soil.unshift(0);
-            NewChartData.temp.unshift(0);
-            NewChartData.light.unshift(0);
-            NewChartData.humid.unshift(0);
-          }
-          setChartData(NewChartData);
-          console.log(NewChartData);
-        } catch (error) {
-          console.error('차트 연동 에러: ', error);
-        }
-      };
+const fetchChartData = async () => {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/environment-log/stats/${currentPlant.id}`);
+    if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
+    const data = await response.json();
+    setStatsData(data);
+  } catch (error) {
+    console.error('차트 연동 에러: ', error);
+  }
+};
 
   const [showHistory, setShowHistory] = useState(false);
 
@@ -76,12 +51,6 @@ function Menu() {
 
   // 자동 급수 모드 상태 (True: AI 자동 제어, False: 사용자 수동 제어)
   const [isAutoMode, setIsAutoMode] = useState(true);
-
-  // 알림 목록 상태 (추후 백엔드 연동 예정)
-  const [alerts] = useState([
-    { id: 1, type: 'warning', msg: '물통에 물이 부족합니다!' },
-    { id: 2, type: 'success', msg: '오전 09:00 급수 완료' },
-  ]);
 
   // 다른 페이지(목록 등)에서 넘겨받은 식물 데이터
   const receivedPlant = location.state?.plant;
@@ -286,7 +255,7 @@ function Menu() {
           <div className='chart-wrapper'>
             <PlantChart
             activeTab={activeTab}
-            dataList={chartData[activeTab]}
+            statsData={statsData}
             />
           </div>
         </div>
@@ -369,17 +338,18 @@ function Menu() {
           
         ) : (
           <>
-            {/* 알림 목록 영역 */}
-            <div className="card alert-box">
-              <h3>알림</h3>
-              <ul className="alert-list">
-                {alerts.map((alert) => (
-                  <li key={alert.id} className={`alert-item ${alert.type}`}>
-                    {alert.msg}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div className="card alert-box">
+        <h3>알림</h3>
+        <ul className="alert-list">
+          {statsData.dailyErrors && statsData.dailyErrors.length > 0 ? (
+          statsData.dailyErrors[statsData.dailyErrors.length - 1].map((msg, idx) => (
+        <li key={idx} className="alert-item warning">
+          {msg}
+        </li>
+      ))
+    ) : null}
+  </ul>
+</div>
 
             {/* AI 진단 페이지 이동 카드 */}
             <div className="card ai-diagnosis"

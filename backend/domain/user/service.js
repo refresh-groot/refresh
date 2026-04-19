@@ -116,8 +116,8 @@ module.exports = {
 
   // 12. 카카오 로그인
   kakaoLogin: async (code) => {
-    const KAKAO_CLIENT_ID = 'd1beca23f694938a7163a0e4629d6f4a'; 
-    const KAKAO_REDIRECT_URI = 'http://223.130.157.123:8080/api/user/auth/kakao/callback';
+    const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID; 
+    const KAKAO_REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
 
     const tokenResponse = await axios.post(
       'https://kauth.kakao.com/oauth/token',
@@ -144,9 +144,9 @@ module.exports = {
 
   // 13. 구글 로그인
   googleLogin: async (code) => {
-    const GOOGLE_CLIENT_ID = '903322860212-hpnv3iafvc82p19jk3res2thj8tdvsku.apps.googleusercontent.com';
-    const GOOGLE_CLIENT_SECRET = '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';
-    const GOOGLE_REDIRECT_URI = 'http://223.130.157.123.nip.io:8080/api/user/auth/google/callback';
+    const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+    const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+    const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
       client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, code, grant_type: 'authorization_code', redirect_uri: GOOGLE_REDIRECT_URI
@@ -171,8 +171,8 @@ module.exports = {
 
   // 14. 네이버 로그인
   naverLogin: async (code, state) => {
-    const NAVER_CLIENT_ID = 'HpGYrW8mOYQAinxcaFcR';
-    const NAVER_CLIENT_SECRET = 'Rxu6IM43bw';
+    const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID;
+    const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
 
     const tokenUrl = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${NAVER_CLIENT_ID}&client_secret=${NAVER_CLIENT_SECRET}&code=${code}&state=${state}`;
     const tokenResponse = await axios.get(tokenUrl);
@@ -196,8 +196,8 @@ module.exports = {
 
   // 15. 깃허브 로그인
   githubLogin: async (code) => {
-    const GITHUB_CLIENT_ID = 'Ov23lijQahA3wGcLU83z';
-    const GITHUB_CLIENT_SECRET = '85e9d6b22b861b13c39b03a3a258265b483494ab';
+    const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+    const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
     const tokenResponse = await axios.post('https://github.com/login/oauth/access_token', {
       client_id: GITHUB_CLIENT_ID, client_secret: GITHUB_CLIENT_SECRET, code

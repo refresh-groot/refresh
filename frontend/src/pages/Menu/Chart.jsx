@@ -35,28 +35,40 @@ const THEME = {
   light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 200},
 }
 
-function PlantChart({activeTab = 'soil', dataList = []}) {
+function PlantChart({ activeTab = 'soil', statsData = {} }) {
+
+  const {
+    dateLabels = [],
+    moistureData = [],
+    tempData = [],
+    lightData = [],
+    dailyErrors = [],
+    thresholds = {}
+  } = statsData;
+  
 
   const config = THEME[activeTab];
-  const labels = useMemo(() => {
-    return Array.from({ length: 7}, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return `${d.getMonth() + 1}/${d.getDate()}`;
-    });
-  }, []);
-  
+
+  const currentData = useMemo(() => {
+    if (activeTab === 'soil') return moistureData;
+    if (activeTab === 'temp') return tempData;
+    if (activeTab === 'light') return lightData;
+    return [];
+  }, [activeTab, moistureData, tempData, lightData]);
+
+  const currentLimit = thresholds[activeTab === 'soil' ? 'moisture' : activeTab] ?? config.limit;
+
   const data = useMemo(() => ({
-    labels: labels,
+    labels: dateLabels.map(label => label.slice(5)),
     datasets: [{
       label: config.label,
-      data: dataList,
+      data: currentData,
       borderColor: config.color,
       backgroundColor: config.color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
       tension: 0.4,
       fill: true,
     }]
-  }), [config, dataList, labels]);
+  }), [config, currentData, dateLabels]);
 
   const options = useMemo(() => ({
     responsive: true,
@@ -64,32 +76,48 @@ function PlantChart({activeTab = 'soil', dataList = []}) {
     layout: { padding: { right: 20 } },
     plugins: {
       legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterBody: (tooltipItems) => {
+            const index = tooltipItems[0].dataIndex;
+            const errors = dailyErrors[index];
+            if (errors && errors.length > 0) {
+              return ['', '⚠️ 에러 이력:', ...errors];
+            }
+            return [];
+          }
+        }
+      },
       annotation: {
         annotations: {
           limitLine: {
             type: 'line',
-            yMin: config.limit,
-            yMax: config.limit,
+            yMin: currentLimit,
+            yMax: currentLimit,
             borderColor: 'rgba(255, 0, 0, 0.5)',
             borderWidth: 2,
             borderDash: [5, 5],
-            label: { display: true, content: `주의 수치 (${config.limit})`, position: 'end' }
+            label: {
+              display: true,
+              content: `주의 수치 (${currentLimit})`,
+              position: 'end'
+            }
           }
         }
       }
     },
     scales: {
-      y: { 
+      y: {
         beginAtZero: true,
-        title: { display: true, text: config.unit } 
+        title: { display: true, text: config.unit }
       }
     }
-  }), [config]);
+  }), [config, currentLimit, dailyErrors]);
 
   return (
-<div className='Chart-canvas'>
-        <Line data={data} options={options} />
-      </div>
+    <div className='Chart-canvas'>
+      <Line data={data} options={options} />
+    </div>
   );
 }
 
