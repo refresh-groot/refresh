@@ -72,7 +72,7 @@ module.exports = {
     // 세션 객체에 유저 정보 할당
     req.session.user = user;
 
-    // [수정 중요!] 세션이 스토어에 완전히 저장된 후 응답을 보냅니다.
+    //  세션이 스토어에 완전히 저장된 후 응답을 보냅니다.
     req.session.save(() => {
       return res.status(200).json({
         message: '로그인 성공!',
