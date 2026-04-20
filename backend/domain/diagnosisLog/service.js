@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // AI 서버 통신 함수 
-const requestAIAnalysis = async (file, question) => {
+const requestAIAnalysis = async (file, question ,plantSpecies) => {
     try {
         // [방어 로직] 파일이나 질문 둘 중 하나는 있어야 통신
         if (!file && !question) {
@@ -27,12 +27,14 @@ const requestAIAnalysis = async (file, question) => {
             formData.append('message', question);
         }
 
+        if (plantSpecies) formData.append('plant_species', plantSpecies); //추가 파이썬 서버로 식물 종 보냄
+
         const pythonServerUrl = 'https://ys1235-smartplant.hf.space/predict'.trim();
         
         console.log(`🚀 AI 서버(${pythonServerUrl})로 요청 보냄...`);
         const response = await axios.post(pythonServerUrl, formData, {
             headers: { ...formData.getHeaders() },
-            timeout: 10000 // AI 서버 응답 지연 시 10초 타임아웃
+            timeout: 30000 // AI 서버 응답 지연 시 30초 타임아웃
         });
 
         console.log("✅ AI 응답 도착:", response.data);
@@ -61,12 +63,15 @@ module.exports = {
         const imageUrl = (files && files.length > 0) 
             ? files.map(f => `/uploads/${f.filename}`).join(',') 
             : null;
-        
+
+        const plantInfo = await Plant.findByPk(plantId);                           //추가 DB에서 가져오기
+        const plantSpecies = plantInfo ? plantInfo.species : '알 수 없는 식물';    //추가
+
         let aiResponse = {};
         // [수정] file 대신 files 배열 존재 여부 확인
         if ((files && files.length > 0) || question) {
              // [수정] AI 분석 함수로 파일 배열 전달
-             aiResponse = await requestAIAnalysis(files, question);
+             aiResponse = await requestAIAnalysis(files, question, plantSpecies);
         }
 
         const finalResult = aiResponse.ui_status || '상담 완료';
