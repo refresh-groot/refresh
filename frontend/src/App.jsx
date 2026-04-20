@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import React, { lazy, Suspense} from 'react'
 import Layout from './layout/Layout';
 import Bottom from './components/Bottom/Bottom';
+import { BluetoothProvider } from './context/BluetoothContext';
+import { AuthProvider } from './context/AuthContext';
 const Login = lazy(() => import('./pages/Login/Login'));
 const Menu = lazy(() => import('./pages/Menu/Menu'));
 const Profile = lazy(() => import('./pages/Profile/Profile'));
@@ -22,7 +24,9 @@ function App() {
   const hideBottomPaths = ['/', '/chat'];
   const shouldHideBottom = hideBottomPaths.includes(currentPath);
 
-  return (
+return (
+  <AuthProvider>
+    <BluetoothProvider>
     <div className="app-container">
     
     <Suspense fallback={<LoadingFallback />}>
@@ -42,7 +46,9 @@ function App() {
       <Bottom hidden={shouldHideBottom} />
     </Suspense>
     </div>
-  );
+    </BluetoothProvider>
+  </AuthProvider>
+);
 }
 
 export default App;

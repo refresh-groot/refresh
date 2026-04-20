@@ -285,7 +285,7 @@ const fetchChartData = async () => {
           </p>
 
           {/* 수동 급수 버튼: 자동 모드일 경우 비활성화 처리 */}
-          <div className="quick-btn">
+          <div className="control-btns">
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}

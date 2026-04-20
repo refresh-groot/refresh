@@ -169,7 +169,7 @@ function Profile() {
 
 
   /* ===============================
-     UI 렌더링
+    UI 렌더링
   =============================== */
   return (
     <div className="profile-container">

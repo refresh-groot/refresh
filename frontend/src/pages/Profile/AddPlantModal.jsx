@@ -7,7 +7,7 @@ import { Bluetooth } from '../../hooks/Bluetooth';
 import { FaTimes, FaCamera } from 'react-icons/fa';
 import defaultImg from '../../assets/img/default.png';
 import { showAlert } from '../../app/alert';
-
+import { useBluetooth } from '../../context/BluetoothContext';
 // 새 식물을 등록하기 위한 모달 컴포넌트
 // 사용자가 입력한 이름, 종, 날짜, 사진 정보를 부모 컴포넌트(Profile)로 전달하는 역할을 함
 function AddPlantModal({onClose, onSave}) {
@@ -15,6 +15,7 @@ function AddPlantModal({onClose, onSave}) {
     const [nickname, setNickname] =useState('');
     const [species, setSpecies] = useState(''); 
     const [date, setDate] = useState(new Date()); 
+    const { handleConnectSuccess } = useBluetooth();
     
     // 이미지 업로드 관련 상태 (화면 표시용 미리보기 URL, 실제 전송용 파일 객체)
     const [preview, setPreview] = useState(defaultImg);
@@ -102,10 +103,10 @@ function AddPlantModal({onClose, onSave}) {
 
                 <div className="modal-input-group ble-group">
     <label>기기 연동</label>
-    <Bluetooth onConnectSuccess={(device) => {
-        console.log("연결된 기기 정보:", device);
-        // 여기서 필요하다면 setDeviceId(device.id) 등으로 상태를 저장하세요!
-    }} />
+    <Bluetooth onConnectSuccess={(info) => {
+  handleConnectSuccess(info);
+  console.log("연결된 기기:", info?.deviceName);
+}} />
 </div>
 
                 <button type="submit" className="modal-submit-btn">등록하기</button>

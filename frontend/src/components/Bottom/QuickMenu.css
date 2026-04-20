@@ -1,0 +1,109 @@
+/* QuickMenu.css */
+.qm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 998;
+}
+
+.qm-badge {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.12);
+  border: 0.5px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.qm-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+.qm-dot.connected { background: #22c55e; }
+
+.qm-fan {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+}
+
+.qm-item {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+  animation: qmPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.qm-parent {
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  width: 62px;
+  height: 62px;
+  z-index: 10;
+}
+.qm-parent.active {
+  background: var(--accent);
+}
+.qm-parent.active .qm-label {
+  color: #fff;
+}
+.qm-parent:not(.active) {
+  opacity: 0.6;
+}
+
+.qm-child {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: 52px;
+  height: 52px;
+  z-index: 20;
+}
+.qm-child:hover { background: #f1f5f9; }
+
+@keyframes qmPop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1);
+  }
+}
+
+.qm-icon { font-size: 18px; line-height: 1; }
+
+.qm-label {
+  font-size: 8.5px;
+  color: #475569;
+  margin-top: 2px;
+  white-space: nowrap;
+  font-weight: 500;
+}
