@@ -33,7 +33,8 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       console.log('   - 필터: namePrefix = "ESP32_PUMP"');
       console.log('   - optionalServices:', SERVICE_UUID);
       const device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: "ESP32_PUMP" }],
+        acceptAllDevices: true,
+        // filters: [{ namePrefix: "ESP32_PUMP" }],
         optionalServices: [SERVICE_UUID]
       });
       console.log('✅ [1] 기기 선택 완료');
