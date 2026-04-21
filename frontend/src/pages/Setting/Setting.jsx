@@ -3,6 +3,8 @@ import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
 import { useAuth } from '../../context/AuthContext';
 import { Bluetooth } from '../../hooks/Bluetooth';
+import { useNavigate } from 'react-router-dom';
+import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
 import api from '../../api/axios';
 import './Setting.css';
@@ -10,6 +12,7 @@ import './Setting.css';
 function Setting() {
   const { user, logout } = useAuth();
   const { deviceName, handleConnectSuccess } = useBluetooth();
+  const navigate = useNavigate();
 
   const [bio, setBio] = useState('');
   const [isAlertOn, setIsAlertOn] = useState(false);
@@ -63,7 +66,11 @@ function Setting() {
       cancelButtonText: '취소',
       confirmButtonColor: '#e67e22',
     });
-    if (result.isConfirmed) logout();
+    if (result.isConfirmed) {
+      await logout();
+      showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
+      navigate('/login');
+    }
   };
 
   const handleWithdraw = async () => {
