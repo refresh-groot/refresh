@@ -1,5 +1,5 @@
-const { Plant, DiagnosisLog } = require('../../models'); // [수정] index.js를 통해 초기화된 모델들을 가져옴
-const DiagnosisLog = require('./DiagnosisLog'); 
+const repository = require('./repository');
+const { Plant, DiagnosisLog } = require('../../models'); // [수정] Plant 모델 추가 및 index.js 참조
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
@@ -151,15 +151,19 @@ module.exports = {
         if (!log) throw new Error('NOT_FOUND');
 
         if (log.image_url) {
-            try {
-                const fileName = path.basename(log.image_url);
-                const filePath = path.join(__dirname, '../../public/uploads', fileName);
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
+            // [수정] 여러 장의 이미지 삭제 대응
+            const imageUrls = log.image_url.split(',');
+            imageUrls.forEach(url => {
+                try {
+                    const fileName = path.basename(url.trim());
+                    const filePath = path.join(__dirname, '../../public/uploads', fileName);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                } catch (err) {
+                    console.error("파일 삭제 에러:", err.message);
                 }
-            } catch (err) {
-                console.error("파일 삭제 에러:", err.message);
-            }
+            });
         }
         return await repository.deleteById(logId);
     },
@@ -182,15 +186,19 @@ module.exports = {
 
             logsInSession.forEach(log => {
                 if (log.image_url) {
-                    try {
-                        const fileName = path.basename(log.image_url);
-                        const filePath = path.join(__dirname, '../../public/uploads', fileName);
-                        if (fs.existsSync(filePath)) {
-                            fs.unlinkSync(filePath);
+                    // [수정] 여러 장의 이미지 삭제 대응
+                    const imageUrls = log.image_url.split(',');
+                    imageUrls.forEach(url => {
+                        try {
+                            const fileName = path.basename(url.trim());
+                            const filePath = path.join(__dirname, '../../public/uploads', fileName);
+                            if (fs.existsSync(filePath)) {
+                                fs.unlinkSync(filePath);
+                            }
+                        } catch (fileErr) {
+                            console.error(`세션 삭제 중 이미지 지우기 실패:`, fileErr.message);
                         }
-                    } catch (fileErr) {
-                        console.error(`세션 삭제 중 이미지 지우기 실패:`, fileErr.message);
-                    }
+                    });
                 }
             });
             
