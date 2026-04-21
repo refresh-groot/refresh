@@ -1,5 +1,5 @@
 const repository = require('./repository');
-const { Plant, DiagnosisLog } = require('../../models'); // [수정] Plant 모델 추가 및 index.js 참조
+const { Plant, DiagnosisLog } = require('../index');
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
