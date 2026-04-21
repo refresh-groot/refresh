@@ -1,4 +1,4 @@
-const repository = require('./repository');
+const { Plant, DiagnosisLog } = require('../../models'); // [수정] index.js를 통해 초기화된 모델들을 가져옴
 const DiagnosisLog = require('./DiagnosisLog'); 
 const axios = require('axios');
 const FormData = require('form-data');
