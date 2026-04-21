@@ -6,90 +6,119 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // 고유 UUID 정의 (사용자님의 ESP32 설정과 일치)
   const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-  const RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // 앱 -> ESP32 (Write)
-  const TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // ESP32 -> 앱 (Notify)
+  const RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+  const TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
   const handleDisconnect = (event) => {
     const device = event.target;
-    console.log(`기기 연결 끊김: ${device.name}`);
+    console.warn(`⚠️ [BLE] 연결 끊김 - 기기명: ${device.name}`);
     setConnectedDevice(null);
     if (onConnectSuccess) onConnectSuccess(null);
   };
 
   const connectBluetooth = async () => {
     setIsConnecting(true);
-    console.log("--- 블루투스 연동 시작 ---");
+    console.group('🔵 블루투스 연동 시작');
+
     try {
-      if (!navigator.bluetooth){ 
-        console.error("결과: 이 브라우저는 블루투스를 지원하지 않음");
+      // 0. Web Bluetooth 지원 여부
+      console.log('📌 [0] navigator.bluetooth 존재 여부:', !!navigator.bluetooth);
+      if (!navigator.bluetooth) {
         throw new Error("NOT_SUPPORTED");
       }
 
-      // 1. 기기 요청 (이름 접두사로 필터링)
-      console.log("단계: 기기 선택 팝업 대기 중...");
+      // 1. 기기 선택
+      console.log('📌 [1] 기기 선택 팝업 오픈 중...');
+      console.log('   - 필터: namePrefix = "ESP32_PUMP"');
+      console.log('   - optionalServices:', SERVICE_UUID);
       const device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: "ESP32_PUMP" }],  // "ESP32_PUMP"로 시작하는 모든 기기 검색 할수있도록(1) (2)처럼 여러개  받아오기 위한거
+        filters: [{ namePrefix: "ESP32_PUMP" }],
         optionalServices: [SERVICE_UUID]
       });
+      console.log('✅ [1] 기기 선택 완료');
+      console.log('   - name:', device.name);
+      console.log('   - id:', device.id);
+      console.log('   - gatt 존재 여부:', !!device.gatt);
 
-      console.log("성공: 기기 선택 완료 ->", {
-      name: device.name,
-      id: device.id
-    });
-
-      // 2. GATT 서버 연결
-      console.log("단계: GATT 서버 연결 시도...");
+      // 2. GATT 연결
+      console.log('📌 [2] GATT 서버 연결 시도...');
       const server = await device.gatt.connect();
-      
-      // 3. 서비스 가져오기
-      const service = await server.getPrimaryService(SERVICE_UUID);
+      console.log('✅ [2] GATT 연결 결과');
+      console.log('   - server 객체:', server);
+      console.log('   - connected 상태:', server.connected);
+      console.log('   - device.gatt.connected:', device.gatt.connected);
 
-      // 4. [RX] 보내기 통로 설정
+      // 3. 서비스
+      console.log('📌 [3] Primary Service 가져오는 중...');
+      console.log('   - 요청 UUID:', SERVICE_UUID);
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      console.log('✅ [3] 서비스 획득 성공:', service);
+
+      // 4. RX Characteristic
+      console.log('📌 [4] RX Characteristic 가져오는 중...');
+      console.log('   - 요청 UUID:', RX_UUID);
       const rxChar = await service.getCharacteristic(RX_UUID);
+      console.log('✅ [4] RX 획득:', rxChar);
+      console.log('   - properties:', rxChar.properties);
+
       const sendCommand = async (command) => {
+        console.log(`📤 [sendCommand] 전송: "${command}"`);
         const encoder = new TextEncoder();
         await rxChar.writeValue(encoder.encode(command));
-        console.log(`[보냄]: ${command}`);
+        console.log(`✅ [sendCommand] 전송 완료: "${command}"`);
       };
 
-      // 5. [TX] 받기 통로 설정 (알림 구독)
+      // 5. TX Characteristic
+      console.log('📌 [5] TX Characteristic 가져오는 중...');
+      console.log('   - 요청 UUID:', TX_UUID);
       const txChar = await service.getCharacteristic(TX_UUID);
+      console.log('✅ [5] TX 획득:', txChar);
+      console.log('   - properties:', txChar.properties);
+
+      console.log('📌 [5-1] TX 알림 구독 시작...');
       await txChar.startNotifications();
+      console.log('✅ [5-1] 알림 구독 완료');
+
       txChar.addEventListener('characteristicvaluechanged', (event) => {
-        const value = event.target.value;
-        const decoder = new TextDecoder();
-        const receivedText = decoder.decode(value);
-        console.log(`[받음]: ${receivedText}`);
-        
-        // 부모 컴포넌트에 메시지 전달 (예: 습도값 업데이트 등)
+        const receivedText = new TextDecoder().decode(event.target.value);
+        console.log(`📥 [받음]: ${receivedText}`);
         if (onMessageReceived) onMessageReceived(receivedText);
       });
 
-      console.log("성공: GATT 서버 연결 완료! 상태:", device.gatt.connected);
+      // 6. 최종 상태
+      console.log('📌 [6] 최종 연결 상태 확인');
+      console.log('   - device.name:', device.name);
+      console.log('   - device.gatt.connected:', device.gatt.connected);
+
       device.addEventListener('gattserverdisconnected', handleDisconnect);
-      
       setConnectedDevice(device);
-      
-      // 연결 성공 시 기기 정보와 명령 함수를 함께 전달
+
       if (onConnectSuccess) {
-        onConnectSuccess({ 
-          device, 
-          sendCommand, 
-          deviceName: device.name 
-        });
+        onConnectSuccess({ device, sendCommand, deviceName: device.name });
+        console.log('✅ [6] onConnectSuccess 호출 완료 - deviceName:', device.name);
       }
+
       showToast('success', '블루투스 연동 성공!');
-      
+
     } catch (error) {
-      if (error.name === 'NotFoundError') return;
-      console.warn("결과: 사용자가 기기 선택을 취소함");
-      alert(error.message === "NOT_SUPPORTED" ? "블루투스 미지원 브라우저입니다." : "연결 오류가 발생했습니다.");
-      console.error(error);
+      console.group('❌ 블루투스 오류 발생');
+      console.log('   - error.name:', error.name);
+      console.log('   - error.message:', error.message);
+      console.log('   - 전체 error:', error);
+      console.groupEnd();
+
+      if (error.name === 'NotFoundError') {
+        console.warn('   → 사용자가 팝업에서 취소함 (정상)');
+        return;
+      }
+      alert(error.message === "NOT_SUPPORTED"
+        ? "블루투스 미지원 브라우저입니다."
+        : `연결 오류: ${error.message}`);
     } finally {
       setIsConnecting(false);
-      console.log("--- 블루투스 프로세스 종료 ---");
+      console.groupEnd();
+      console.log('🔵 블루투스 프로세스 종료');
     }
   };
 
@@ -100,10 +129,10 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
           <FaBluetooth /> {connectedDevice.name} 연결됨
         </div>
       ) : (
-        <button 
-          type="button" 
-          className="ble-connect-btn" 
-          onClick={connectBluetooth} 
+        <button
+          type="button"
+          className="ble-connect-btn"
+          onClick={connectBluetooth}
           disabled={isConnecting}
         >
           <FaBluetooth /> {isConnecting ? '연결 중...' : '기기 연동'}

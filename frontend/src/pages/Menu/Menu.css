@@ -298,6 +298,8 @@
 .alert-list {
     list-style: none;
     padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
 }
 .alert-item {
     padding: 10px;
