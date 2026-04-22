@@ -1,19 +1,22 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useRef } from 'react'; // useRef 추가 필수
 
 const BluetoothContext = createContext();
 
 export function BluetoothProvider({ children }) {
-  const [sendCommand, setSendCommand] = useState(null);
   const [deviceName, setDeviceName] = useState(null);
+  const [sendCommand, setSendCommand] = useState(null); // sendCommand 상태가 빠져있었습니다.
+  const bleService = useRef(null); 
 
   const handleConnectSuccess = (info) => {
     if (!info) {
-      setSendCommand(null);
       setDeviceName(null);
+      setSendCommand(null);
+      bleService.current = null;
       return;
     }
-    setSendCommand(() => info.sendCommand);
+    bleService.current = info;
     setDeviceName(info.deviceName);
+    setSendCommand(() => info.sendCommand); // 함수 저장
   };
 
   return (
