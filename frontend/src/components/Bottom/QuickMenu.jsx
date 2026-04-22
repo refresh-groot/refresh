@@ -14,7 +14,7 @@ const MENU = [{
     name: '급수제어',
     color: '#3b82f6',
     children: [
-    { icon: <IoWaterOutline />, name: '급수', cmd: 'WATER 10' },
+    { icon: <IoWaterOutline />, name: '급수', cmd: 'WATER 100' },
     { icon: <FaStop />,  name: '정지', cmd: 'STOP' },
     { icon: <MdAutorenew />, name: '자동모드', cmd: 'MODE:AUTO' },
     { icon: <FaHandPaper />, name: '수동모드', cmd: 'MODE:MANUAL' },
