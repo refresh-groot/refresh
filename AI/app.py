@@ -26,7 +26,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 # 3. AI 진단 핵심 로직
 # ==============================================================================
 # 매개변수에 plant_species 추가
-def get_plant_diagnosis(image_path, user_message, history, plant_species): # 식물 종 추가
+# ==============================================================================
+# 3. AI 진단 핵심 로직 (Gemini 2.5 Flash + 비서 프롬프트 버전)
+# ==============================================================================
+def get_plant_diagnosis(image_path, user_message, history, plant_species): 
     history_text = ""
     try:
         if history:
@@ -45,42 +48,47 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species): # 식
         print(f" [Warning] 대화 내역 파싱 무시됨: {e}")
         pass 
 
-    # format_instruction (confidence 포함) 유지
+    # ✨ [수정 1] ui_water_msg에 구체적인 작성 가이드라인(포맷)을 강제 주입
+    # ✨ [수정 1] ui_guide의 분량을 늘리고, 내용을 통합하도록 지시
     format_instruction = """
     반드시 다음 JSON 형식으로만 답해 (마크다운 없이).
-    [주의] 아래 JSON의 값들은 구조를 보여주기 위한 단순 예시일 뿐입니다. 
-    반드시 네가 직접 분석하고 추론한 실제 결과값(특히 confidence는 네가 계산한 0.0~1.0 사이의 숫자)으로 교체해서 응답해!
-    
     {
-        "ui_status": "상태 요약 (예: 물 부족, 건강함)",
-        "ui_guide": "사용자에게 할 말 (친절하게, 3문장 이내)", 
-        "ui_water_msg": "물주기 팁 (1문장)",
+        "ui_status": "상태 요약 (예: 건강함, 잎 마름, 물 부족 등)",
+        "ui_guide": "사용자에게 보내는 최종 답변 (친절하고 따뜻하게, 4~5문장으로 상세히 작성)", 
+        "ui_water_msg": "물주기 요약 (OO일에 한 번, OOml)",
         "pump_now": true 또는 false,
-        "schedule": {"interval_hours": 0, "amount_ml": 0},
-        "confidence": 0
+        "min_moisture": 30, 
+        "water_duration_ms": 2000, 
+        "care_tip": "식물 맞춤형 관리 팁 (1문장)",
+        "confidence": 0.0
     }
     """
 
-    if not user_message: 
-        user_message = "이 식물의 상태를 진단하고 관리 방법을 알려줘."
-
-    # 프롬프트에 plant_species 강력 주입
+    # ✨ [수정 2] 행동 수칙에서 '상세 답변'과 '예외 처리'를 더 강력하게 결합
     system_rules = f"""
-    당신은 '스마트 화분 AI'로 식물을 키우는 사람을 위한 진단 시스템 입니다.
+    당신은 '스마트 화분 AI'로 식물을 키우는 사람을 위한 다정한 '원예 비서'입니다.
     
     [사전 정보]
-    - 진단할 식물의 종(품종): {plant_species}
+    - 사이드바 입력 식물 종: {plant_species} 
     
     {history_text}
     현재 사용자 질문: "{user_message}"
     
-    [행동 수칙]
-    1. **식물 맞춤 진단**: 반드시 위 [사전 정보]의 식물 종({plant_species}) 특성을 바탕으로 사진과 질문을 분석해. 다른 식물로 착각하지 마.
-    2. **문맥 파악**: 위 [이전 대화 내역]을 참고하여 자연스럽게 대화해.
-    3. **사진 유무**: 사진이 없으면 사용자의 말에 의존해서 추론해.
-    4. **제어**: 식물이 시들었거나 흙이 말랐다면 'pump_now': true.
-    5. ui_guide 와 ui_water_msg 를 참고하여 질문에 대한 답을 자연스럽게 대답해줘.
-    6. **[매우 중요]** 현재 주어진 정보(사진, 대화)로 판단했을 때 진단의 확신도를 `confidence`에 적어줘. 
+    [행동 수칙 - 상용화 & 감성 모드]
+    1. **다정하고 풍성한 대화 (ui_guide)**: 
+       - 기계적인 요약이나 매번 똑같은 패턴의 문장은 피하고, 매 대화마다 조금씩 다른 어휘와 뉘앙스를 사용해.
+       - 사진 속 식물의 상태에 따라 감정을 담아 공감해 (예: 아파 보이면 걱정해주고, 건강하면 기뻐해 주기).
+       - 너무 짧게 끝나지 않도록 **4~5문장 정도의 충분한 분량**으로 작성하고, 대화 중간에 이모지(🌱, 💧, 🪴, 😥 등)를 자연스럽게 섞어 써.
+    2. **자연스러운 물주기 처방 통합**:
+       - 'OO일에 한 번씩 OOml를 주세요'라는 구체적인 처방을 반드시 **`ui_guide` 본문의 대화 흐름 속에 부드럽게 녹여내어 포함**시켜.
+    3. **사진 분석 최우선**:
+       - 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 관찰해서 가장 먼저 언급해.
+    4. **[매우 중요] 식물이 아닌 사진 예외 처리 (철벽 방어)**:
+       - 사람, 동물, 책상 등 식물이 전혀 없는 사진이 들어오면 무조건 `ui_status`를 "인식 불가"로 세팅해.
+       - 억지로 꾸며내지 말고, `ui_guide`에 "앗, 이건 식물 사진이 아닌 것 같아요! 예쁜 화분 사진을 다시 올려주시면 열심히 살펴볼게요 🥺" 처럼 부드럽게 거절해.
+       - 기기(펌프) 오작동을 막기 위해 반드시 `pump_now`: false, `min_moisture`: 0, `water_duration_ms`: 0 으로 강제 세팅해.
+    5. **하드웨어 제어 데이터 (숨겨진 데이터)**: 
+       - 정상적인 식물일 경우, `min_moisture`와 `water_duration_ms`는 아두이노가 읽을 수 있도록 정확히 계산해.
     
     {format_instruction}
     """
@@ -91,17 +99,21 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species): # 식
         try:
             with PIL.Image.open(image_path) as img_file: 
                 img = img_file.copy()
-                inputs = [system_rules, img] 
+                # ✨ 제미나이에게도 "사진 들어왔다!"고 빨간불 경고문 강제 삽입
+                alert_msg = "\n🚨[새로운 식물 사진이 방금 첨부되었습니다! 과거 대화보다 이 사진을 최우선으로 시각적 분석하세요!]🚨\n"
+                inputs = [system_rules + alert_msg, img] 
         except Exception as e:                            
             return json.dumps({"ui_status": "오류", "ui_guide": f"이미지 처리 오류: {str(e)}"})
     else:
-        inputs = [system_rules + "\n[주의] 사진이 없습니다. 텍스트로만 상담하고 pump_now는 false로 설정하세요."]
+        # 사진 없을 때의 텍스트 모드 우회
+        inputs = [system_rules + "\n[주의] 현재 사용자가 추가 사진을 올리지 않았습니다. 이전 대화 문맥과 텍스트만 보고 자연스럽게 이어가세요."]
         
     try:
-        # 최신 라이브러리 실행 코드 유지!
+        # 제미나이 2.5 Flash 호출
         response = client.models.generate_content(
             model='gemini-2.5-flash', 
-            contents=inputs
+            contents=inputs,
+            config={'temperature': 0.2} # 일관성을 위해 추가하면 좋습니다
         )
         result_text = response.text                
         if "```" in result_text:
