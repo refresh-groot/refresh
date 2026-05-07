@@ -65,12 +65,12 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .profile-avatar {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: #e8f5e9;
   border: 2px solid #c8ecd4;
@@ -78,26 +78,26 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: bold;
   color: #27ae60;
   flex-shrink: 0;
 }
 
 .profile-name {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   color: #1a1a1a;
 }
 
 .profile-email {
-  font-size: 12px;
+  font-size: 14px;
   color: #aaa;
   margin-top: 3px;
 }
 
 .bio-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -125,7 +125,7 @@
   border: none;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s;
@@ -138,7 +138,7 @@
 .s-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   padding: 11px 0;
   border-bottom: 0.5px solid #f5f5f5;
 }
@@ -146,8 +146,8 @@
 .s-row.no-border { border-bottom: none; }
 
 .s-row-icon {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -158,12 +158,12 @@
 .s-row-text { flex: 1; }
 
 .s-row-label {
-  font-size: 13px;
+  font-size: 16px;
   color: #1a1a1a;
 }
 
 .s-row-sub {
-  font-size: 11px;
+  font-size: 14px;
   color: #bbb;
   margin-top: 2px;
 }
@@ -173,7 +173,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 16px;
   color: #27ae60;
   background: #e8f5e9;
   border-radius: 999px;
@@ -182,8 +182,8 @@
 }
 
 .ble-dot {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #2ecc71;
 }
@@ -250,7 +250,7 @@
 }
 
 .danger-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   color: #e74c3c;
 }
@@ -289,7 +289,7 @@
 
 .version-label,
 .version-val {
-  font-size: 11px;
+  font-size: 14px;
   color: #ccc;
 }
 

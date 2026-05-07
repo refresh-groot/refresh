@@ -4,7 +4,7 @@ const BluetoothContext = createContext();
 
 export function BluetoothProvider({ children }) {
   const [deviceName, setDeviceName] = useState(null);
-  const [sendCommand, setSendCommand] = useState(null); // sendCommand 상태가 빠져있었습니다.
+  const [sendCommand, setSendCommand] = useState(null);
   const bleService = useRef(null); 
 
   const handleConnectSuccess = (info) => {

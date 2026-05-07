@@ -206,7 +206,6 @@ function Login() {
         const userData = response.user || response.data?.user;
 
         if (userData) {
-          // [핵심] 페이지 이동 전에 Context에 유저 정보를 '먼저' 저장해야 튕기지 않습니다.
           login(userData);
 
           const nickname = userData.nickname || '사용자';

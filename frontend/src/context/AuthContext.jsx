@@ -12,8 +12,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkUserLoggedIn = async () => {
       try {
-        //API 요청 (주소는 기존 코드 참고, 보통 /api/user/me 또는 /api/user/check)
-        // 기존에 작성된 주소를 그대로 사용하세요. 예시:
         const response = await axios.get(`${SERVER_URL}/api/user/check`, {
             withCredentials: true 
         });
@@ -49,8 +47,7 @@ export function AuthProvider({ children }) {
         setUser(null);
     }
   };
-
-  // value에 loading 추가
+  
   return (
     <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, logout, loading }}>
       {children}

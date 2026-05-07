@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
 import EditPlantModal from './EditPlantModal';
 import api from '../../api/axios';
+import { showToast } from '../../app/alert';
 
 // 식물 목록 조회, 등록, 수정, 삭제 및 필터링 기능을 제공하는 프로필 대시보드 컴포넌트
 function Profile() {
@@ -119,12 +120,7 @@ function Profile() {
 
       await api.post('/api/plants', formData);
 
-      Swal.fire({
-        icon: 'success',
-        title: '등록 완료',
-        timer: 1200,
-        showConfirmButton: false,
-      });
+      showToast('success','등록 완료');
 
       // 목록 갱신
       fetchPlants();
@@ -155,7 +151,7 @@ function Profile() {
       // 영구 삭제 모드로 API 호출
       await api.delete(`/api/plants/${id}?mode=permanent`);
       await fetchPlants();
-      Swal.fire('삭제 완료', '식물이 삭제되었습니다.', 'success');
+      showToast('success', '식물 삭제 완료');
     } catch (error) {
       console.error('삭제 실패:', error);
       Swal.fire('오류', '식물 삭제에 실패했습니다.', 'error');

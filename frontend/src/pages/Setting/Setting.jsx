@@ -6,6 +6,7 @@ import { Bluetooth } from '../../hooks/Bluetooth';
 import { useNavigate } from 'react-router-dom';
 import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
+import { showToast } from '../../app/alert';
 import api from '../../api/axios';
 import './Setting.css';
 
@@ -38,9 +39,9 @@ function Setting() {
     setBioSaving(true);
     try {
       await api.put('/api/user/profile', { bio });
-      Swal.fire({ icon: 'success', title: '저장 완료', timer: 1000, showConfirmButton: false });
+      showToast('success', '저장 완료');
     } catch (e) {
-      Swal.fire('오류', '저장에 실패했습니다.', 'error');
+      showToast('fail','저장 실패');
     } finally {
       setBioSaving(false);
     }

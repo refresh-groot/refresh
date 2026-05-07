@@ -7,6 +7,7 @@ import { Bluetooth } from '../../hooks/Bluetooth';
 import { FaTimes, FaCamera } from 'react-icons/fa';
 import defaultImg from '../../assets/img/default.png';
 import { showAlert } from '../../app/alert';
+import { showToast } from '../../app/alert';
 import { useBluetooth } from '../../context/BluetoothContext';
 // 새 식물을 등록하기 위한 모달 컴포넌트
 // 사용자가 입력한 이름, 종, 날짜, 사진 정보를 부모 컴포넌트(Profile)로 전달하는 역할을 함

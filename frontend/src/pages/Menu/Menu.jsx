@@ -219,9 +219,7 @@ const fetchChartData = async () => {
               {/* 토양 수분이 낮을 경우 경고 스타일 적용 */}
               <div
                 className={`sensor-value ${
-                  sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''
-                }`}
-              >
+                  sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''}`}>
                 {newData[sensor.id]} {sensor.unit}
               </div>
 
