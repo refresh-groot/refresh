@@ -1,0 +1,26 @@
+.agreement-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  font-size: 13px;
+}
+
+.agreement-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.agreement-divider {
+  height: 0.5px;
+  background: #e0e0e0;
+}
+
+.agreement-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+}
