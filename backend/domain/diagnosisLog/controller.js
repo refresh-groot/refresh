@@ -4,7 +4,6 @@ const service = require('./service');
 const addDiagnosisLog = async (req, res) => {
     try {
         const { plantId } = req.params;
-        // ▼ [수정] session_id 추가로 받기
         const { question, title, session_id } = req.body; 
         const files = req.files;
 
