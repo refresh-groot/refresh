@@ -219,9 +219,7 @@ const fetchChartData = async () => {
               {/* 토양 수분이 낮을 경우 경고 스타일 적용 */}
               <div
                 className={`sensor-value ${
-                  sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''
-                }`}
-              >
+                  sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''}`}>
                 {newData[sensor.id]} {sensor.unit}
               </div>
 
@@ -285,7 +283,7 @@ const fetchChartData = async () => {
           </p>
 
           {/* 수동 급수 버튼: 자동 모드일 경우 비활성화 처리 */}
-          <div className="quick-btn">
+          <div className="control-btns">
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}

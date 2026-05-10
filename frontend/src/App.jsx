@@ -2,12 +2,15 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import React, { lazy, Suspense} from 'react'
 import Layout from './layout/Layout';
 import Bottom from './components/Bottom/Bottom';
+import { BluetoothProvider } from './context/BluetoothContext';
+import { AuthProvider } from './context/AuthContext';
 const Login = lazy(() => import('./pages/Login/Login'));
 const Menu = lazy(() => import('./pages/Menu/Menu'));
 const Profile = lazy(() => import('./pages/Profile/Profile'));
 const Community = lazy(() => import('./pages/Community/Community'));
 const Chat = lazy(() => import('./pages/Chat/Chat'))
 const Setting = lazy(() => import('./pages/Setting/Setting'))
+const CommunityWrite = lazy(() => import('./pages/Community/CommunityWrite'));
 
 // 1. Lazy Loading: 초기 로딩 시 모든 페이지를 불러오지 않고 필요할때만 불러옴
 const LoadingFallback = () => (
@@ -22,7 +25,9 @@ function App() {
   const hideBottomPaths = ['/', '/chat'];
   const shouldHideBottom = hideBottomPaths.includes(currentPath);
 
-  return (
+return (
+  <AuthProvider>
+    <BluetoothProvider>
     <div className="app-container">
     
     <Suspense fallback={<LoadingFallback />}>
@@ -32,6 +37,7 @@ function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/community/write" element={<CommunityWrite />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/Setting" element={<Setting />} />
         </Route>
@@ -42,7 +48,9 @@ function App() {
       <Bottom hidden={shouldHideBottom} />
     </Suspense>
     </div>
-  );
+    </BluetoothProvider>
+  </AuthProvider>
+);
 }
 
 export default App;

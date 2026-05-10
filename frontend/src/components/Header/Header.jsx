@@ -43,8 +43,8 @@ const handleRefresh = (e) =>{
         <ul>
         <li><Link to="/Profile" onClick={closeMenu}>PROFILE</Link></li>
         <li><Link to="/Community" onClick={closeMenu}>COMMUNITY</Link></li>
-        <li><Link to="#" onClick={closeMenu}>SETTINGS</Link></li>
-        <li><Link to="/" onClick={handleLogout}>LOGOUT</Link></li>
+        <li><Link to="/Setting" onClick={closeMenu}>SETTINGS</Link></li>
+        <li><Link to="/logout" onClick={handleLogout}>LOGOUT</Link></li>
         </ul>
       </div>
     </nav>

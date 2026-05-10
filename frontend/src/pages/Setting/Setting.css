@@ -1,0 +1,365 @@
+.setting-page {
+  min-height: calc(100vh - 60px);
+  background: #f7f7f5;
+  padding: 90px 32px;
+}
+
+.setting-inner {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.setting-left,
+.setting-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 카드 ── */
+.s-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 0.5px solid #e8e8e8;
+  overflow: hidden;
+}
+
+.s-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 12px;
+  border-bottom: 0.5px solid #f2f2f2;
+}
+
+.s-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.s-card-icon.green  { background: #e8f5e9; }
+.s-card-icon.purple { background: #eeeefe; }
+.s-card-icon.amber  { background: #fff8e8; }
+.s-card-icon.gray   { background: #f5f5f5; }
+
+.s-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.s-card-body {
+  padding: 16px 20px;
+}
+
+/* ── 프로필 ── */
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #e8f5e9;
+  border: 2px solid #c8ecd4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #27ae60;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.profile-email {
+  font-size: 14px;
+  color: #aaa;
+  margin-top: 3px;
+}
+
+.bio-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bio-input {
+  flex: 1;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-size: 13px;
+  color: #444;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.bio-input:focus {
+  border-color: #2ecc71;
+  background: #fff;
+}
+
+.bio-save-btn {
+  padding: 9px 18px;
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.bio-save-btn:hover { background: #27ae60; }
+.bio-save-btn:disabled { background: #a8e6c1; cursor: not-allowed; }
+
+/* ── 설정 행 ── */
+.s-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid #f5f5f5;
+}
+
+.s-row.no-border { border-bottom: none; }
+
+.s-row-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.s-row-text { flex: 1; }
+
+.s-row-label {
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.s-row-sub {
+  font-size: 14px;
+  color: #bbb;
+  margin-top: 2px;
+}
+
+/* ── 블루투스 pill ── */
+.ble-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  color: #27ae60;
+  background: #e8f5e9;
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.ble-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2ecc71;
+}
+
+/* ── 토글 ── */
+.toggle {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.toggle.on  { background: #2ecc71; }
+.toggle.off { background: #e0e0e0; }
+
+.toggle-knob {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 2px;
+  transition: left 0.25s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.toggle.on  .toggle-knob { left: 20px; }
+.toggle.off .toggle-knob { left: 2px; }
+
+/* ── 버튼들 ── */
+.action-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 0.5px solid #e0e0e0;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.action-btn.orange {
+  color: #e67e22;
+  border-color: #f0d0b0;
+}
+
+.action-btn.orange:hover { background: #fff8f2; }
+
+/* ── 탈퇴 배너 ── */
+.danger-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff5f5;
+  border-radius: 10px;
+  border: 0.5px solid #fde8e8;
+  padding: 13px 15px;
+  margin-top: 8px;
+}
+
+.danger-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #e74c3c;
+}
+
+.danger-desc {
+  font-size: 11px;
+  color: #f0a0a0;
+  margin-top: 2px;
+}
+
+.danger-btn {
+  padding: 7px 16px;
+  background: #fff;
+  color: #e74c3c;
+  border: 0.5px solid #e74c3c;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.danger-btn:hover {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* ── 버전 ── */
+.version-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 0;
+  margin-top: 4px;
+}
+
+.version-label,
+.version-val {
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* ── 로딩 ── */
+.setting-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+/* ── Bluetooth 버튼 스타일 오버라이드 ── */
+.s-row .bluetooth-connect-area { margin: 0; }
+
+.s-row .ble-connect-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 0.5px solid #e0e0e0;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.s-row .ble-connect-btn:hover { background: #f5f5f5; }
+
+.s-row .ble-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.s-row .ble-status-badge.success {
+  color: #27ae60;
+  background: #e8f5e9;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  .setting-page {
+    padding: 70px 12px 50px;
+  }
+
+  .setting-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 15px;
+  }
+
+  .profile-name { font-size: 14px; }
+
+  .bio-row { flex-direction: column; align-items: stretch; }
+
+  .bio-save-btn { width: 100%; text-align: center; }
+
+  .danger-banner { flex-direction: column; gap: 10px; align-items: flex-start; }
+
+  .danger-btn { width: 100%; text-align: center; }
+}
