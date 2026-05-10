@@ -10,8 +10,17 @@ const CommunityWrite = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
 
     const navigate = useNavigate();
+
+    const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    }
+};
 
     const handleSubmit = () => {
         if(!title.trim()) {Swal.fire('알림', '제목을 입력해주세요.', 'warning'); return;}
@@ -21,7 +30,7 @@ const CommunityWrite = () => {
         .then(() => navigate('/community'));
     };
 
-  return (
+    return (
     <div className="write-page">
     <div className="write-inner">
         <div className="write-left">
@@ -53,15 +62,20 @@ const CommunityWrite = () => {
             onChange={(e) => setContent(e.target.value)}/>
         </div>
         <div className="write-field">
-            <div className="write-field-label">사진 첨부</div>
-            <label className="file-upload-label">
-    {image ? image.name : '@ 사진 선택 (최대 3장)'}
-    <input 
+    <div className="write-field-label">사진 첨부</div>
+    <label className="file-upload-label">
+    {imagePreview ? (
+        <img src={imagePreview} alt="미리보기" className="image-preview" />
+        ) : (
+        '📎 사진 선택 (최대 3장)'
+        )}
+        <input
         type="file"
         accept='image/*'
         style={{ display: 'none' }}
-        onChange={(e) => setImage(e.target.files[0])}/>
-    </label>
+        onChange={handleImageChange}
+        />
+        </label>
         </div>
         </div>
         <div className="write-right">
