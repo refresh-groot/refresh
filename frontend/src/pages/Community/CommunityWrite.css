@@ -185,3 +185,43 @@
 .write-field textarea:focus {
     border-color: #2ecc71;
 }
+
+@media (max-width: 768px) {
+.write-page {
+    margin-top: 60px;
+    padding: 12px 12px 50px;
+}
+
+.write-inner {
+    grid-template-columns: 1fr;
+    height: auto;
+}
+
+.write-right {
+    padding-top: 0;
+}
+
+.write-submit-btn,
+.write-cancel-btn {
+    height: 48px;
+    font-size: 15px;
+}
+
+.write-tip {
+    margin-top: 0;
+}
+
+.write-field-label {
+    font-size: 15px;
+}
+
+.file-upload-label {
+    height: 80px;
+    font-size: 15px;
+}
+
+.category-btn {
+    font-size: 13px;
+    padding: 5px 12px;
+}
+}

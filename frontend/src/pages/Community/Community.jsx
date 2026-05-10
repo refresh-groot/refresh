@@ -127,7 +127,7 @@ const Community = () => {
         </div>
         <div className="post-list">
   {filteredPosts.map((post) => (
-    <div key={post.id} className="post-card">
+    <div key={post.id} className="post-card" onClick={() => Navigate(`/community/${post.id}`)}>
       <div className="post-top">
         <span className={`post-badge badge-${post.category}`}>{post.category}</span>
         <span className="post-title">{post.title}</span>
