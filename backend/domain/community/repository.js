@@ -24,7 +24,7 @@ module.exports = {
   },
 
   create: async (data) => {
-    return await CommunityPost.create(postData = data);
+    return await CommunityPost.create(data);
   },
 
   findById: async (id) => {
