@@ -22,9 +22,10 @@
 /* ── 카드 ── */
 .s-card {
   background: #fff;
-  border-radius: 14px;
-  border: 0.5px solid #e8e8e8;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .s-card-header {
@@ -51,7 +52,7 @@
 .s-card-icon.gray   { background: #f5f5f5; }
 
 .s-card-title {
-  font-size: 14px;
+  font-size: 1.1rem;
   font-weight: 500;
   color: #1a1a1a;
 }
@@ -158,13 +159,13 @@
 .s-row-text { flex: 1; }
 
 .s-row-label {
-  font-size: 16px;
+  font-size: 1rem;
   color: #1a1a1a;
 }
 
 .s-row-sub {
-  font-size: 14px;
-  color: #bbb;
+  font-size: 0.9rem;
+  color: #888;
   margin-top: 2px;
 }
 
@@ -303,7 +304,6 @@
   color: #aaa;
 }
 
-/* ── Bluetooth 버튼 스타일 오버라이드 ── */
 .s-row .bluetooth-connect-area { margin: 0; }
 
 .s-row .ble-connect-btn {

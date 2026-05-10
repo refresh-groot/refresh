@@ -27,7 +27,7 @@
 
 .sidebar-title {
   font-weight: bold;
-  font-size: 16px;
+  font-size: 1.1rem;
   color: #aaa;
   padding: 0 4px;
   margin-bottom: 4px;
@@ -36,7 +36,7 @@
 .sidebar-item {
   padding: 8px 10px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 1rem;
   color: #666;
   cursor: pointer;
 }
@@ -104,9 +104,9 @@
   background: #fff;
   border-radius: 12px;
   border: 1px solid #f0f0f0;
-  padding: 20px;
+  padding: 15px;
   margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   transition: transform 0.2s;
 }
 
@@ -261,13 +261,14 @@
 
 .post-title {
   font-weight: 500;
+  font-size: 1rem;
 }
 
 .post-preview {
   margin-top: 20px;
   padding: 10px;
-  color: #666;
-  font-size: 15px
+  color: #888;
+  font-size: 0.9rem;
 }
 
 .post-bottom {
@@ -276,4 +277,5 @@
   border-top: 0.5px solid #e0e0e0;
   padding-top: 5px;
   color: #888;
+  font-size: 0.9rem;
 }
