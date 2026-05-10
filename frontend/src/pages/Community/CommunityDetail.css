@@ -314,30 +314,48 @@
 
 @media (max-width: 768px) {
 .detail-page {
-    padding: 25px 12px 10px;
+    padding: 70px 12px 50px;
 }
 
 .detail-inner {
     grid-template-columns: 1fr;
+    margin: 12px auto;
 }
 
 .detail-panel {
     position: static;
+    height: auto;
 }
 
 .detail-title {
     font-size: 1.2rem;
 }
 
-.stat-grid {
-    grid-template-columns: 1fr 1fr;
+.detail-main {
+    padding: 16px;
+}
+
+.detail-action-row {
+    flex-wrap: wrap;
+}
+
+.detail-action-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 10px;
 }
 
 .comment-input-row {
     flex-direction: row;
 }
 
-.detail-action-row {
-    flex-wrap: wrap;
+.comment-send-btn {
+    padding: 9px 12px;
+    font-size: 12px;
+}
+
+.stat-grid {
+    grid-template-columns: 1fr 1fr;
 }
 }

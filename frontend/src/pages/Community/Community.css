@@ -279,3 +279,72 @@
   color: #888;
   font-size: 0.9rem;
 }
+
+@media (max-width: 768px) {
+  .community-page {
+    padding: 70px 12px 50px;
+  }
+
+  .community-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .community-sidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-title {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .sidebar-item {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+
+  .sidebar-write-btn {
+    margin-top: 0;
+    width: auto;
+    padding: 8px 16px;
+  }
+
+  .community-main-container {
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .custom-dropdown {
+    width: 100%;
+  }
+
+  .dropdown-selected {
+    width: 100%;
+  }
+
+  .post-card {
+    margin-bottom: 8px;
+  }
+
+  .post-preview {
+    margin-top: 10px;
+  }
+
+  .post-badge {
+    font-size: 1rem;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .post-top {
+    gap: 10px;
+  }
+}
