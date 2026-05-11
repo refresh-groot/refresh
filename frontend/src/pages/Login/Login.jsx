@@ -115,40 +115,40 @@ const handleAllAgree = () => {
 
   // 아이디 중복 확인 함수
   const handleCheckId = async () => {
-    if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.');
+    if (!id) return showAlert('warning', '아이디 입력', '아이디를 입력해주세요.', 1000);
 
     try {
       const data = await checkIdApi(id); 
       if (data.isDuplicate) {
-        showAlert('error', '중복된 아이디', '이미 사용 중인 아이디입니다');
+        showAlert('error', '중복된 아이디', '이미 사용 중인 아이디입니다', 1000);
         setIsIdChecked(false);
       }
       else {
-        showAlert('success', '사용 가능', '사용 가능한 아이디입니다');
+        showAlert('success', '사용 가능', '사용 가능한 아이디입니다', 1000);
         setIsIdChecked(true);
       }
     } catch (error) {
       console.error("중복 확인 에러:", error);
       
       const errorMsg = error.response?.data?.message || '서버와의 연결이 원활하지 않습니다.';
-      showAlert('error', '확인 실패', errorMsg);
+      showAlert('error', '확인 실패', errorMsg, 1000);
     }
   };
 
   // 닉네임 중복 확인 함수
   const handleCheckNickname = async () => {
-    if (!nickname) return showAlert('warning', '닉네임 입력', '닉네임을 입력해주세요.');
+    if (!nickname) return showAlert('warning', '닉네임 입력', '닉네임을 입력해주세요.', 1000);
     try {
       const data = await checkNicknameApi(nickname);
-      if (data.isDuplicate) showAlert('error', '중복된 닉네임', '이미 존재하는 닉네임입니다.');
+      if (data.isDuplicate) showAlert('error', '중복된 닉네임', '이미 존재하는 닉네임입니다.', 1000);
       else if(!data.isDuplicate){
-        showAlert('success', '사용가능한 닉네임', '사용 가능한 닉네임입니다.');
+        showAlert('success', '사용가능한 닉네임', '사용 가능한 닉네임입니다.', 1000);
         setIsNicknameChecked(true);
       }
     } catch (error) {
       console.error(error);
       const errorMsg = error.response?.data?.message || '서버 확인 불가';
-      showAlert('error', '오류 발생', errorMsg);
+      showAlert('error', '오류 발생', errorMsg, 1000);
     }
   };
 
@@ -157,22 +157,22 @@ const handleAllAgree = () => {
     if (isLoading) return;
 
     if(!email) {
-      return showAlert('warning', '이메일 입력', '이메일 주소를 입력하세요.');
+      return showAlert('warning', '이메일 입력', '이메일 주소를 입력하세요.', 1000);
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)){
-      return showAlert('warning', '형식 오류', '올바른 이메일 형식이 아닙니다.');
+      return showAlert('warning', '형식 오류', '올바른 이메일 형식이 아닙니다.', 1000);
     }
 
     try{
       setIsLoading(true);
       await sendEmailCodeApi(email);
-      showAlert('success', '전송 완료', '인증코드가 메일로 발송되었습니다. 확인해주세요.');
+      showAlert('success', '전송 완료', '인증코드가 메일로 발송되었습니다. 확인해주세요.', 1000);
     }
     catch (error){
       console.error(error);
       const errorMsg = error.response?.data?.message || '메일 발송 중 오류가 발생했습니다.';
-      showAlert('error', '전송 실패', errorMsg);
+      showAlert('error', '전송 실패', errorMsg, 1000);
     }
     finally{
       setIsLoading(false);
@@ -184,7 +184,7 @@ const handleAllAgree = () => {
     if (isLoading) return;
 
     if(!authCode) {
-      return showAlert('warning',  '코드 입력', '인증코드를 입력해주세요');
+      return showAlert('warning',  '코드 입력', '인증코드를 입력해주세요', 1000);
     }
     try {
       setIsLoading(true);
@@ -194,17 +194,17 @@ const handleAllAgree = () => {
       console.log("서버 응답 데이터:", data); 
 
       if(data && (data.verified || data.success || (data.result && data.result.verified))) { 
-          showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.');
+          showAlert('success', '인증 성공', '이메일 인증이 완료되었습니다.', 1000);
           setIsEmailVerified(true);
       }
       else{
-        showAlert('error', '인증 실패', '인증코드가 일치하지 않습니다.');
+        showAlert('error', '인증 실패', '인증코드가 일치하지 않습니다.', 1000);
       }
     }
     catch (error){
       console.error(error);
       const errorMsg = error.response?.data?.message || '인증 확인 중 문제가 발생했습니다.';
-      showAlert('error', '인증 오류', errorMsg);
+      showAlert('error', '인증 오류', errorMsg, 1000);
     } finally {
       setIsLoading(false);
     }
@@ -240,12 +240,12 @@ const handleAllAgree = () => {
           navigate('/profile'); 
           
         } else {
-          showAlert('error', '로그인 실패', '회원 정보를 불러올 수 없습니다.');
+          showAlert('error', '로그인 실패', '회원 정보를 불러올 수 없습니다.', 1000);
         }
       } catch (err) {
         console.error("로그인 에러 발생:", err);
         const errorMsg = err.response?.data?.message || '아이디 또는 비밀번호가 틀렸습니다.';
-        showAlert('error', '로그인 실패', errorMsg);
+        showAlert('error', '로그인 실패', errorMsg, 1000);
       } finally {
         setIsLoading(false);
       }
@@ -256,14 +256,14 @@ const handleAllAgree = () => {
     else {
       // 필수 입력값 및 유효성 검사
       if (!id || !pw || !confirmPw || !email || !authCode || !nickname) {
-        return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.');
+        return showAlert('warning', '입력 부족', '모든 정보를 입력해주세요.', 1000);
       }
-      if (pw.length < 8) return showAlert('warning', '비밀번호 오류', '비밀번호는 8자리 이상이어야 합니다.');
-      if (!isIdChecked) return showAlert('warning', '중복 확인', '아이디 중복 확인을 해주세요.');
-      if (!isEmailVerified) return showAlert('warning', '인증 필요', '이메일 인증을 완료해주세요.');
-      if (!isNicknameChecked) return showAlert('warning', '중복 확인', '닉네임 중복 확인을 해주세요.');
+      if (pw.length < 8) return showAlert('warning', '비밀번호 오류', '비밀번호는 8자리 이상이어야 합니다.', 1000);
+      if (!isIdChecked) return showAlert('warning', '중복 확인', '아이디 중복 확인을 해주세요.', 1000);
+      if (!isEmailVerified) return showAlert('warning', '인증 필요', '이메일 인증을 완료해주세요.', 1000);
+      if (!isNicknameChecked) return showAlert('warning', '중복 확인', '닉네임 중복 확인을 해주세요.', 1000);
       if (!agreements.terms || !agreements.privacy) {
-  return showAlert('warning', '약관 동의', '필수 약관에 동의해주세요.');
+  return showAlert('warning', '약관 동의', '필수 약관에 동의해주세요.', 1000);
 }
 
       if (pw !== confirmPw) {
@@ -288,7 +288,7 @@ const handleAllAgree = () => {
       } catch (err) {
         console.error(err);
         const msg = err.response?.data?.message || '회원가입 중 오류가 발생했습니다.';
-        showAlert('error', '가입 실패', msg);
+        showAlert('error', '가입 실패', msg, 1000);
       } finally {
         setIsLoading(false);
       }

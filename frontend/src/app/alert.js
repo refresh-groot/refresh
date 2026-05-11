@@ -18,7 +18,7 @@ export const showToast = (icon, title) => {
         toast: true,
         position: 'bottom-end', // 화면 하단
         showConfirmButton: false,
-        timer: 3000, // 3초 뒤 자동 사라짐
+        timer: 1000, // 3초 뒤 자동 사라짐
         timerProgressBar: true,
         width: '300px',
         padding: '0.5rem',

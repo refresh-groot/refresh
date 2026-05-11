@@ -8,6 +8,7 @@ import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
 import Swal from 'sweetalert2';
 import PlantChart from './Chart';
+import { showToast } from '../../app/alert';
 
 
 function Menu() {
@@ -287,7 +288,7 @@ const fetchChartData = async () => {
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
-          onClick={() => Swal.fire('성공', '급수를 완료했습니다.', 'success')}>
+          onClick={() => showToast('success', '급수를 완료했습니다.')}>
             급수
           </button>
           <button 

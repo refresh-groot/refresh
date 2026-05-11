@@ -88,7 +88,7 @@ function Setting() {
     if (!password) return;
     try {
       await api.delete('/api/user/withdraw', { data: { password } });
-      Swal.fire('완료', '회원 탈퇴가 완료되었습니다.', 'success').then(() => logout());
+      showAlert('success','완료', '회원 탈퇴가 완료되었습니다.', 1000).then(() => navigate('/login'));
     } catch (e) {
       const msg = e.response?.status === 401
         ? '비밀번호가 일치하지 않습니다.'
@@ -239,7 +239,7 @@ function Setting() {
                   <div className="danger-title">회원 탈퇴</div>
                   <div className="danger-desc">탈퇴 시 모든 데이터가 삭제됩니다</div>
                 </div>
-                <button className="danger-btn" onClick={handleWithdraw}>탈퇴하기</button>
+                <button className="danger-btn" onClick={handleWithdraw} >탈퇴하기</button>
               </div>
 
               <div className="version-row">
