@@ -4,28 +4,26 @@ import { FaTimes } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import { showAlert } from '../../app/alert';
 import './CommunityWrite.css';
+import api from '../../api/axios';
 
     const CommunityWrite = () => {
     const navigate = useNavigate();
 
-  // --- 상태 관리 ---
     const [category, setCategory] = useState('질문');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [images, setImages] = useState([]);
 
-  // --- 핸들러 함수 ---
     const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     
-    // 최대 3장 제한 및 미리보기 URL 생성
     const newImages = files.map((file) => ({
         file,
         preview: URL.createObjectURL(file),
     }));
 
     setImages((prev) => [...prev, ...newImages].slice(0, 3));
-    e.target.value = ''; // 같은 파일 다시 올릴 수 있도록 초기화
+    e.target.value = '';
     };
 
     const removeImage = (index) => {
@@ -33,15 +31,29 @@ import './CommunityWrite.css';
     };
 
     const handleSubmit = async () => {
-    // 유효성 검사
     if (!title.trim()) return Swal.fire('알림', '제목을 입력해주세요.', 'warning');
     if (!content.trim()) return Swal.fire('알림', '내용을 입력해주세요.', 'warning');
 
     try {
+        let res;
+        if (images.length > 0) {
+        const formData = new FormData();
+            formData.append('category', category);
+            formData.append('title', title);
+            formData.append('content', content);
+            images.forEach((img) => formData.append('image', img.file));
+            res = await api.post('/api/community', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        } else {
+            res = await api.post('/api/community', { category, title, content });
+        }
+
         await showAlert('success', '성공', '게시글이 등록되었습니다.', 1000);
         navigate('/community');
         } catch (error) {
         console.error('등록 실패:', error);
+        Swal.fire('오류', '게시글 등록에 실패했습니다.', 'error');
     }
     };
 
@@ -49,10 +61,8 @@ import './CommunityWrite.css';
         <div className="write-page">
         <div className="write-inner">
         
-        {/* 왼쪽 입력 영역 */}
             <div className="write-left">
 
-          {/* 카테고리 선택 */}
             <div className="write-field">
             <div className="write-field-label">카테고리</div>
             <div className="write-category">
@@ -68,7 +78,6 @@ import './CommunityWrite.css';
             </div>
             </div>
 
-          {/* 제목 입력 */}
             <div className="write-field">
             <div className="write-field-label">제목</div>
                 <input
@@ -79,7 +88,6 @@ import './CommunityWrite.css';
                 />
             </div>
 
-          {/* 내용 입력 */}
             <div className="write-field">
             <div className="write-field-label">내용</div>
             <textarea
@@ -89,7 +97,6 @@ import './CommunityWrite.css';
                 />
             </div>
 
-          {/* 사진 첨부 (채팅 스타일 미리보기) */}
             <div className="write-field">
             <div className="write-field-label">사진 첨부</div>
             <div className="file-upload-wrapper">
@@ -129,7 +136,6 @@ import './CommunityWrite.css';
             </div>
             </div>
 
-        {/* 오른쪽 사이드바 (등록/취소/가이드) */}
             <div className="write-right">
                 <button className="write-submit-btn" onClick={handleSubmit}>등록하기</button>
                 <button className="write-cancel-btn" onClick={() => navigate('/community')}>취소</button>

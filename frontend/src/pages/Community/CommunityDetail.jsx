@@ -2,66 +2,65 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import './CommunityDetail.css'
 import api from '../../api/axios';
+import { showToast } from '../../app/alert';
 
 const CommunityDetail = () => {
 
   const {id} = useParams();
   const navigate = useNavigate();
-  //const [post, setPost] = useState(null);
+  const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
-
-  const [post, setPost] = useState({
-  id: 1,
-  category: '질문',
-  title: '몬스테라 잎이 자꾸 노래지는데 왜 그럴까요?',
-  content: '토양 수분은 40% 유지 중인데 계속 노래져서요. 빛이 문제일까요?',
-  author: 'admin',
-  likes: 24,
-  isLiked: false,
-  comments: 8,
-  date: '2026.04.28',
-  image: null,
-  });
-
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likes);
+  const [likeCount, setLikeCount] = useState(0); 
 
   useEffect(() => {
-  const fetchPost = async () => {
-    try {
-      const res = await api.get(`/api/community/${id}`);
-      setPost(res.data);
-      setLikeCount(res.data.likes); 
-      setIsLiked(res.data.isLiked);
-    } catch (e) {
-      console.error('게시글 불러오기 실패:', e);
-    }
-  };
+    const fetchPost = async () => {
+      try {
+        const res = await api.get(`/api/community/${id}`);
+        setPost(res.data);
+        setLikeCount(res.data.likes ?? res.data.like_count ?? 0);
+        setIsLiked(res.data.isLiked);
+      } catch (e) {
+        console.error('게시글 불러오기 실패:', e);
+      }
+    };
 
-  const fetchComments = async () => {
-    try {
-      const res = await api.get(`/api/community/${id}/comments`);
-      setComments(res.data);
-    } catch (e) {
-      console.error('댓글 불러오기 실패:', e);
-    }
-  };
+    const fetchComments = async () => {
+      try {
+        const res = await api.get(`/api/community/${id}/comments`);
+        setComments(res.data);
+      } catch (e) {
+        console.error('댓글 불러오기 실패:', e);
+      }
+    };
 
-  fetchPost();
-  fetchComments();
+    fetchPost();
+    fetchComments();
   }, [id]);
 
+  const handleLike = async () => {
+    try {
+      const res = await api.post(`/api/community/${id}/like`);
+      const { isLiked: newIsLiked } = res.data;
+      setIsLiked(newIsLiked);
+      setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
+    } catch (e) {
+      console.error('좋아요 실패:', e);
+    }
+  };
+
   const handleCommentSubmit = async () => {
-  if (!newComment.trim()) return;
-  try {
-    const res = await api.post(`/api/community/${id}/comments`, { content: newComment });
-    setComments([...comments, res.data]); 
-    setNewComment('');
-  } catch (e) {
-    console.error('댓글 등록 실패:', e);
-  }
-    };
+    if (!newComment.trim()) return;
+    try {
+      const res = await api.post(`/api/community/${id}/comments`, { content: newComment });
+      setComments(prev => [...prev, res.data]);
+      setNewComment('');
+      setPost(prev => prev ? { ...prev, comment_count: (prev.comment_count ?? 0) + 1 } : prev);
+    } catch (e) {
+      console.error('댓글 등록 실패:', e);
+    }
+  };
 
   if (!post) return <div className="detail-loading">불러오는 중...</div>;
 
@@ -81,20 +80,11 @@ const CommunityDetail = () => {
     </div>
       <div className="detail-content">{post.content}</div>
       <div className="detail-action-row">
-        <button className={`detail-action-btn ${isLiked ? 'liked' : ''}`}
-        onClick={async () => {
-        try {
-        await api.post(`/api/community/${id}/like`);
-        } catch (e) {
-        console.error('좋아요 실패:', e);
-        }
-        setIsLiked(!isLiked);
-        setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-        }}>
-        {isLiked ? '❤' : '🤍'} 좋아요 {likeCount}
+        <button className={`detail-action-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike}>
+          {isLiked ? '❤' : '🤍'} 좋아요 {likeCount}
         </button>
         <button className='detail-action-btn'>
-        💬 댓글 {post.comments}
+          💬 댓글 {post.comment_count ?? 0}
         </button>
       </div>
     <div className="comment-section">
@@ -139,20 +129,26 @@ const CommunityDetail = () => {
       <div className="stat-label">좋아요</div>
     </div>
     <div className="stat-card">
-      <div className="stat-num">{post.comments}</div>
+      <div className="stat-num">{post.comment_count ?? 0}</div>
       <div className="stat-label">댓글</div>
     </div>
     </div>
       <div className="panel-title">관련 게시글</div>
     <div>
-      <div className="related-item" onClick={() => navigate('/community/2')}>
-      <div className="related-title">몬스테라 물 주기 팁 공유해요</div>
-      <div className="related-meta">정보공유 · 좋아요 18</div>
-    </div>
-      <div className="related-item" onClick={() => navigate('/community/3')}>
-      <div className="related-title">잎이 갈색으로 변할 때 대처법</div>
-      <div className="related-meta">질문 · 좋아요 9</div>
-    </div>
+      {post.relatedPosts?.length > 0 ? (
+        post.relatedPosts.map(related => (
+          <div
+            key={related.id}
+            className="related-item"
+            onClick={() => navigate(`/community/${related.id}`)}
+          >
+            <div className="related-title">{related.title}</div>
+            <div className="related-meta">{related.category} · 좋아요 {related.likes}</div>
+          </div>
+        ))
+      ) : (
+        <div className="related-empty">관련 게시글이 없습니다.</div>
+      )}
     </div>
     </div>
     </div>
