@@ -9,7 +9,7 @@ import defaultImg from '../../assets/img/default.png';
 import Swal from 'sweetalert2';
 import PlantChart from './Chart';
 import { showToast } from '../../app/alert';
-
+import Modal from '../../components/Modal/Modal';
 
 function Menu() {
   const location = useLocation();
@@ -17,8 +17,9 @@ function Menu() {
 
   const [activeTab, setActiveTab] = useState('soil');
   const [isReLoading, setIsReLoading] = useState(false);
-
   const [statsData, setStatsData] = useState({});
+  const [showWaterModal, setShowWaterModal] = useState(false);
+  const [waterDuration, setWaterDuration] = useState(5);
 
 const fetchChartData = async () => {
   try {
@@ -49,6 +50,25 @@ const fetchChartData = async () => {
     }
   },[]);
   
+const handleWatering = async () => {
+  setShowWaterModal(false);
+  try {
+    const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plant_id: currentPlant.id,
+        is_auto: false,
+        duration_sec: waterDuration
+      })
+    });
+    if (!response.ok) throw new Error('급수 실패');
+    showToast('success', `${waterDuration}초 급수를 완료했습니다.`);
+    fetchWateringHistory();
+  } catch (error) {
+    showToast('error', '급수에 실패했습니다.');
+  }
+};
 
   // 자동 급수 모드 상태 (True: AI 자동 제어, False: 사용자 수동 제어)
   const [isAutoMode, setIsAutoMode] = useState(true);
@@ -288,7 +308,7 @@ const fetchChartData = async () => {
           <button className='control-btn water-btn'
           disabled={isAutoMode}
           style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
-          onClick={() => showToast('success', '급수를 완료했습니다.')}>
+          onClick={() => setShowWaterModal(true)}>
             급수
           </button>
           <button 
@@ -364,6 +384,25 @@ const fetchChartData = async () => {
           </>
         )}
       </section>
+        {showWaterModal && (
+        <div className="modal-overlay" onClick={() => setShowWaterModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowWaterModal(false)}>✕</button>
+            <h2>급수 시간 설정</h2>
+            <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginBottom: '24px' }}>
+              급수할 시간을 설정해주세요
+            </p>
+            <div className="duration-selector">
+              <button onClick={() => setWaterDuration(d => Math.max(1, d - 1))}>−</button>
+              <span>{waterDuration}초</span>
+              <button onClick={() => setWaterDuration(d => Math.min(60, d + 1))}>+</button>
+            </div>
+            <button className="modal-submit-btn" onClick={handleWatering}>
+              급수 시작
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
