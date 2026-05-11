@@ -354,7 +354,7 @@
 
 .inner-image-preview img{
   height: 70px;
-  width: auto;
+  width: 70px;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #f0f0f0;
@@ -362,25 +362,34 @@
 
 .inner-image-preview button {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ff5252;
-  color: white;
+  top: 3px;
+  right: 3px;
+  background: white;
+  color: black;
   border: none;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   box-shadow:  0 2px 5px rgba(0,0,0,0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.inner-image-preview:hover button {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1.1);
 }
 
 .icon-btn {
   background: #f1f8e9;
-  color: #2e7d32;
+  color: black;
   border: none;
   width: 36px;
   height: 36px;
@@ -394,7 +403,7 @@
 }
 
 .icon-btn:hover {
-  background-color: #dcedc8;
+  background-color: rgb(170, 167, 167);
 }
 
 .send-btn {
@@ -481,8 +490,8 @@
 }
 
 .message-row.user .message-bubble {
-    background-color: #88ec8d;
-    color: white;
+    background-color: #ffffff;
+    color: black;
     border-top-right-radius: 4px;
 }
 
