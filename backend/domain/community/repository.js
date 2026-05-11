@@ -2,8 +2,11 @@ const { CommunityPost, User, Comment } = require('../index'); // Comment 모델 
 const { Op } = require('sequelize');
 
 module.exports = {
-  // 게시글 목록 조회 (필터 및 검색)
-  findAll: async ({ category, sort, search }) => {
+  // findAll을 findAndCountAll로 변경하고 limit, offset 추가
+  findAll: async ({ category, sort, search, page = 1 }) => {
+    const limit = 10; // 한 페이지당 10개
+    const offset = (page - 1) * limit;
+    
     const where = {};
     if (category && category !== '전체') where.category = category;
     if (search) {
@@ -13,12 +16,15 @@ module.exports = {
       ];
     }
 
-    let order = [['created_at', 'DESC']]; // 기본 최신순
+    let order = [['created_at', 'DESC']];
     if (sort === 'likes') order = [['like_count', 'DESC']];
 
-    return await CommunityPost.findAll({
+    // findAndCountAll을 써야 전체 개수(count)와 해당 페이지 데이터(rows)를 동시에 가져옵니다.
+    return await CommunityPost.findAndCountAll({
       where,
       order,
+      limit,   // 10개만 가져오기
+      offset,  // 시작 지점 설정
       include: [{ model: User, as: 'Author', attributes: ['nickname'] }]
     });
   },

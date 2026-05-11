@@ -61,25 +61,27 @@ function Setting() {
     }
   };
 
-  const handleLogout = async () => {
+const handleLogout = async () => {
+    localStorage.removeItem('user');
     await logout();
     showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
     navigate('/login');
   };
 
   const handleWithdraw = async () => {
-  if (!withdrawPassword) return;
-  try {
-    await api.delete('/api/user/withdraw', { data: { password: withdrawPassword } });
-    setShowWithdrawModal(false);
-    showAlert('success', '완료', '회원 탈퇴가 완료되었습니다.', 1000)
-      .then(() => navigate('/login'));
-  } catch (e) {
-    const msg = e.response?.status === 401
-      ? '비밀번호가 일치하지 않습니다.'
-      : '오류가 발생했습니다.';
-    showToast('error', msg);
-  }
+    if (!withdrawPassword) return;
+    try {
+      await api.delete('/api/user/withdraw', { data: { password: withdrawPassword } });
+      localStorage.removeItem('user');
+      setShowWithdrawModal(false);
+      showAlert('success', '완료', '회원 탈퇴가 완료되었습니다.', 1000)
+        .then(() => navigate('/login'));
+    } catch (e) {
+      const msg = e.response?.status === 401
+        ? '비밀번호가 일치하지 않습니다.'
+        : '오류가 발생했습니다.';
+      showToast('error', msg);
+    }
   };
 
   const initials = user?.nickname ? user.nickname.slice(0, 2) : 'RE';
@@ -90,10 +92,7 @@ function Setting() {
     <div className="setting-page">
       <div className="setting-inner">
 
-        {/* ── 왼쪽 ── */}
         <div className="setting-left">
-
-          {/* 프로필 */}
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon green">

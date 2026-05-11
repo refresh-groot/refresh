@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect} from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import './Community.css';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaChevronDown } from "react-icons/fa";
+import { FaSearch, FaChevronDown, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import api from '../../api/axios';
 import { SERVER_URL } from '../../app/constants';
 
@@ -11,22 +11,15 @@ const Community = () => {
   const [currentSort, setCurrentSort] = useState('최신순');
   const dropdownRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [posts, setPosts] = useState([]);
+  
+  // 초기값을 빈 배열로 설정하여 length 에러 방지
+  const [posts, setPosts] = useState([]); 
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   const Navigate = useNavigate();
   
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsSortOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
@@ -37,11 +30,22 @@ const Community = () => {
             category: activeCategory === '전체' ? undefined : activeCategory,
             sort: sortMap[currentSort],
             search: searchTerm || undefined,
+            page: currentPage
           }
         });
-        setPosts(res.data);
+        
+        // 데이터 구조 안전하게 받기
+        if (res.data && res.data.posts) {
+          setPosts(res.data.posts);
+          setTotalPages(res.data.totalPages || 1);
+        } else {
+          // 페이지네이션 적용 전 데이터 구조(배열)일 경우 대응
+          setPosts(Array.isArray(res.data) ? res.data : []);
+          setTotalPages(1);
+        }
       } catch (e) {
         console.error('게시글 목록 불러오기 실패:', e);
+        setPosts([]); // 에러 시 빈 배열로 초기화
       } finally {
         setLoading(false);
       }
@@ -49,21 +53,14 @@ const Community = () => {
 
     const timer = setTimeout(fetchPosts, 300);
     return () => clearTimeout(timer);
-  }, [activeCategory, currentSort, searchTerm]);
+  }, [activeCategory, currentSort, searchTerm, currentPage]);
 
-  const Categories = [
-    {name: '전체'},
-    {name: '질문'},
-    {name: '정보공유'},
-    {name: '자랑'},
-    {name: '고민'},
-  ];
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchTerm, currentSort]);
 
-  const sortOptions = [
-    { label: '최신순', value: 'new' },
-    { label: '관련도순', value: 'type' },
-    { label: '좋아요순', value: 'good' }
-  ];
+  const Categories = [{name: '전체'}, {name: '질문'}, {name: '정보공유'}, {name: '자랑'}, {name: '고민'}];
+  const sortOptions = [{ label: '최신순', value: 'new' }, { label: '관련도순', value: 'type' }, { label: '좋아요순', value: 'good' }];
 
   return (
     <div className="community-page">
@@ -96,10 +93,7 @@ const Community = () => {
                   {sortOptions.map((option) => (
                     <li
                       key={option.value}
-                      onClick={() => {
-                        setCurrentSort(option.label);
-                        setIsSortOpen(false);
-                      }}
+                      onClick={() => {setCurrentSort(option.label); setIsSortOpen(false);}}
                       className={currentSort === option.label ? 'selected' : ''}>
                       {option.label}
                     </li>
@@ -110,21 +104,26 @@ const Community = () => {
           </div>
           <div className="post-list">
             {loading && <div className="loading">불러오는 중...</div>}
-            {!loading && posts.length === 0 && (
-              <div className="no-posts">게시글이 없습니다.</div>
-            )}
-            {!loading && posts.map((post) => (
+            
+            {/* posts가 undefined일 경우를 대비해 옵셔널 체이닝 사용 */}
+            {!loading && posts?.length === 0 && <div className="no-posts">게시글이 없습니다.</div>}
+            
+            {!loading && posts?.map((post) => (
               <div key={post.id} className="post-card" onClick={() => Navigate(`/community/${post.id}`)}>
-                <div className="post-top">
-                  <span className={`post-badge badge-${post.category}`}>{post.category}</span>
-                  <span className="post-title">{post.title}</span>
-                </div>
-                {post.image && (
-                  <div className="post-list-image">
-                    <img src={`${SERVER_URL}${post.image}`} alt="post" />
+                <div className="post-card-content-wrapper">
+                  <div className="post-text-area">
+                    <div className="post-top">
+                      <span className={`post-badge badge-${post.category}`}>{post.category}</span>
+                      <span className="post-title">{post.title}</span>
+                    </div>
+                    <div className="post-preview">{post.preview}</div>
                   </div>
-                )}
-                <div className="post-preview">{post.preview}</div>
+                  {post.image && (
+                    <div className="post-list-image-v2">
+                      <img src={`${SERVER_URL}${post.image}`} alt="post" />
+                    </div>
+                  )}
+                </div>
                 <div className="post-bottom">
                   <span>{post.author}</span>
                   <span>❤️ {post.likes}</span>
@@ -134,6 +133,36 @@ const Community = () => {
               </div>
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className="page-btn"
+              >
+                <FaChevronLeft />
+              </button>
+              
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`page-number ${currentPage === i + 1 ? 'active' : ''}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className="page-btn"
+              >
+                <FaChevronRight />
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>
