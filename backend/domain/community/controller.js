@@ -41,5 +41,34 @@ module.exports = {
     } catch (e) {
       res.status(403).json({ message: e.message });
     }
+  },
+
+  toggleLike: async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const result = await service.toggleLike(req.params.id, userId);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
   }
+},
+
+getComments: async (req, res) => {
+  try {
+    const comments = await service.getComments(req.params.id);
+    res.json(comments);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+},
+
+createComment: async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const comment = await service.createComment(req.params.id, userId, req.body.content);
+    res.status(201).json(comment);
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+},
 };

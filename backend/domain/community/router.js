@@ -8,4 +8,8 @@ router.post('/', upload.single('image'), controller.createPost);
 router.get('/:id', controller.getPostDetail);
 router.delete('/:id', controller.deletePost);
 
+router.post('/:id/like', controller.toggleLike);
+router.get('/:id/comments', controller.getComments);
+router.post('/:id/comments', controller.createComment);
+
 module.exports = router;

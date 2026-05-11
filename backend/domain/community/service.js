@@ -1,4 +1,6 @@
 const repository = require('./repository');
+const { CommunityPost, User, Comment } = require('../index');
+const { Op } = require('sequelize');
 
 module.exports = {
   getPosts: async (query) => {
@@ -25,15 +27,30 @@ module.exports = {
     const post = await repository.findById(id);
     if (!post) throw new Error('게시글을 찾을 수 없습니다.');
 
-    // 상세 보기에서는 본인이 좋아요를 눌렀는지 여부(isLiked)도 확인
     const isLiked = userId ? await post.hasLiker(userId) : false;
+
+    const relatedPosts = await CommunityPost.findAll({
+      where: {
+        category: post.category,
+        id: { [Op.ne]: parseInt(id) }
+      },
+      order: [['created_at', 'DESC']],
+      limit: 3,
+      attributes: ['id', 'title', 'category', 'like_count']
+    });
 
     return {
       ...post.toJSON(),
       author: post.Author?.nickname,
       isLiked,
       date: post.created_at,
-      image: post.photo_url
+      image: post.photo_url,
+      relatedPosts: relatedPosts.map(p => ({
+        id: p.id,
+        title: p.title,
+        category: p.category,
+        likes: p.like_count
+      }))
     };
   },
 
@@ -41,5 +58,49 @@ module.exports = {
     const result = await repository.delete(id, userId);
     if (!result) throw new Error('게시글이 없거나 삭제 권한이 없습니다.');
     return result;
+  },
+
+  toggleLike: async (postId, userId) => {
+  const post = await repository.findById(postId);
+  if (!post) throw new Error('게시글을 찾을 수 없습니다.');
+
+  const isLiked = await post.hasLiker(userId);
+  if (isLiked) {
+    await post.removeLiker(userId);
+    await post.decrement('like_count');
+  } else {
+    await post.addLiker(userId);
+    await post.increment('like_count');
   }
+  return { isLiked: !isLiked };
+},
+
+getComments: async (postId) => {
+  const comments = await Comment.findAll({
+    where: { post_id: postId },
+    include: [{ model: User, as: 'Author', attributes: ['nickname'] }],
+    order: [['created_at', 'ASC']],
+  });
+  return comments.map(c => ({
+    id: c.id,
+    author: c.Author?.nickname || '알 수 없음',
+    content: c.content,
+    date: c.created_at,
+  }));
+},
+
+createComment: async (postId, userId, content) => {
+  const comment = await Comment.create({ post_id: postId, user_id: userId, content });
+  // 댓글 수 동기화
+  await CommunityPost.increment('comment_count', { where: { id: postId } });
+  const withAuthor = await Comment.findByPk(comment.id, {
+    include: [{ model: User, as: 'Author', attributes: ['nickname'] }],
+  });
+  return {
+    id: withAuthor.id,
+    author: withAuthor.Author?.nickname || '알 수 없음',
+    content: withAuthor.content,
+    date: withAuthor.created_at,
+  };
+},
 };
