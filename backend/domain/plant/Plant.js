@@ -19,7 +19,7 @@ class Plant extends Sequelize.Model {
           type: Sequelize.STRING(100),
           allowNull: false,
           /* [수정] 특정 종만 허용하던 제약 조건을 주석 처리
-             이제 species_info 테이블에 없는 식물 이름도 자유롭게 입력 가능함
+              이제 species_info 테이블에 없는 식물 이름도 자유롭게 입력 가능함
           */
           /*
           references: {
@@ -84,7 +84,9 @@ class Plant extends Sequelize.Model {
   });
 
   // 3. 자식 로그들과의 관계 (여기도 CASCADE를 넣는 것이 안전)
-  db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+  // [주석 처리] 하드웨어 관련 파일 삭제로 인해 Device 모델 참조 중단
+  // db.Plant.hasOne(db.Device, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
+  
   db.Plant.hasMany(db.DiagnosisLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
   db.Plant.hasMany(db.WateringLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
   db.Plant.hasMany(db.EnvironmentLog, { foreignKey: 'plant_id', sourceKey: 'id', onDelete: 'CASCADE' });
