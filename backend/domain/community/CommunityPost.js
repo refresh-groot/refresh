@@ -43,9 +43,30 @@ class CommunityPost extends Sequelize.Model {
   }
 
   static associate(db) {
-    db.CommunityPost.belongsTo(db.User, { foreignKey: 'user_id', targetKey: 'id', as: 'Author' });
-    db.CommunityPost.belongsToMany(db.User, { through: 'CommunityLike', as: 'Likers', foreignKey: 'post_id' });
+    // [수정] onDelete: 'CASCADE' 추가 (유저 탈퇴 시 작성한 게시글 자동 삭제)
+    db.CommunityPost.belongsTo(db.User, { 
+      foreignKey: 'user_id', 
+      targetKey: 'id', 
+      as: 'Author', 
+      onDelete: 'CASCADE' 
+    });
+
+    // [수정] onDelete: 'CASCADE' 추가 (유저 탈퇴 시 해당 게시글에 누른 좋아요 기록 자동 삭제)
+    db.CommunityPost.belongsToMany(db.User, { 
+      through: 'CommunityLike', 
+      as: 'Likers', 
+      foreignKey: 'post_id', 
+      onDelete: 'CASCADE' 
+    });
+
     // 댓글 기능을 위해 나중에 Comment 모델과 연결할 수 있습니다.
+    // [추가] 게시글 삭제 시 관련 댓글도 모두 삭제되도록 연결
+    db.CommunityPost.hasMany(db.Comment, { 
+      foreignKey: 'post_id', 
+      sourceKey: 'id', 
+      as: 'Comments', 
+      onDelete: 'CASCADE' 
+    });
   }
 }
 
