@@ -11,6 +11,8 @@ const wateringRouter = require('./domain/wateringLog/router');
 const diagnosisLogRouter = require('./domain/diagnosisLog/router');
 const environmentLogRouter = require('./domain/EnvironmentLog/router');
 const notificationRouter = require('./domain/notification/router');
+const communityRouter = require('./domain/community/router'); 
+
 // --- [Gemini AI 설정 시작] ---
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -119,6 +121,7 @@ app.use('/api/environment-log', environmentLogRouter);
 app.use('/', userRouter); // 이제 req.body를 정상적으로 받을 수 있음
 app.use('/api/diagnosis-logs', diagnosisLogRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/community', communityRouter); 
 
 /**
  * 스마트팜 식물 AI API 추가

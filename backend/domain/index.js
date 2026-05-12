@@ -26,41 +26,51 @@ const sequelize = new Sequelize(
 const User = require('./user/User');
 const Plant = require('./plant/Plant');
 const SpeciesInfo = require('./plant/SpeciesInfo'); // 1. 추가
-const Device = require('./device/Device');
+// const Device = require('./device/Device'); // [주석 처리]
 const DiagnosisLog = require('./diagnosisLog/DiagnosisLog');
 const WateringLog = require('./wateringLog/WateringLog');
 const EnvironmentLog = require('./EnvironmentLog/EnvironmentLog'); // [추가]
 const Notification = require('./notification/Notification'); // [추가]
+const CommunityPost = require('./community/CommunityPost'); // [추가]
+const Comment = require('./community/Comment'); // [추가]
+
 // 5. db 객체에 담기
 db.User = User;
 db.Plant = Plant;
 db.SpeciesInfo = SpeciesInfo; // 2. 추가
-db.Device = Device;
+// db.Device = Device; // [주석 처리]
 db.DiagnosisLog = DiagnosisLog;
 db.WateringLog = WateringLog;
 db.EnvironmentLog = EnvironmentLog; // [추가]
 db.Notification = Notification; // [추가]
+db.CommunityPost = CommunityPost; // [추가]
+db.Comment = Comment; // [추가]
 
 // 6. 모델 초기화 (init)
 User.init(sequelize);
 Plant.init(sequelize);
 SpeciesInfo.init(sequelize); // 3. 추가
-Device.init(sequelize);
+// Device.init(sequelize); // [주석 처리]
 DiagnosisLog.init(sequelize);
 WateringLog.init(sequelize);
 EnvironmentLog.init(sequelize); // [추가]
 Notification.init(sequelize); // [추가]
+CommunityPost.init(sequelize); // [추가]
+Comment.init(sequelize); // [추가]
+
 // 7. 관계 설정 (associate)
 User.associate(db);
 Plant.associate(db);
 // SpeciesInfo는 정적 데이터라 현재 관계 설정이 없으면 생략 가능하지만
 // 형식을 맞추기 위해 추가(SpeciesInfo.js에 static associate가 있어야 함)
 if (SpeciesInfo.associate) SpeciesInfo.associate(db); // 4. 추가
-Device.associate(db);
+// Device.associate(db); // [주석 처리]
 DiagnosisLog.associate(db);
 WateringLog.associate(db);
 EnvironmentLog.associate(db); // [추가]
 Notification.associate(db); // [추가]
+CommunityPost.associate(db); // [추가]
+Comment.associate(db); // [추가]
 
 // 8. 내보내기
 db.sequelize = sequelize;

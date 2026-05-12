@@ -97,7 +97,7 @@ function Chat() {
   // inputText가 바뀔 때마다 textarea 높이를 내용에 맞게 자동 조절
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';                                   // 일단 초기화
+      textareaRef.current.style.height = 'auto';                                   // 초기화
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'; // 실제 내용 높이로 확장
     }
   }, [inputText]);

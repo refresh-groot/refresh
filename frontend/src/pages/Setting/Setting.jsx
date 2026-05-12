@@ -6,6 +6,7 @@ import { Bluetooth } from '../../hooks/Bluetooth';
 import { useNavigate } from 'react-router-dom';
 import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
+import { showToast } from '../../app/alert';
 import api from '../../api/axios';
 import './Setting.css';
 
@@ -18,6 +19,9 @@ function Setting() {
   const [isAlertOn, setIsAlertOn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [bioSaving, setBioSaving] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawPassword, setWithdrawPassword] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,9 +42,9 @@ function Setting() {
     setBioSaving(true);
     try {
       await api.put('/api/user/profile', { bio });
-      Swal.fire({ icon: 'success', title: '저장 완료', timer: 1000, showConfirmButton: false });
+      showToast('success', '저장 완료');
     } catch (e) {
-      Swal.fire('오류', '저장에 실패했습니다.', 'error');
+      showToast('fail','저장 실패');
     } finally {
       setBioSaving(false);
     }
@@ -57,42 +61,26 @@ function Setting() {
     }
   };
 
-  const handleLogout = async () => {
-    const result = await Swal.fire({
-      title: '로그아웃 하시겠습니까?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: '로그아웃',
-      cancelButtonText: '취소',
-      confirmButtonColor: '#e67e22',
-    });
-    if (result.isConfirmed) {
-      await logout();
-      showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
-      navigate('/login');
-    }
+const handleLogout = async () => {
+    localStorage.removeItem('user');
+    await logout();
+    showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
+    navigate('/login');
   };
 
   const handleWithdraw = async () => {
-    const { value: password } = await Swal.fire({
-      title: '회원 탈퇴',
-      text: '비밀번호를 입력해주세요.',
-      input: 'password',
-      inputPlaceholder: '비밀번호',
-      showCancelButton: true,
-      confirmButtonText: '탈퇴하기',
-      cancelButtonText: '취소',
-      confirmButtonColor: '#e74c3c',
-    });
-    if (!password) return;
+    if (!withdrawPassword) return;
     try {
-      await api.delete('/api/user/withdraw', { data: { password } });
-      Swal.fire('완료', '회원 탈퇴가 완료되었습니다.', 'success').then(() => logout());
+      await api.delete('/api/user/withdraw', { data: { password: withdrawPassword } });
+      localStorage.removeItem('user');
+      setShowWithdrawModal(false);
+      showAlert('success', '완료', '회원 탈퇴가 완료되었습니다.', 1000)
+        .then(() => navigate('/login'));
     } catch (e) {
       const msg = e.response?.status === 401
         ? '비밀번호가 일치하지 않습니다.'
         : '오류가 발생했습니다.';
-      Swal.fire('오류', msg, 'error');
+      showToast('error', msg);
     }
   };
 
@@ -104,10 +92,7 @@ function Setting() {
     <div className="setting-page">
       <div className="setting-inner">
 
-        {/* ── 왼쪽 ── */}
         <div className="setting-left">
-
-          {/* 프로필 */}
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon green">
@@ -230,7 +215,7 @@ function Setting() {
                   <div className="s-row-label">로그아웃</div>
                   <div className="s-row-sub">현재 기기에서 로그아웃</div>
                 </div>
-                <button className="action-btn orange" onClick={handleLogout}>로그아웃</button>
+                <button className="action-btn orange" onClick={() => setShowLogoutModal(true)}>로그아웃</button>
               </div>
 
               <div className="danger-banner">
@@ -238,7 +223,7 @@ function Setting() {
                   <div className="danger-title">회원 탈퇴</div>
                   <div className="danger-desc">탈퇴 시 모든 데이터가 삭제됩니다</div>
                 </div>
-                <button className="danger-btn" onClick={handleWithdraw}>탈퇴하기</button>
+                <button className="danger-btn" onClick={() => setShowWithdrawModal(true)} >탈퇴하기</button>
               </div>
 
               <div className="version-row">
@@ -250,6 +235,46 @@ function Setting() {
 
         </div>
       </div>
+            {showLogoutModal && (
+        <div className="modal-overlay" onClick={() => setShowLogoutModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowLogoutModal(false)}>✕</button>
+            <h2>로그아웃</h2>
+            <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginBottom: '24px' }}>
+              현재 기기에서 로그아웃 하시겠습니까?
+            </p>
+            <div className="modal-btns">
+              <button className="modal-cancel-btn" onClick={() => setShowLogoutModal(false)}>취소</button>
+              <button className="modal-confirm-btn orange" onClick={handleLogout}>로그아웃</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+            {showWithdrawModal && (
+        <div className="modal-overlay" onClick={() => setShowWithdrawModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => { setShowWithdrawModal(false); setWithdrawPassword(''); }}>✕</button>
+            <h2>회원 탈퇴</h2>
+            <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginBottom: '20px' }}>
+              비밀번호를 입력해주세요.
+            </p>
+            <div className="modal-input-group">
+              <input
+                type="password"
+                placeholder="비밀번호"
+                value={withdrawPassword}
+                onChange={e => setWithdrawPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleWithdraw()}
+              />
+            </div>
+            <div className="modal-btns">
+              <button className="modal-cancel-btn" onClick={() => { setShowWithdrawModal(false); setWithdrawPassword(''); }}>취소</button>
+              <button className="modal-confirm-btn red" onClick={handleWithdraw}>탈퇴하기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

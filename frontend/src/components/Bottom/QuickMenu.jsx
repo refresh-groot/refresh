@@ -1,32 +1,34 @@
 import React, { useState } from 'react';
 import { useBluetooth } from '../../context/BluetoothContext';
-import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 import './QuickMenu.css';
 import { IoWaterOutline } from "react-icons/io5";
-import { FaStop, FaHandPaper, FaWifi } from "react-icons/fa";
+import { FaStop, FaHandPaper, FaWifi, FaExclamationTriangle } from "react-icons/fa";
 import { MdAutorenew, MdTune } from "react-icons/md";
 import { BsFileBarGraph } from "react-icons/bs";
 import { IoIosSettings } from "react-icons/io";
 import { PiPlant } from "react-icons/pi";
+import { showToast } from '../../app/alert';
 
-const MENU = [{
+const MENU = [
+    {
     icon: <IoWaterOutline />,
     name: '급수제어',
     color: '#3b82f6',
     children: [
     { icon: <IoWaterOutline />, name: '급수', cmd: 'WATER 100' },
-    { icon: <FaStop />,  name: '정지', cmd: 'STOP' },
+    { icon: <FaStop />, name: '정지', cmd: 'STOP' },
     { icon: <MdAutorenew />, name: '자동모드', cmd: 'MODE:AUTO' },
     { icon: <FaHandPaper />, name: '수동모드', cmd: 'MODE:MANUAL' },
     ],
-},
-{
+    },
+    {
     icon: <BsFileBarGraph />,
     name: '상태확인',
     color: '#10b981',
     cmd: 'STATE',
-},
-{
+    },
+    {
     icon: <IoIosSettings />,
     name: '기기설정',
     color: '#f59e0b',
@@ -35,28 +37,30 @@ const MENU = [{
     { icon: <FaWifi />, name: '와이파이', special: 'wifi' },
     { icon: <MdTune />, name: '펌프보정', cmd: 'CAL 8.5' },
     ],
-},
+    },
 ];
 
 const PARENT_RADIUS = 90;
 const CHILD_RADIUS = 100;
 
 function getFanPositions(count) {
-const total = 160;
-const start = 180 + (180 - total) / 2;
-return Array.from({ length: count }, (_, i) => {
+    const total = 160;
+    const start = 180 + (180 - total) / 2;
+    return Array.from({ length: count }, (_, i) => {
     const angle = count === 1 ? 270 : start + (total / (count - 1)) * i;
     const rad = (angle * Math.PI) / 180;
     return {
-      x: Math.cos(rad) * PARENT_RADIUS,
-      y: Math.sin(rad) * CHILD_RADIUS,
+    x: Math.cos(rad) * PARENT_RADIUS,
+    y: Math.sin(rad) * CHILD_RADIUS,
     };
-});
+    });
 }
 
-    const QuickMenu = ({ onClose }) => {
+const QuickMenu = ({ onClose }) => {
     const { sendCommand, deviceName } = useBluetooth();
     const [activeParent, setActiveParent] = useState(null);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const navigate = useNavigate();
 
     const handleParent = (item, idx) => {
     if (item.cmd) {
@@ -67,43 +71,23 @@ return Array.from({ length: count }, (_, i) => {
     };
 
     const execCommand = async (cmd, name) => {
-    if (!sendCommand) {
-        Swal.fire('기기 미연결', '먼저 블루투스 기기를 연결해주세요.', 'warning');
+    if (!deviceName || !sendCommand) {
+        setIsAlertOpen(true);
         return;
     }
-    await sendCommand(cmd);
-    Swal.fire({ icon: 'success', title: `${name} 완료`, timer: 1000, showConfirmButton: false });
-    onClose();
+
+    try {
+        await sendCommand(cmd);
+        showToast('success', `${name} 명령을 전송했습니다.`);
+        onClose();
+    } catch (error) {
+        console.error('명령 전송 실패:', error);
+        showToast('error', '명령 전송에 실패했습니다.');
+    }
     };
 
     const handleChild = async (item) => {
-    if (item.special === 'plant') {
-        const { value } = await Swal.fire({
-        title: '식물 종 입력',
-        input: 'text',
-        inputPlaceholder: '예: 바질',
-        showCancelButton: true,
-        confirmButtonText: '전송',
-        cancelButtonText: '취소',
-        });
-        if (value) execCommand(`PLANT-TYPE:${value}`, '식물설정');
-        return;
-    }
-    if (item.special === 'wifi') {
-        const { value: ssid } = await Swal.fire({
-        title: '와이파이 SSID',
-        input: 'text',
-        inputPlaceholder: '네트워크 이름',
-        showCancelButton: true,
-    });
-    if (!ssid) return;
-    const { value: pw } = await Swal.fire({
-        title: '와이파이 비밀번호',
-        input: 'password',
-        inputPlaceholder: '비밀번호',
-        showCancelButton: true,
-        });
-        if (pw !== undefined) execCommand(`WIFI:${ssid},${pw}`, '와이파이 설정');
+    if (item.special === 'plant' || item.special === 'wifi') {
         return;
     }
     execCommand(item.cmd, item.name);
@@ -114,16 +98,14 @@ return Array.from({ length: count }, (_, i) => {
     const childPositions = getFanPositions(childItems?.length || 0);
 
     return (
-    <div className="qm-overlay" onClick={() => { setActiveParent(null); onClose(); }}>
-      {/* 연결 상태 뱃지 */}
+    <>
+        <div className="qm-overlay" onClick={() => { setActiveParent(null); onClose(); }}>
         <div className="qm-badge" onClick={e => e.stopPropagation()}>
-        {deviceName
-            ? <><span className="qm-dot connected" />  {deviceName}</>
-            : <><span className="qm-dot" /> 기기 미연결</>}
+        <span className={`qm-dot ${deviceName ? 'connected' : ''}`} />
+        {deviceName ? deviceName : '기기 미연결'}
         </div>
 
         <div className="qm-fan" onClick={e => e.stopPropagation()}>
-        {/* 1단계 */}
         {MENU.map((item, i) => {
             const { x, y } = parentPositions[i];
             const isActive = activeParent === i;
@@ -132,44 +114,81 @@ return Array.from({ length: count }, (_, i) => {
             if (isAnyActive && !isActive) return null;
             return (
             <button
-                key={i}
-                className={`qm-item qm-parent ${isActive ? 'active' : ''}`}
-                style={{
-                '--tx': `${x}px`,
-                '--ty': `${y}px`,
-                '--accent': item.color,
-                animationDelay: `${i * 40}ms`,
-                }}
-                onClick={() => handleParent(item, i)}
+            key={i}
+            className={`qm-item qm-parent ${isActive ? 'active' : ''}`}
+            style={{
+            '--tx': `${x}px`,
+            '--ty': `${y}px`,
+            '--accent': item.color,
+            '--delay': `${i * 0.05}s`,
+            }}
+            onClick={() => handleParent(item, i)}
             >
-                <span className="qm-icon">{item.icon}</span>
-                <span className="qm-label">{item.name}</span>
+            <span className="qm-icon">{item.icon}</span>
+            <span className="qm-label">{item.name}</span>
             </button>
             );
-        })}
+            })}
 
-        {/* 2단계 */}
-        {activeParent !== null && childItems.map((item, i) => {
+            {activeParent !== null && childItems.map((item, i) => {
             const { x, y } = childPositions[i];
             return (
             <button
-                key={`child-${i}`}
-                className="qm-item qm-child"
-                style={{
-                '--tx': `${x}px`,
-                '--ty': `${y}px`,
-                animationDelay: `${i * 35}ms`,
-                }}
-                onClick={() => handleChild(item)}
+            key={`child-${i}`}
+            className="qm-item qm-child"
+            style={{
+            '--tx': `${x}px`,
+            '--ty': `${y}px`,
+            '--delay': `${i * 0.05}s`,
+            '--accent': MENU[activeParent].color,
+            }}
+            onClick={() => handleChild(item)}
             >
-                <span className="qm-icon">{item.icon}</span>
-                <span className="qm-label">{item.name}</span>
+            <span className="qm-icon">{item.icon}</span>
+            <span className="qm-label">{item.name}</span>
             </button>
             );
-        })}
+            })}
         </div>
-    </div>
-    );
+        </div>
+
+        {isAlertOpen && (
+        <div className="modal-overlay" style={{ zIndex: 3000 }}>
+        <div className="modal-content" style={{ maxWidth: '320px', padding: '30px' }}>
+        <div className="modal-header" style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <FaExclamationTriangle style={{ fontSize: '40px', color: '#ff9f43', marginBottom: '15px' }} />
+            <h2 style={{ fontSize: '20px', color: '#333' }}>기기 미연결</h2>
+        </div>
+        <div className="modal-body" style={{ textAlign: 'center', marginBottom: '25px' }}>
+            <p style={{ fontSize: '15px', color: '#666', lineHeight: '1.5' }}>
+            블루투스 기기가 연결되어 있지 않습니다.<br />설정 페이지로 이동하시겠습니까?
+            </p>
+        </div>
+        <div className="modal-footer" style={{ display: 'flex', gap: '10px' }}>
+            <button 
+            className="btn-secondary" 
+            style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#f1f5f9', color: '#64748b', fontWeight: '600' }}
+            onClick={() => setIsAlertOpen(false)}
+            >
+            나중에
+            </button>
+            <button 
+            className="btn-primary" 
+            style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#2ecc71', color: 'white', fontWeight: '600' }}
+            onClick={() => {
+            setIsAlertOpen(false);
+            onClose();
+            navigate('/Setting');
+            }}
+            >
+            연결하기
+            </button>
+        </div>
+        </div>
+        </div>
+    )}
+    </>
+);
 };
 
 export default QuickMenu;

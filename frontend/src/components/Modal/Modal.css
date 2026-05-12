@@ -1,0 +1,61 @@
+/* 기존 Modal.css 하단에 추가 */
+
+.modal-warning-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #ff9f43;
+  color: #ff9f43;
+  font-size: 40px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.modal-body p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 25px;
+  font-size: 15px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* 설정 페이지 버튼 스타일 적용 */
+.modal-footer button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-primary {
+  background-color: #2ecc71; /* 설정 페이지의 긍정 버튼 색상 */
+  color: white;
+}
+
+.modal-footer button:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}

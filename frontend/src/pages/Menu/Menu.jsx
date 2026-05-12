@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './Menu.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaTemperatureHigh, FaTint, FaSun, FaLeaf } from 'react-icons/fa';
+import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaChevronDown, FaChevronUp, FaHistory } from 'react-icons/fa';
 import { FcSynchronize } from "react-icons/fc";
 import { SERVER_URL } from '../../app/constants';
 import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
-import Swal from 'sweetalert2';
 import PlantChart from './Chart';
-
+import { showToast } from '../../app/alert';
 
 function Menu() {
   const location = useLocation();
@@ -16,89 +15,44 @@ function Menu() {
 
   const [activeTab, setActiveTab] = useState('soil');
   const [isReLoading, setIsReLoading] = useState(false);
-
   const [statsData, setStatsData] = useState({});
-
-const fetchChartData = async () => {
-  try {
-    const response = await fetch(`${SERVER_URL}/api/environment-log/stats/${currentPlant.id}`);
-    if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
-    const data = await response.json();
-    setStatsData(data);
-  } catch (error) {
-    console.error('차트 연동 에러: ', error);
-  }
-};
-
+  const [showWaterModal, setShowWaterModal] = useState(false);
+  const [waterDuration, setWaterDuration] = useState(5);
   const [showHistory, setShowHistory] = useState(false);
-
-  const handleReLoading = async () => {
-    setIsReLoading(true);
-  
-    await fetchChartData();
-  
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  
-    setIsReLoading(false);
-  };
-  
-  useEffect (() => {
-    if(currentPlant && currentPlant.id) {
-      fetchChartData();
-    }
-  },[]);
-  
-
-  // 자동 급수 모드 상태 (True: AI 자동 제어, False: 사용자 수동 제어)
-  const [isAutoMode, setIsAutoMode] = useState(true);
-
-  // 다른 페이지(목록 등)에서 넘겨받은 식물 데이터
-  const receivedPlant = location.state?.plant;
-
-  // 현재 표시할 식물 데이터 초기화
-  // 1순위: 넘겨받은 데이터, 2순위: 로컬 스토리지 저장값, 3순위: 기본값
-  const [currentPlant, setCurrentPlant] = useState(() => {
-    if (receivedPlant) return receivedPlant;
-
-    const saved = localStorage.getItem('my-plants');
-    const parsed = saved ? JSON.parse(saved) : [];
-    return parsed.length > 0
-      ? parsed[0]
-      : {
-          plant_name: '식물을 등록해주세요',
-          species: '식물 종류',
-          reg_date: new Date().toISOString().split('T')[0],
-          photo_url: defaultImg,
-          status: 'active',
-        };
-  });
-
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
+  const [isAutoMode, setIsAutoMode] = useState(true);
 
-  const groupedHistory = wateringHistory.reduce((acc,log) => {
-    if(!log.watering_date) return acc;
-    const date = new Date(log.watering_date);
-    const dateKey = `${String(date.getMonth() + 1).padStart(2,'0')}월 ${String(date.getDate()).padStart(2,'0')}일`;
+  const receivedPlant = location.state?.plant;
+  const [currentPlant, setCurrentPlant] = useState(() => {
+    if (receivedPlant) return receivedPlant;
+    const saved = localStorage.getItem('my-plants');
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.length > 0 ? parsed[0] : {
+      plant_name: '식물을 등록해주세요',
+      species: '식물 종류',
+      reg_date: new Date().toISOString().split('T')[0],
+      photo_url: defaultImg,
+      status: 'active',
+    };
+  });
 
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(log);
-    return acc;
-  }, {});
-
-  const formatTimeOnly = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const hours = String(date.getHours()).padStart(2,'0');
-    const minutes = String(date.getMinutes()).padStart(2,'0');
-    return `${hours}:${minutes}`;
+  const fetchChartData = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/environment-log/stats/${currentPlant.id}`);
+      if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
+      const data = await response.json();
+      setStatsData(data);
+    } catch (error) {
+      console.error('차트 연동 에러: ', error);
+    }
   };
 
   const fetchWateringHistory = async () => {
     try {
       const response = await fetch(`${SERVER_URL}/api/watering-log/${currentPlant.id}`);
-      if(!response.ok) throw new Error('급수 이력을 불러오지 못했습니다.');
-      
+      if (!response.ok) throw new Error('급수 이력을 불러오지 못했습니다.');
       const data = await response.json();
       setWateringHistory(data);
     } catch (error) {
@@ -106,60 +60,103 @@ const fetchChartData = async () => {
     }
   };
 
-  useEffect (() => {
-    if(showHistory && currentPlant?.id) {
+  const handleReLoading = async () => {
+    setIsReLoading(true);
+    await fetchChartData();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsReLoading(false);
+  };
+
+  useEffect(() => {
+    if (currentPlant && currentPlant.id) {
+      fetchChartData();
+    }
+  }, []);
+
+  const handleWatering = async () => {
+    setShowWaterModal(false);
+    try {
+      const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: currentPlant.id,
+          is_auto: false,
+          duration_sec: waterDuration
+        })
+      });
+      if (!response.ok) throw new Error('급수 실패');
+      showToast('success', `${waterDuration}초 급수를 완료했습니다.`);
+      fetchWateringHistory();
+    } catch (error) {
+      showToast('error', '급수에 실패했습니다.');
+    }
+  };
+
+  // 최근 10일 기준 데이터 가공 로직
+  const getRecent10DaysHistory = () => {
+    const tempGroup = {};
+    const today = new Date();
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = `${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일`;
+      tempGroup[key] = [];
+    }
+    wateringHistory.forEach(log => {
+      const logDate = new Date(log.watering_date);
+      const key = `${String(logDate.getMonth() + 1).padStart(2, '0')}월 ${String(logDate.getDate()).padStart(2, '0')}일`;
+      if (tempGroup[key]) tempGroup[key].push(log);
+    });
+    return Object.keys(tempGroup).filter(key => tempGroup[key].length > 0);
+  };
+
+  const historyKeys = getRecent10DaysHistory();
+  const displayKeys = showAllHistory ? historyKeys : historyKeys.slice(0, 3);
+
+  useEffect(() => {
+    if (showHistory && currentPlant?.id) {
       fetchWateringHistory();
     }
   }, [showHistory, currentPlant?.id]);
 
   const { sensorData: newData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
 
-  // 넘겨받은 식물 데이터가 변경되면 현재 상태를 업데이트
   useEffect(() => {
-    if (
-      receivedPlant &&
-      receivedPlant.plant_name !== currentPlant.plant_name
-    ) {
+    if (receivedPlant && receivedPlant.plant_name !== currentPlant.plant_name) {
       setCurrentPlant(receivedPlant);
     }
   }, [receivedPlant, currentPlant.plant_name]);
 
-  // 새로고침 시에도 데이터가 유지되도록 로컬 스토리지에 현재 식물 정보 저장
   useEffect(() => {
     if (currentPlant) {
       localStorage.setItem('my-plants', JSON.stringify([currentPlant]));
     }
   }, [currentPlant]);
 
-  // 식물 등록일로부터 경과한 날짜(D-Day) 계산 함수
   const calculateDays = (dateString) => {
     if (!dateString) return 0;
     const start = new Date(dateString);
     const today = new Date();
     const diff = today - start;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return days + 1; // 시작일을 1일로 계산
+    return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
   };
 
-  // 이미지 URL 정규화 함수
-  // 서버에서 상대 경로(/uploads/...)로 넘어오는 경우 전체 URL로 변환 처리
   const getImageSrc = (url) => {
     if (!url) return defaultImg;
-
     if (typeof url === 'string') {
-      if (url.startsWith('http')) return url; // 외부 링크
-      if (url.startsWith('data:')) return url; // Base64 이미지
-
-      // 백엔드 업로드 경로인 경우 서버 주소 추가
+      if (url.startsWith('http') || url.startsWith('data:')) return url;
       if (url.startsWith('/uploads/')) return `${SERVER_URL}${url}`;
-
-      return url;
     }
-
     return defaultImg;
   };
 
-  // 센서 카드 렌더링을 위한 설정 배열 (반복되는 UI를 효율적으로 관리)
+  const formatTimeOnly = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  };
+
   const SENSOR_CONFIG = [
     { id: 'temp', label: '온도', unit: '°C', icon: <FaTemperatureHigh />, color: 'temp' },
     { id: 'humid', label: '습도', unit: '%', icon: <FaTint />, color: 'humid' },
@@ -167,7 +164,6 @@ const fetchChartData = async () => {
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
 
-  // 센서 데이터 로딩 중 표시
   if (sensorLoading && newData.temp === 0) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
@@ -175,196 +171,140 @@ const fetchChartData = async () => {
   return (
     <div className="menu-dashboard">
       <section className="dashboard-left">
-        {/* 식물 프로필 카드 영역 */}
         <div className="card profile-card">
           <div className="plant-img-box">
             <div className="img-placeholder">
               <img src={getImageSrc(currentPlant.photo_url)} alt="plant" />
             </div>
           </div>
-
           <div className="plant-info">
             <h2 className='plant-nickname'>{currentPlant.plant_name}</h2>
             <p className="plant-species">{currentPlant.species}</p>
-            
-            {/* 식물 상태 표시: 사망 여부 또는 토양 수분에 따른 상태 텍스트 */}
             <p className="status-text">
-              현재 상태: {
-              currentPlant.status === 'archived' || currentPlant.status === 'dead'
-              ? `${currentPlant.death_reason || '원인 미상'}(으)로 사망 ☠️`
-              : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
+              현재 상태: {currentPlant.status === 'dead' ? '사망 ☠️' : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
             </p>
-            
-            {/* 함께한 날짜 표시 */}
-            <div className="growth-day">
-              {currentPlant.status === 'archived' || currentPlant.status === 'dead' ?(
-              <span style={{color: `#888`}}>
-                {(currentPlant.updated_at || currentPlant.updatedAt || new Date().toISOString().split('T')[0])}
-                {' '}(떠난 지 {calculateDays(currentPlant.updated_at || currentPlant.updatedAt || new Date())}일째)
-              </span>
-              ):(
-              <span>함께한 지 {calculateDays(currentPlant.reg_date)}일째</span>
-              )}
-            </div>
+            <div className="growth-day">함께한 지 {calculateDays(currentPlant.reg_date)}일째</div>
           </div>
         </div>
 
-        {/* 실시간 센서 데이터 그리드 */}
         <h3 className="section-title">실시간 환경 데이터</h3>
         <div className="sensor-grid">
           {SENSOR_CONFIG.map((sensor) => (
             <div className="card sensor-card" key={sensor.id}>
               <div className={`icon-box ${sensor.color}`}>{sensor.icon}</div>
-
-              {/* 토양 수분이 낮을 경우 경고 스타일 적용 */}
-              <div
-                className={`sensor-value ${
-                  sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''
-                }`}
-              >
+              <div className={`sensor-value ${sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''}`}>
                 {newData[sensor.id]} {sensor.unit}
               </div>
-
               <div className="sensor-label">{sensor.label}</div>
             </div>
           ))}
         </div>
 
-        {/* 성장 리포트 차트 영역 (Chart.js 연동 예정) */}
         <h3 className="section-title">주간 성장 리포트</h3>
         <div className="card chart-card">
           <div className="chart-controls-container">
-          <div className='tab-buttons'>
-            {['soil', 'temp', 'humid', 'light'].map(id => (
-              <button
-              key = {id}
-              className={activeTab === id ? 'active' : ''}
-              onClick={() => setActiveTab(id)}>
-                {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id === 'humid' ? '습도' : '조도'}
-              </button>
-            ))}
-          </div>
-          <button
-      className={`Chart-btn ${isReLoading ? 'loading' : ''}`}
-      onClick={handleReLoading}
-      disabled={isReLoading}
-      >
-        {isReLoading ? '갱신중' : <FcSynchronize />}
-      </button>
+            <div className='tab-buttons'>
+              {['soil', 'temp', 'humid', 'light'].map(id => (
+                <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
+                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id === 'humid' ? '습도' : '조도'}
+                </button>
+              ))}
+            </div>
+            <button className={`Chart-btn ${isReLoading ? 'loading' : ''}`} onClick={handleReLoading}>
+              {isReLoading ? '갱신중' : <FcSynchronize />}
+            </button>
           </div>
           <div className='chart-wrapper'>
-            <PlantChart
-            activeTab={activeTab}
-            statsData={statsData}
-            />
+            <PlantChart activeTab={activeTab} statsData={statsData} />
           </div>
         </div>
-        
       </section>
 
       <section className="dashboard-right">
-        {/* 제어 패널: 자동/수동 모드 및 급수 버튼 */}
         <div className="card control-panel">
           <h3>퀵 컨트롤</h3>
-          
-          {/* 모드 전환 토글 버튼 */}
-          <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`}
-          onClick={() => setIsAutoMode(!isAutoMode)}>
-            <div className="toggle-label">
-              {isAutoMode ? '자동 급수 모드' : '수동 급수 모드'}
-            </div>
-
-            <div className="toggle-track">
-              <div className="toggle-knob"></div>
-            </div>
+          <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`} onClick={() => setIsAutoMode(!isAutoMode)}>
+            <div className="toggle-label">{isAutoMode ? '자동 모드' : '수동 모드'}</div>
+            <div className="toggle-track"><div className="toggle-knob"></div></div>
           </div>
-          <p className='mode-desc'>
-            {isAutoMode
-            ? 'AI가 토양 수분을 감지해 자동으로 물을 줍니다.'
-            : '직접 버튼을 눌러 물을 줘야 합니다.'}
-          </p>
-
-          {/* 수동 급수 버튼: 자동 모드일 경우 비활성화 처리 */}
           <div className="control-btns">
-          <button className='control-btn water-btn'
-          disabled={isAutoMode}
-          style={{ opacity: isAutoMode ? 0.6 : 1, cursor: isAutoMode ? 'not-allowed' : 'pointer' }}
-          onClick={() => Swal.fire('성공', '급수를 완료했습니다.', 'success')}>
-            급수
-          </button>
-          <button 
-            className='water-history-btn'
-            onClick={() => setShowHistory(!showHistory)}>
+            <button className='control-btn water-btn' disabled={isAutoMode} onClick={() => setShowWaterModal(true)}>급수</button>
+            <button className='water-history-btn' onClick={() => { setShowHistory(!showHistory); setShowAllHistory(false); }}>
               {showHistory ? '알림 보기' : '급수 이력'}
-              </button>
+            </button>
           </div>
         </div>
 
-        {showHistory ? (
-          <div className="history-list">
-              {Object.keys(groupedHistory).length > 0 ? (
-                Object.entries(groupedHistory).map(([dateKey, logs]) => (
-                  <div className="history-group" key={dateKey}>
-                  <div 
-                    className={`group-header ${openDateTab === dateKey ? 'open' : ''}`}
-                    onClick={() => setOpenDateTab(openDateTab === dateKey ? null : dateKey)}
-                  >
-                    <span className="group-date">{dateKey} ({logs.length}건)</span>
-                    <span className="group-arrow">{openDateTab === dateKey ? '▲' : '▼'}</span>
-                  </div>
-                  {openDateTab === dateKey && (
-                  <div className="group-content">
-                    {logs.map((log) => (
-                    <div className="history-item" key={log.id}>
-                      <span className='time'>{formatTimeOnly(log.watering_date)}</span>
-                      <span className={`status ${log.is_auto ? 'auto' : 'manual'}`}>
-                      {log.is_auto ? '자동 급수' : '수동 급수'}
-                      <span style={{ fontSize: '0.85em', color: '#888', marginLeft: '4px' }}>
-                      ({log.duration_sec}초)
-                      </span>
-                      </span>
-                      </div>
-                      ))}
-                  </div>
-                  )}
-                  </div>
-                ))
-              ) : (
-                <div className="history-item" style={{ justifyContent: 'center', color: '#999', border: 'none' }}>
-                  최근 급수 이력이 없습니다. 🌱
-                </div>
-              )}
-            </div>
-          
-        ) : (
+        {!showHistory ? (
           <>
-      <div className="card alert-box">
-        <h3>알림</h3>
-        <ul className="alert-list">
-          {statsData.dailyErrors && statsData.dailyErrors.length > 0 ? (
-          statsData.dailyErrors[statsData.dailyErrors.length - 1].map((msg, idx) => (
-        <li key={idx} className="alert-item warning">
-          {msg}
-        </li>
-      ))
-    ) : null}
-  </ul>
-</div>
-
-            {/* AI 진단 페이지 이동 카드 */}
-            <div className="card ai-diagnosis"
-            onClick={() => navigate('/Chat', { state: { plant: currentPlant } })}
-            style={{ cursor: 'pointer' }}>
-              
-              <p>
-                내 식물 아픈 곳은 없을까?
-                <br />
-                <strong>AI 진단 받기</strong>
-              </p>
+            <div className="card alert-box">
+              <h3>알림</h3>
+              <ul className="alert-list">
+                {statsData.dailyErrors?.[statsData.dailyErrors.length - 1]?.map((msg, idx) => (
+                  <li key={idx} className="alert-item warning">{msg}</li>
+                )) || <li className="alert-item">현재 알림이 없습니다.</li>}
+              </ul>
+            </div>
+            <div className="card ai-diagnosis" onClick={() => navigate('/Chat', { state: { plant: currentPlant } })} style={{ cursor: 'pointer' }}>
+              <p>내 식물 아픈 곳은 없을까?<br /><strong>AI 진단 받기</strong></p>
             </div>
           </>
+        ) : (
+          <div className="history-list">
+            {historyKeys.length > 0 ? (
+              <>
+                {displayKeys.map((dateKey) => (
+                  <div className="history-group" key={dateKey}>
+                    <div className={`group-header ${openDateTab === dateKey ? 'open' : ''}`} onClick={() => setOpenDateTab(openDateTab === dateKey ? null : dateKey)}>
+                      <span className="group-date">{dateKey} ({wateringHistory.filter(l => {
+                        const d = new Date(l.watering_date);
+                        return `${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일` === dateKey;
+                      }).length}건)</span>
+                      <span className="group-arrow">{openDateTab === dateKey ? <FaChevronUp /> : <FaChevronDown />}</span>
+                    </div>
+                    {openDateTab === dateKey && (
+                      <div className="group-content">
+                        {wateringHistory.filter(l => {
+                          const d = new Date(l.watering_date);
+                          return `${String(d.getMonth() + 1).padStart(2, '0')}월 ${String(d.getDate()).padStart(2, '0')}일` === dateKey;
+                        }).map((log) => (
+                          <div className="history-item" key={log.id}>
+                            <span className='time'>{formatTimeOnly(log.watering_date)}</span>
+                            <span className={`status ${log.is_auto ? 'auto' : 'manual'}`}>
+                              {log.is_auto ? '자동' : '수동'} ({log.duration_sec}초)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {historyKeys.length > 3 && (
+                  <button className="view-more-history" onClick={() => setShowAllHistory(!showAllHistory)}>
+                    <FaHistory style={{ marginRight: '6px' }} />
+                    {showAllHistory ? '이력 접기' : '최근 10일 기록 더보기'}
+                  </button>
+                )}
+              </>
+            ) : <div className="history-empty">최근 10일간 기록 없음 🌱</div>}
+          </div>
         )}
       </section>
+
+      {showWaterModal && (
+        <div className="modal-overlay" onClick={() => setShowWaterModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowWaterModal(false)}>✕</button>
+            <h2>급수 시간 설정</h2>
+            <div className="duration-selector">
+              <button onClick={() => setWaterDuration(d => Math.max(1, d - 1))}>−</button>
+              <span>{waterDuration}초</span>
+              <button onClick={() => setWaterDuration(d => Math.min(60, d + 1))}>+</button>
+            </div>
+            <button className="modal-submit-btn" onClick={handleWatering}>급수 시작</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
