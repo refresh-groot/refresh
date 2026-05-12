@@ -484,6 +484,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
     z-index: 9999;
 }
 
@@ -492,7 +493,7 @@
     padding: 40px;
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    width: 100%;
+    width: 90%;
     max-width: 500px;
     position: relative;
     animation: modalFadeIn 0.3s ease-out;
