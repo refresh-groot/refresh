@@ -6,7 +6,7 @@
 extern BLECharacteristic *pTxCharacteristic;
 
 // [설정] 전역 변수
-float ml_per_sec = 8.0f; // 내가 초당 펌프 물 얼만큼 나오는지 보고 수정할 것!! //초당 물 양 계산
+float ml_per_sec = 8.0f; //초당 물 양 계산
 float target_seconds = 0;
 WateringMode currentMode = MODE_MANUAL; 
 Preferences modePrefs; // 세이브 공간 (esp32 꺼도 지워지지 않음)
