@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './Menu.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaTemperatureHigh, FaTint, FaSun, FaLeaf, FaChevronDown, FaChevronUp, FaHistory } from 'react-icons/fa';
@@ -24,7 +24,9 @@ function Menu() {
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
   const [isAutoMode, setIsAutoMode] = useState(true);
-  const { sendCommand } = useBluetooth();
+  
+  // 블루투스 실시간 센서 데이터 가져오기
+  const { sendCommand, sensorData: btSensorData } = useBluetooth();
 
   const receivedPlant = location.state?.plant;
   const [currentPlant, setCurrentPlant] = useState(() => {
@@ -40,7 +42,8 @@ function Menu() {
     };
   });
 
-  const fetchChartData = async () => {
+  const fetchChartData = useCallback(async () => {
+    if (!currentPlant?.id) return;
     try {
       const response = await fetch(`${SERVER_URL}/api/environment-log/stats/${currentPlant.id}`);
       if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
@@ -49,9 +52,10 @@ function Menu() {
     } catch (error) {
       console.error('차트 연동 에러: ', error);
     }
-  };
+  }, [currentPlant?.id]);
 
-  const fetchWateringHistory = async () => {
+  const fetchWateringHistory = useCallback(async () => {
+    if (!currentPlant?.id) return;
     try {
       const response = await fetch(`${SERVER_URL}/api/watering-log/${currentPlant.id}`);
       if (!response.ok) throw new Error('급수 이력을 불러오지 못했습니다.');
@@ -60,7 +64,7 @@ function Menu() {
     } catch (error) {
       console.error('급수 이력 연동 에러: ', error);
     }
-  };
+  }, [currentPlant?.id]);
 
   const handleReLoading = async () => {
     setIsReLoading(true);
@@ -70,46 +74,48 @@ function Menu() {
   };
 
   useEffect(() => {
-    if (currentPlant && currentPlant.id) {
+    if (currentPlant?.id) {
       fetchChartData();
     }
-  }, []);
+  }, [fetchChartData]);
+
+  // 퀵메뉴 급수 완료 이벤트 수신 시 서버 데이터(이력/알림) 즉시 갱신
+  useEffect(() => {
+    const handler = () => {
+      fetchWateringHistory();
+      fetchChartData();
+    };
+    window.addEventListener('wateringDone', handler);
+    return () => window.removeEventListener('wateringDone', handler);
+  }, [fetchWateringHistory, fetchChartData]);
 
   const handleWatering = async () => {
-  setShowWaterModal(false);
+    setShowWaterModal(false);
+    if (!sendCommand) {
+      showToast('error', '블루투스 기기가 연결되지 않았습니다.');
+      return;
+    }
+    try {
+      await sendCommand(`WATER:${waterDuration}`);
+      const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plant_id: currentPlant.id,
+          is_auto: false,
+          duration_sec: waterDuration
+        })
+      });
+      if (!response.ok) throw new Error('급수 실패');
+      showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
+      fetchWateringHistory();
+      fetchChartData(); // 급수 후 상태 변화(알림 등) 반영
+    } catch (error) {
+      showToast('error', '급수에 실패했습니다.');
+    }
+  };
 
-  // 블루투스 연결 확인
-  if (!sendCommand) {
-    showToast('error', '블루투스 기기가 연결되지 않았습니다.');
-    return;
-  }
-
-  try {
-    // ESP32로 급수 명령 전송
-    await sendCommand(`WATER:${waterDuration}`);
-
-    // DB에 기록
-    const response = await fetch(`${SERVER_URL}/api/watering-log`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plant_id: currentPlant.id,
-        is_auto: false,
-        duration_sec: waterDuration
-      })
-    });
-    if (!response.ok) throw new Error('급수 실패');
-
-    showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
-    fetchWateringHistory();
-
-  } catch (error) {
-    showToast('error', '급수에 실패했습니다.');
-  }
-};
-  
-
-  // 최근 10일 기준 데이터 가공 로직
+  // 최근 10일 기준 필터링
   const getRecent10DaysHistory = () => {
     const tempGroup = {};
     const today = new Date();
@@ -134,9 +140,18 @@ function Menu() {
     if (showHistory && currentPlant?.id) {
       fetchWateringHistory();
     }
-  }, [showHistory, currentPlant?.id]);
+  }, [showHistory, fetchWateringHistory]);
 
-  const { sensorData: newData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
+  // 서버 센서 데이터 로드
+  const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
+
+  // 실시간 데이터 우선순위 결정: 블루투스 데이터가 있으면 우선 노출, 없으면 서버 데이터 사용
+  const newData = {
+    temp: btSensorData?.temp || serverData?.temp || 0,
+    humid: btSensorData?.humid || serverData?.humid || 0,
+    soil: btSensorData?.soil || serverData?.soil || 0,
+    light: btSensorData?.light || serverData?.light || 0,
+  };
 
   useEffect(() => {
     if (receivedPlant && receivedPlant.plant_name !== currentPlant.plant_name) {
@@ -180,7 +195,7 @@ function Menu() {
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
 
-  if (sensorLoading && newData.temp === 0) {
+  if (sensorLoading && newData.temp === 0 && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
 
