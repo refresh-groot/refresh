@@ -40,7 +40,7 @@ class User extends Sequelize.Model {
         },
         bio: {
           type: Sequelize.STRING(100), 
-          allowNull: true,             
+          allowNull: true,              
           defaultValue: '안녕하세요.',            // 기본값
           comment: '한 줄 소개',
         },
@@ -76,6 +76,20 @@ class User extends Sequelize.Model {
       // 연쇄 삭제 설정 (Cascade)
       onDelete: 'CASCADE', // DB에서 유저 삭제 시 식물 데이터 자동 삭제
       hooks: true
+    });
+
+    // [추가] 유저 탈퇴 시 작성한 커뮤니티 게시글도 함께 삭제
+    db.User.hasMany(db.CommunityPost, { 
+      foreignKey: 'user_id', 
+      sourceKey: 'id', 
+      onDelete: 'CASCADE' 
+    });
+
+    // [추가] 유저 탈퇴 시 작성한 커뮤니티 댓글도 함께 삭제
+    db.User.hasMany(db.Comment, { 
+      foreignKey: 'user_id', 
+      sourceKey: 'id', 
+      onDelete: 'CASCADE' 
     });
   }
 }
