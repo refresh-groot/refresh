@@ -24,7 +24,9 @@ const Community = () => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const sortMap = { '최신순': 'new', '관련도순': 'type', '좋아요순': 'likes' };
+        const sortMap = { '최신순': 'new', '댓글순': 'chat', '좋아요순': 'likes' };
+         console.log('📌 currentSort:', currentSort);           // 추가
+    console.log('📌 sortMap 변환값:', sortMap[currentSort]); // 추가
         const res = await api.get('/api/community', {
           params: {
             category: activeCategory === '전체' ? undefined : activeCategory,
@@ -60,7 +62,7 @@ const Community = () => {
   }, [activeCategory, searchTerm, currentSort]);
 
   const Categories = [{name: '전체'}, {name: '질문'}, {name: '정보공유'}, {name: '자랑'}, {name: '고민'}];
-  const sortOptions = [{ label: '최신순', value: 'new' }, { label: '관련도순', value: 'type' }, { label: '좋아요순', value: 'good' }];
+  const sortOptions = [{ label: '최신순', value: 'new' }, { label: '좋아요순', value: 'likes' }, { label: '댓글순', value: 'chat' }];
 
   return (
     <div className="community-page">

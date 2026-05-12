@@ -18,6 +18,7 @@ module.exports = {
 
     let order = [['created_at', 'DESC']];
     if (sort === 'likes') order = [['like_count', 'DESC']];
+    if (sort === 'chat') order = [['comment_count', 'DESC']];
 
     // findAndCountAll을 써야 전체 개수(count)와 해당 페이지 데이터(rows)를 동시에 가져옵니다.
     return await CommunityPost.findAndCountAll({

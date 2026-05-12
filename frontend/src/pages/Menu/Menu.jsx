@@ -8,6 +8,7 @@ import { useSensorData } from '../../hooks/useSensorData';
 import defaultImg from '../../assets/img/default.png';
 import PlantChart from './Chart';
 import { showToast } from '../../app/alert';
+import { useBluetooth } from '../../context/BluetoothContext';
 
 function Menu() {
   const location = useLocation();
@@ -23,6 +24,7 @@ function Menu() {
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
   const [isAutoMode, setIsAutoMode] = useState(true);
+  const { sendCommand } = useBluetooth();
 
   const receivedPlant = location.state?.plant;
   const [currentPlant, setCurrentPlant] = useState(() => {
@@ -74,24 +76,38 @@ function Menu() {
   }, []);
 
   const handleWatering = async () => {
-    setShowWaterModal(false);
-    try {
-      const response = await fetch(`${SERVER_URL}/api/watering-log`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plant_id: currentPlant.id,
-          is_auto: false,
-          duration_sec: waterDuration
-        })
-      });
-      if (!response.ok) throw new Error('급수 실패');
-      showToast('success', `${waterDuration}초 급수를 완료했습니다.`);
-      fetchWateringHistory();
-    } catch (error) {
-      showToast('error', '급수에 실패했습니다.');
-    }
-  };
+  setShowWaterModal(false);
+
+  // 블루투스 연결 확인
+  if (!sendCommand) {
+    showToast('error', '블루투스 기기가 연결되지 않았습니다.');
+    return;
+  }
+
+  try {
+    // ESP32로 급수 명령 전송
+    await sendCommand(`WATER:${waterDuration}`);
+
+    // DB에 기록
+    const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plant_id: currentPlant.id,
+        is_auto: false,
+        duration_sec: waterDuration
+      })
+    });
+    if (!response.ok) throw new Error('급수 실패');
+
+    showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
+    fetchWateringHistory();
+
+  } catch (error) {
+    showToast('error', '급수에 실패했습니다.');
+  }
+};
+  
 
   // 최근 10일 기준 데이터 가공 로직
   const getRecent10DaysHistory = () => {

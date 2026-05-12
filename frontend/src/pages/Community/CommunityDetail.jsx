@@ -13,8 +13,6 @@ const CommunityDetail = () => {
   const [newComment, setNewComment] = useState('');
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-
-  // 모달 상태 관리
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const currentUser = JSON.parse(localStorage.getItem('user'));
@@ -90,8 +88,10 @@ const CommunityDetail = () => {
   );
 
   return (
-    <div className='detail-page'>
+    <div className="detail-page">
       <div className="detail-inner">
+
+        {/* 메인 콘텐츠 */}
         <div className="detail-main">
           <div className="detail-header-row">
             <div className="detail-back" onClick={() => navigate('/community')}>← 목록으로</div>
@@ -99,8 +99,10 @@ const CommunityDetail = () => {
               <button className="post-delete-btn" onClick={() => setShowDeleteModal(true)}>삭제</button>
             )}
           </div>
+
           <div className={`detail-badge badge-${post.category}`}>{post.category}</div>
           <div className="detail-title">{post.title}</div>
+
           <div className="detail-author-row">
             <div className="detail-avatar">{post.author?.slice(0, 2)}</div>
             <div>
@@ -108,21 +110,25 @@ const CommunityDetail = () => {
               <div className="detail-author-date">{post.date}</div>
             </div>
           </div>
+
           {post.image && (
             <div className="detail-image-box">
               <img src={`${SERVER_URL}${post.image}`} alt="post" className="detail-main-img" />
             </div>
           )}
+
           <div className="detail-content">{post.content}</div>
+
           <div className="detail-action-row">
             <button className={`detail-action-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike}>
               {isLiked ? '❤' : '🤍'} 좋아요 {likeCount}
             </button>
-            <button className='detail-action-btn'>
+            <button className="detail-action-btn">
               💬 댓글 {post.comment_count ?? 0}
             </button>
           </div>
 
+          {/* 댓글 섹션 */}
           <div className="comment-section">
             <div className="comment-title">댓글 {comments.length}개</div>
             {comments.map((comment) => (
@@ -150,6 +156,7 @@ const CommunityDetail = () => {
           </div>
         </div>
 
+        {/* 사이드 패널 */}
         <div className="detail-panel">
           <div className="panel-title">작성자</div>
           <div className="panel-author-row">
@@ -159,17 +166,35 @@ const CommunityDetail = () => {
               <div className="panel-author-sub">게시글 작성자</div>
             </div>
           </div>
-          {/* ... */}
+
+          {post.relatedPosts && post.relatedPosts.length > 0 && (
+            <div className="panel-related">
+              <div className="panel-title" style={{ marginTop: '24px' }}>관련 게시글</div>
+              {post.relatedPosts.map(related => (
+                <div
+                  key={related.id}
+                  className="related-item"
+                  onClick={() => navigate(`/community/${related.id}`)}
+                >
+                  <div className={`related-badge badge-${related.category}`}>{related.category}</div>
+                  <div className="related-title">{related.title}</div>
+                  <div className="related-likes">❤ {related.likes}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
       </div>
 
+      {/* 삭제 확인 모달 */}
       {showDeleteModal && (
         <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setShowDeleteModal(false)}>✕</button>
             <h2>게시글 삭제</h2>
             <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginBottom: '24px' }}>
-              정말로 이 게시글을 삭제하시겠습니까?<br/>
+              정말로 이 게시글을 삭제하시겠습니까?<br />
               삭제된 데이터는 복구할 수 없습니다.
             </p>
             <div className="modal-btns">
@@ -179,6 +204,7 @@ const CommunityDetail = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };
