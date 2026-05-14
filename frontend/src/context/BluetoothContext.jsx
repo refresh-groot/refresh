@@ -1,11 +1,13 @@
-import React, { createContext, useState, useContext, useRef } from 'react'; // useRef 추가 필수
+import React, { createContext, useState, useContext, useRef } from 'react';
 
 const BluetoothContext = createContext();
 
 export function BluetoothProvider({ children }) {
   const [deviceName, setDeviceName] = useState(null);
   const [sendCommand, setSendCommand] = useState(null);
-  const bleService = useRef(null); 
+  const [isAutoMode, setIsAutoMode] = useState(true); // 추가
+  const bleService = useRef(null);
+  const [pumpRate, setPumpRate] = useState(8.5);
 
   const handleConnectSuccess = (info) => {
     if (!info) {
@@ -16,11 +18,11 @@ export function BluetoothProvider({ children }) {
     }
     bleService.current = info;
     setDeviceName(info.deviceName);
-    setSendCommand(() => info.sendCommand); // 함수 저장
+    setSendCommand(() => info.sendCommand);
   };
 
   return (
-    <BluetoothContext.Provider value={{ sendCommand, deviceName, handleConnectSuccess }}>
+    <BluetoothContext.Provider value={{ sendCommand, deviceName, handleConnectSuccess, isAutoMode, setIsAutoMode, pumpRate, setPumpRate }}>
       {children}
     </BluetoothContext.Provider>
   );

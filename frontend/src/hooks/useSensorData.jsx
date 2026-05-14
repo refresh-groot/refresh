@@ -24,7 +24,7 @@ const fetchData = async () => {
         temp: serverData?.temperature ?? 0,
         soil: serverData?.moisture_level ?? 0,
         light: serverData?.light_level ?? 0,
-        humid: 50
+        humid: serverData?.humidity ?? 50
     });
 
     setSensorData(newData);
