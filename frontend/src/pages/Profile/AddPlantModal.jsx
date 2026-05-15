@@ -13,10 +13,12 @@ import { useBluetooth } from '../../context/BluetoothContext';
 // 사용자가 입력한 이름, 종, 날짜, 사진 정보를 부모 컴포넌트(Profile)로 전달하는 역할을 함
 function AddPlantModal({onClose, onSave}) {
     // 폼 입력값 상태 관리 (이름, 종, 등록일)
-    const [nickname, setNickname] =useState('');
+    const [nickname, setNickname] = useState('');
     const [species, setSpecies] = useState(''); 
     const [date, setDate] = useState(new Date()); 
-    const { handleConnectSuccess } = useBluetooth();
+    
+    // [수정] 중복 선언을 방지하기 위해 여기서 한꺼번에 가져옵니다.
+    const { handleConnectSuccess, sendCommand } = useBluetooth();
     
     // 이미지 업로드 관련 상태 (화면 표시용 미리보기 URL, 실제 전송용 파일 객체)
     const [preview, setPreview] = useState(defaultImg);
@@ -33,20 +35,36 @@ function AddPlantModal({onClose, onSave}) {
         }
     };
 
-    // 폼 제출(등록하기 버튼) 핸들러
-    const handleSubmit = (e) => {
+    // 폼 제출(등록하기 버튼) 핸들러 - async 함수
+    const handleSubmit = async (e) => {
         e.preventDefault(); // 기본 폼 제출 동작(새로고침) 방지
         
         // 필수 입력값 유효성 검사
         if(!nickname || !species || !date){
             return showAlert('warning', '정보 부족', '모든 정보를 입력해주세요.');
         }
-        const formattedDate = date.toISOString().split('T')[0];
 
-    // 부모 컴포넌트의 저장 함수 호출 (데이터 전달)
-    onSave(nickname, species, date, file);
-    onClose(); // 저장 후 모달 닫기
-};
+        try {
+            // 부모 컴포넌트의 저장 함수 호출 후 결과(ID)를 기다림
+            const result = await onSave(nickname, species, date, file);
+            
+            // 서버 응답 구조에서 ID 추출
+            const newPlantId = result?.plant?.id; 
+
+            console.log("추출된 식물 ID:", newPlantId); // 확인용 로그 추가 
+
+            // ID가 존재하고 블루투스가 연결되어 있다면 기기로 전송
+            if (newPlantId && sendCommand) {
+                console.log("기기로 ID 전송 중:", newPlantId);
+                await sendCommand(`SET_ID ${newPlantId}`);
+                showToast('success', '기기 연동이 완료되었습니다.');
+            }
+
+            onClose(); // 모든 작업 완료 후 모달 닫기
+        } catch (err) {
+            console.error("등록 및 연동 실패:", err);
+        }
+    };
 
     return (
     // 모달 배경(Overlay) 클릭 시 닫기
