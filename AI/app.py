@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 import json
+import re
 from google import genai       # 라이브러리 수정
 from dotenv import load_dotenv
 import PIL.Image
@@ -50,21 +51,24 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
 
     # ✨ [수정 1] ui_water_msg에 구체적인 작성 가이드라인(포맷)을 강제 주입
     # ✨ [수정 1] ui_guide의 분량을 늘리고, 내용을 통합하도록 지시
+    # ✨ [수정 1] AI가 자유롭게 말하도록 족쇄를 풀고, JSON은 맨 뒤에 몰아서 출력하도록 지시
     format_instruction = """
-    반드시 다음 JSON 형식으로만 답해 (마크다운 없이).
+    [답변 출력 규칙 - 매우 중요]
+    1. 먼저 일반적인 채팅 비서처럼 다정하고 자유롭게 대답해. (사용자가 2가지 이상을 물어보면 문단을 나누어서 모두 길고 상세하게 대답해 줘!)
+    2. 당신의 자유로운 텍스트 답변이 모두 끝난 후, **맨 마지막에만** 아두이노 제어 및 앱 UI 업데이트를 위한 아래 JSON 데이터를 딱 한 번 덧붙여.
+
+    👇 [출력 예시] 👇
+    어머, 사진을 보니 로즈마리 잎이 조금 말라 있네요! 🥺 물어보신 관리 팁도 함께 알려드릴게요. (중략... 자유롭고 풍성한 대답)
     {
-        "ui_status": "상태 요약 (예: 건강함, 잎 마름, 물 부족 등)",
-        "ui_guide": "사용자에게 보내는 최종 답변 (친절하고 따뜻하게, 4~5문장으로 상세히 작성)", 
-        "ui_water_msg": "물주기 요약 (OO일에 한 번, OOml)",
-        "pump_now": true 또는 false,
-        "min_moisture": 30, 
-        "water_duration_ms": 2000, 
-        "care_tip": "식물 맞춤형 관리 팁 (1문장)",
-        "confidence": 0.0
+        "ui_status": "잎 마름 (물 부족)",
+        "ui_water_msg": "3일에 한 번, 200ml 급수 (※ 상황상 굳이 필요 없으면 빈칸 처리)",
+        "pump_now": true,
+        "min_moisture": 30,
+        "water_duration_ms": 2000
     }
     """
 
-    # ✨ [수정 2] 행동 수칙에서 '상세 답변'과 '예외 처리'를 더 강력하게 결합
+    # ✨ [수정 2] 복합 질문 대응과 상황에 맞는 물주기 처방 룰 추가
     system_rules = f"""
     당신은 '스마트 화분 AI'로 식물을 키우는 사람을 위한 다정한 '원예 비서'입니다.
     
@@ -74,21 +78,12 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
     {history_text}
     현재 사용자 질문: "{user_message}"
     
-    [행동 수칙 - 상용화 & 감성 모드]
-    1. **다정하고 풍성한 대화 (ui_guide)**: 
-       - 기계적인 요약이나 매번 똑같은 패턴의 문장은 피하고, 매 대화마다 조금씩 다른 어휘와 뉘앙스를 사용해.
-       - 사진 속 식물의 상태에 따라 감정을 담아 공감해 (예: 아파 보이면 걱정해주고, 건강하면 기뻐해 주기).
-       - 너무 짧게 끝나지 않도록 **4~5문장 정도의 충분한 분량**으로 작성하고, 대화 중간에 이모지(🌱, 💧, 🪴, 😥 등)를 자연스럽게 섞어 써.
-    2. **자연스러운 물주기 처방 통합**:
-       - 'OO일에 한 번씩 OOml를 주세요'라는 구체적인 처방을 반드시 **`ui_guide` 본문의 대화 흐름 속에 부드럽게 녹여내어 포함**시켜.
-    3. **사진 분석 최우선**:
-       - 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 관찰해서 가장 먼저 언급해.
-    4. **[매우 중요] 식물이 아닌 사진 예외 처리 (철벽 방어)**:
-       - 사람, 동물, 책상 등 식물이 전혀 없는 사진이 들어오면 무조건 `ui_status`를 "인식 불가"로 세팅해.
-       - 억지로 꾸며내지 말고, `ui_guide`에 "앗, 이건 식물 사진이 아닌 것 같아요! 예쁜 화분 사진을 다시 올려주시면 열심히 살펴볼게요 🥺" 처럼 부드럽게 거절해.
-       - 기기(펌프) 오작동을 막기 위해 반드시 `pump_now`: false, `min_moisture`: 0, `water_duration_ms`: 0 으로 강제 세팅해.
-    5. **하드웨어 제어 데이터 (숨겨진 데이터)**: 
-       - 정상적인 식물일 경우, `min_moisture`와 `water_duration_ms`는 아두이노가 읽을 수 있도록 정확히 계산해.
+    [행동 수칙]
+    1. **자유롭고 풍성한 대화**: 기계적인 요약은 피하고, 사용자가 여러 개(예: 진단 + 팁)를 한 번에 물어보면 문단을 나누어 모두 친절하게 답해. 길고 상세할수록 좋아! 이모지도 팍팍 써.
+    2. **상황에 맞는 물주기 처방**: 매번 억지로 물주기 주기를 말할 필요 없어. 식물이 말라 보이거나, 사용자가 물주기에 대해 물어볼 때만 대화 흐름에 자연스럽게 녹여내.
+    3. **사진 분석 최우선**: 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 관찰해서 가장 먼저 언급해.
+    4. **[매우 중요] 예외 처리 (철벽 방어)**: 식물이 전혀 없는 사진이면 무조건 "인식 불가"로 세팅해. 억지로 꾸며내지 말고 "앗, 식물 사진이 아니네요 🥺"라고 부드럽게 거절해. 기기 오작동을 막기 위해 pump_now: false, water_duration_ms: 0 으로 강제 세팅해.
+    5. **하드웨어 제어 데이터 (숨겨진 데이터)**: 정상적인 식물이고 급수가 필요한 상황이라면 아두이노가 읽을 수 있도록 제어용 숫자를 정확히 계산해.
     
     {format_instruction}
     """
@@ -109,16 +104,45 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
         inputs = [system_rules + "\n[주의] 현재 사용자가 추가 사진을 올리지 않았습니다. 이전 대화 문맥과 텍스트만 보고 자연스럽게 이어가세요."]
         
     try:
-        # 제미나이 2.5 Flash 호출
+        # 제미나이 2.5 Flash 호출 (자유도를 위해 temperature를 살짝 올림)
         response = client.models.generate_content(
             model='gemini-2.5-flash', 
             contents=inputs,
-            config={'temperature': 0.2} # 일관성을 위해 추가하면 좋습니다
+            config={'temperature': 0.3} 
         )
         result_text = response.text                
-        if "```" in result_text:
-            result_text = result_text.replace("```json", "").replace("```", "").strip()
-        return result_text 
+        
+        # ✨ [핵심 방어 로직] 정규식으로 텍스트 속에서 { } JSON 덩어리만 쏙 찾아내기
+        match = re.search(r'\{.*\}', result_text, re.DOTALL)
+        
+        if match:
+            json_str = match.group(0) # 찾아낸 순수 JSON 문자열
+            
+            # 전체 답변에서 JSON 덩어리와 마크다운(```)을 지워버리면 "자유롭게 떠든 대화 내용"만 남음!
+            chat_text = result_text.replace(json_str, '').replace('```json', '').replace('```', '').strip()
+            
+            # 문자열을 파이썬 딕셔너리로 변환
+            parsed_json = json.loads(json_str)
+            
+            # ✨ 프론트엔드로 보낼 최종 데이터 조립 (대화 내용 + 제어 데이터 병합)
+            final_data = {
+                "ui_status": parsed_json.get("ui_status", "진단 완료"),
+                "ui_guide": chat_text, # AI가 길게 작성한 다정한 답변 전체
+                "ui_water_msg": parsed_json.get("ui_water_msg", ""),
+                "pump_now": parsed_json.get("pump_now", False),
+                "min_moisture": parsed_json.get("min_moisture", 0),
+                "water_duration_ms": parsed_json.get("water_duration_ms", 0)
+            }
+            return json.dumps(final_data)
+            
+        else:
+            # AI가 JSON을 아예 빼먹는 초유의 사태를 대비한 최후의 방어선
+            return json.dumps({
+                "ui_status": "분석 완료", 
+                "ui_guide": result_text, # 찾지 못했으면 통째로 화면에 던짐
+                "pump_now": False
+            })
+            
     except Exception as e:
         return json.dumps({
             "ui_status": "API 에러", 
