@@ -194,6 +194,11 @@ function Menu() {
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
+  const goToSetting = () => {
+    // 현재 식물 정보(ID 포함)를 가지고 세팅 페이지로 이동!
+    console.log("▶ goToSetting 함수 실행됨! 전달 데이터:", currentPlant);   
+    navigate('/setting', { state: { plant: currentPlant } }); 
+  };
 
   if (sensorLoading && newData.temp === 0 && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
@@ -209,7 +214,16 @@ function Menu() {
             </div>
           </div>
           <div className="plant-info">
-            <h2 className='plant-nickname'>{currentPlant.plant_name}</h2>
+                    <h2 className='plant-nickname'>
+                {currentPlant.plant_name}
+                <span 
+                    onClick={goToSetting} 
+                    style={{ cursor: 'pointer', marginLeft: '10px', fontSize: '18px' }}
+                    title="기기 설정"
+                >
+                    ⚙️
+                </span>
+            </h2>
             <p className="plant-species">{currentPlant.species}</p>
             <p className="status-text">
               현재 상태: {currentPlant.status === 'dead' ? '사망 ☠️' : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
