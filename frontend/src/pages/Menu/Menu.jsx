@@ -117,7 +117,7 @@ const handleWatering = async () => {
     return;
   }
   try {
-    await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`);
+    await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`); //await sendCommand(`WATER ${waterDuration}`);
     const response = await fetch(`${SERVER_URL}/api/watering-log`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,10 +165,10 @@ const handleWatering = async () => {
   const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
 
   const newData = {
-    temp: btSensorData?.temp || serverData?.temp || 0,
-    humid: btSensorData?.humid || serverData?.humid || 0,
-    soil: btSensorData?.soil || serverData?.soil || 0,
-    light: btSensorData?.light || serverData?.light || 0,
+    temp: btSensorData?.temp ?? serverData?.temp ?? null,
+    humid: btSensorData?.humid ?? serverData?.humid ?? null,
+    soil: btSensorData?.soil ?? serverData?.soil ?? null,
+    light: btSensorData?.light ?? serverData?.light ?? null,
   };
 
   useEffect(() => {
@@ -218,7 +218,7 @@ const handleWatering = async () => {
     navigate('/setting', { state: { plant: currentPlant } }); 
   };
 
-  if (sensorLoading && newData.temp === 0 && !btSensorData) {
+  if (sensorLoading && newData.temp === null && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
 
@@ -256,7 +256,7 @@ const handleWatering = async () => {
             <div className="card sensor-card" key={sensor.id}>
               <div className={`icon-box ${sensor.color}`}>{sensor.icon}</div>
               <div className={`sensor-value ${sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''}`}>
-                {newData[sensor.id]} {sensor.unit}
+                {newData[sensor.id] !== null ? `${newData[sensor.id]} ${sensor.unit}` : '--'}
               </div>
               <div className="sensor-label">{sensor.label}</div>
             </div>

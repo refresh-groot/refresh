@@ -145,7 +145,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
       return;
     }
     try {
-      await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`);
+      await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`); //await sendCommand(`WATER ${waterDuration}`);
       showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
       if (currentPlant?.id) {
         await fetch(`${SERVER_URL}/api/watering-log`, {
