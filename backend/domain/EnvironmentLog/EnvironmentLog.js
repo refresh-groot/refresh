@@ -20,6 +20,11 @@ class EnvironmentLog extends Sequelize.Model {
           allowNull: true,
           comment: '현재 온도',
         },
+        humidity: {
+          type: Sequelize.FLOAT,
+          allowNull: true,
+          comment: '현재 공기 습도',
+        },
         light_level: {
           type: Sequelize.INTEGER,
           allowNull: true,
