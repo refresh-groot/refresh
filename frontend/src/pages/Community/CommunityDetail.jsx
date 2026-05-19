@@ -17,6 +17,21 @@ const CommunityDetail = () => {
 
   const currentUser = JSON.parse(localStorage.getItem('user'));
 
+  // 함수는 컴포넌트 안, return 밖에 있어야 해요
+  const formatRelativeDate = (dateString) => {
+    if (!dateString) return '';
+    const now = new Date();
+    const date = new Date(dateString);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return '방금 전';
+    if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+    if (diff < 2592000) return `${Math.floor(diff / 604800)}주 전`;
+    if (diff < 31536000) return `${Math.floor(diff / 2592000)}개월 전`;
+    return `${Math.floor(diff / 31536000)}년 전`;
+  };
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -91,7 +106,6 @@ const CommunityDetail = () => {
     <div className="detail-page">
       <div className="detail-inner">
 
-        {/* 메인 콘텐츠 */}
         <div className="detail-main">
           <div className="detail-header-row">
             <div className="detail-back" onClick={() => navigate('/community')}>← 목록으로</div>
@@ -107,7 +121,7 @@ const CommunityDetail = () => {
             <div className="detail-avatar">{post.author?.slice(0, 2)}</div>
             <div>
               <div className="detail-author-name">{post.author}</div>
-              <div className="detail-author-date">{post.date}</div>
+              <div className="detail-author-date">{formatRelativeDate(post.date)}</div>
             </div>
           </div>
 
@@ -128,7 +142,6 @@ const CommunityDetail = () => {
             </button>
           </div>
 
-          {/* 댓글 섹션 */}
           <div className="comment-section">
             <div className="comment-title">댓글 {comments.length}개</div>
             {comments.map((comment) => (
@@ -137,7 +150,7 @@ const CommunityDetail = () => {
                 <div>
                   <div>
                     <span className="comment-author">{comment.author}</span>
-                    <span className="comment-date">{comment.date}</span>
+                    <span className="comment-date">{formatRelativeDate(comment.date)}</span>
                   </div>
                   <div className="comment-text">{comment.content}</div>
                 </div>
@@ -156,7 +169,6 @@ const CommunityDetail = () => {
           </div>
         </div>
 
-        {/* 사이드 패널 */}
         <div className="detail-panel">
           <div className="panel-title">작성자</div>
           <div className="panel-author-row">
@@ -187,7 +199,6 @@ const CommunityDetail = () => {
 
       </div>
 
-      {/* 삭제 확인 모달 */}
       {showDeleteModal && (
         <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>

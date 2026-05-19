@@ -24,7 +24,7 @@ module.exports = {
         author: post.Author?.nickname || '알 수 없음',
         likes: post.like_count,
         comments: post.comment_count,
-        date: post.created_at,
+        date: post.created_at || createdAt,
         image: post.photo_url,
         user_id: post.user_id
       })),
@@ -61,7 +61,7 @@ module.exports = {
       author: post.Author?.nickname,
       user_id: postJson.user_id || postJson.userId, // postJson 사용
       isLiked,
-      date: post.created_at,
+      date: post.created_at || createdAt,
       image: post.photo_url,
       relatedPosts: relatedPosts.map(p => ({
         id: p.id,
@@ -103,7 +103,7 @@ module.exports = {
       id: c.id,
       author: c.Author?.nickname || '알 수 없음',
       content: c.content,
-      date: c.created_at,
+      date: c.created_at || createdAt,
     }));
   },
 
