@@ -48,11 +48,12 @@ module.exports = {
     }
   },
 
-  // 5. 회원가입
+  // 5. 회원가입 처리
   signup: async (req, res) => {
     try {
-      const { loginId, password, email, nickname } = req.body;
-      await service.signup({ loginId, password, email, nickname });
+      // 일반 회원가입 시 프론트엔드가 보낸 AI 동의 여부(isAiDataAllowed)를 바디에서 꺼내옴
+      const { loginId, password, email, nickname, isAiDataAllowed } = req.body;
+      await service.signup({ loginId, password, email, nickname, isAiDataAllowed });
       return res.status(201).json({ message: '회원가입이 완료되었습니다.' });
     } catch (error) {
       return res.status(400).json({ message: error.message });
@@ -61,29 +62,29 @@ module.exports = {
 
   // 6. 로그인 처리
   login: async (req, res) => {
-  try {
-    const { id, pw } = req.body;
-    if (!id || !pw) {
-      return res.status(400).json({ message: '아이디와 비밀번호를 입력해주세요.' });
-    }
+    try {
+      const { id, pw } = req.body;
+      if (!id || !pw) {
+        return res.status(400).json({ message: '아이디와 비밀번호를 입력해주세요.' });
+      }
 
-    const user = await service.login(id, pw);
+      const user = await service.login(id, pw);
 
-    // 세션 객체에 유저 정보 할당
-    req.session.user = user;
+      // 세션 객체에 유저 정보 할당
+      req.session.user = user;
 
-    //  세션이 스토어에 완전히 저장된 후 응답을 보냅니다.
-    req.session.save(() => {
-      return res.status(200).json({
-        message: '로그인 성공!',
-        user: user
+      // 세션이 스토어에 완전히 저장된 후 응답을 보냅니다.
+      req.session.save(() => {
+        return res.status(200).json({
+          message: '로그인 성공!',
+          user: user
+        });
       });
-    });
 
-  } catch (error) {
-    return res.status(401).json({ message: error.message });
-  }
-},
+    } catch (error) {
+      return res.status(401).json({ message: error.message });
+    }
+  },
 
   // 7. 로그아웃 처리
   logout: (req, res) => {
@@ -109,9 +110,7 @@ module.exports = {
   getProfile: async (req, res) => {
     try {
       const id = req.session.user.id;
-
       const userProfile = await service.getProfile(id);
-
       return res.status(200).json(userProfile);
     } catch (error) {
       return res.status(404).json({ message: error.message });
@@ -134,6 +133,7 @@ module.exports = {
       return res.status(500).json({ message: '서버 에러' });
     }
   },
+
   // 10. 알림 설정 변경
   updateAlert: async (req, res) => {
     try {
@@ -157,14 +157,15 @@ module.exports = {
       const id = req.session.user.id;
       const { password } = req.body;
 
-      // Service에게 탈퇴 로직 위임
-      await service.withdraw(id, password);
+      // Service에게 탈퇴 로직 위임 후 결과 메시지(조건별 분기 메시지) 수신
+      const result = await service.withdraw(id, password);
 
       // 세션 파괴 
       req.session.destroy();            // 서버 쪽 세션 저장소 삭제
       res.clearCookie('connect.sid');   // 사용자 브라우저의 쿠키 삭제
 
-      return res.status(200).json({ message: '회원 탈퇴가 완료되었습니다.' });
+      // 동의 여부에 따라 서비스단에서 만들어진 다이나믹 메시지를 반환합니다.
+      return res.status(200).json({ message: result.message });
     } catch (error) {
       if (error.message.includes('비밀번호')) {
         return res.status(401).json({ message: error.message });
@@ -195,7 +196,7 @@ module.exports = {
     }
   },
 
-// 12. 카카오 로그인
+  // 12. 카카오 로그인
   kakaoLogin: async (req, res) => {
     try {
       const { code } = req.query; 
@@ -226,7 +227,7 @@ module.exports = {
   // 14. 네이버 로그인 컨트롤러
   naverLogin: async (req, res) => {
     try {
-      const { code, state } = req.query; // 네이버는 state 값도 같이 옵니다
+      const { code, state } = req.query; 
       const user = await service.naverLogin(code, state);
 
       req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
