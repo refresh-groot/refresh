@@ -3,7 +3,7 @@ import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
 import { useAuth } from '../../context/AuthContext';
 import { Bluetooth } from '../../hooks/Bluetooth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // useLocation 추가
 import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
 import { showToast } from '../../app/alert';
@@ -12,8 +12,14 @@ import './Setting.css';
 
 function Setting() {
   const { user, logout } = useAuth();
-  const { deviceName, handleConnectSuccess } = useBluetooth();
+  const { deviceName, handleConnectSuccess, sendCommand } = useBluetooth(); // sendCommand 추가
   const navigate = useNavigate();
+  const location = useLocation(); // location 추가
+
+  // 상세 페이지에서 넘겨준 식물 정보가 있는지 확인
+  const plant = location.state?.plant; 
+  const plantId = plant?.id;
+  console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
 
   const [bio, setBio] = useState('');
   const [isAlertOn, setIsAlertOn] = useState(false);
@@ -38,6 +44,23 @@ function Setting() {
     fetchProfile();
   }, []);
 
+  // 블루투스 연결 성공 시 자동으로 ID를 쏴주는 함수
+  const handleBleSuccess = async (info) => {
+    handleConnectSuccess(info); // 기기 이름 저장 (기존 기능)
+
+    // 만약 세팅창에 들어올 때 식물 정보(ID)를 들고 왔다면? 기기로 바로 전송!
+    if (plantId && sendCommand) {
+        console.log(`기존 식물(${plantId}) ID 연동 시도...`);
+        try {
+            await sendCommand(`SET_ID ${plantId}`);
+            showToast('success', `${plantId}번 식물과 연동되었습니다.`);
+        } catch (err) {
+            console.error("ID 전송 실패:", err);
+            showToast('error', '기기 연동 중 오류가 발생했습니다.');
+        }
+    }
+  };
+  
   const handleBioSave = async () => {
     setBioSaving(true);
     try {
@@ -161,7 +184,7 @@ const handleLogout = async () => {
                   <div className="s-row-label">기기 연결</div>
                   <div className="s-row-sub">ESP32_PUMP 검색 후 연결</div>
                 </div>
-                <Bluetooth onConnectSuccess={handleConnectSuccess} />
+                <Bluetooth onConnectSuccess={handleBleSuccess} />
               </div>
             </div>
           </div>

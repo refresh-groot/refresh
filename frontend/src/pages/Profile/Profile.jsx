@@ -118,15 +118,18 @@ function Profile() {
       formData.append('reg_date', date);
       if (file) formData.append('img', file);
 
-      await api.post('/api/plants', formData);
+      // [변화 1] 서버의 응답(ID가 들어있음)을 변수에 담음
+      const res = await api.post('/api/plants', formData); 
 
       showToast('success','등록 완료');
-
-      // 목록 갱신
       fetchPlants();
+
+    // [변화 2] 응답 데이터(ID 포함)를 모달(AddPlantModal)로 돌려줌
+      return res.data; 
     } catch (error) {
       console.error('식물 등록 실패:', error);
       Swal.fire('등록 실패', '식물 등록 중 오류가 발생했습니다.', 'error');
+      throw error; // 에러가 나면 다음 단계로 안 가게 던져줍니다.
     }
   };
 

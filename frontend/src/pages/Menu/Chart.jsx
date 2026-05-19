@@ -62,11 +62,12 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     labels: dateLabels.map(label => label.slice(5)),
     datasets: [{
       label: config.label,
-      data: currentData,
+      data: currentData.map(v => v === 0 ? null : v),
       borderColor: config.color,
       backgroundColor: config.color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
       tension: 0.4,
       fill: true,
+      spanGaps: false,
     }]
   }), [config, currentData, dateLabels]);
 

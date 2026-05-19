@@ -23,10 +23,7 @@ function Menu() {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
-  const [isAutoMode, setIsAutoMode] = useState(true);
-  
-  // 블루투스 실시간 센서 데이터 가져오기
-  const { sendCommand, sensorData: btSensorData } = useBluetooth();
+  const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate } = useBluetooth();
 
   const receivedPlant = location.state?.plant;
   const [currentPlant, setCurrentPlant] = useState(() => {
@@ -79,7 +76,6 @@ function Menu() {
     }
   }, [fetchChartData]);
 
-  // 퀵메뉴 급수 완료 이벤트 수신 시 서버 데이터(이력/알림) 즉시 갱신
   useEffect(() => {
     const handler = () => {
       fetchWateringHistory();
@@ -89,33 +85,57 @@ function Menu() {
     return () => window.removeEventListener('wateringDone', handler);
   }, [fetchWateringHistory, fetchChartData]);
 
-  const handleWatering = async () => {
-    setShowWaterModal(false);
+  const handleModeToggle = async () => {
+    const nextMode = !isAutoMode;
+    setIsAutoMode(nextMode);
+
     if (!sendCommand) {
       showToast('error', '블루투스 기기가 연결되지 않았습니다.');
+      setIsAutoMode(!nextMode); // 복구
       return;
     }
+
     try {
-      await sendCommand(`WATER:${waterDuration}`);
-      const response = await fetch(`${SERVER_URL}/api/watering-log`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plant_id: currentPlant.id,
-          is_auto: false,
-          duration_sec: waterDuration
-        })
-      });
-      if (!response.ok) throw new Error('급수 실패');
-      showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
-      fetchWateringHistory();
-      fetchChartData(); // 급수 후 상태 변화(알림 등) 반영
+      if (nextMode) {
+        await sendCommand('MODE:AUTO');
+        showToast('success', '자동 모드로 전환되었습니다.');
+      } else {
+        await sendCommand('MODE:MANUAL');
+        showToast('success', '수동 모드로 전환되었습니다.');
+        setShowWaterModal(true);
+      }
     } catch (error) {
-      showToast('error', '급수에 실패했습니다.');
+      showToast('error', '모드 전환에 실패했습니다.');
+      setIsAutoMode(!nextMode); // 실패 시 원래대로 복구
     }
   };
 
-  // 최근 10일 기준 필터링
+const handleWatering = async () => {
+  setShowWaterModal(false);
+  if (!sendCommand) {
+    showToast('error', '블루투스 기기가 연결되지 않았습니다.');
+    return;
+  }
+  try {
+    await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`); //await sendCommand(`WATER ${waterDuration}`);
+    const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plant_id: currentPlant.id,
+        is_auto: false,
+        duration_sec: waterDuration
+      })
+    });
+    if (!response.ok) throw new Error('급수 실패');
+    showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
+    fetchWateringHistory();
+    fetchChartData();
+  } catch (error) {
+    showToast('error', '급수에 실패했습니다.');
+  }
+};
+
   const getRecent10DaysHistory = () => {
     const tempGroup = {};
     const today = new Date();
@@ -142,15 +162,13 @@ function Menu() {
     }
   }, [showHistory, fetchWateringHistory]);
 
-  // 서버 센서 데이터 로드
   const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
 
-  // 실시간 데이터 우선순위 결정: 블루투스 데이터가 있으면 우선 노출, 없으면 서버 데이터 사용
   const newData = {
-    temp: btSensorData?.temp || serverData?.temp || 0,
-    humid: btSensorData?.humid || serverData?.humid || 0,
-    soil: btSensorData?.soil || serverData?.soil || 0,
-    light: btSensorData?.light || serverData?.light || 0,
+    temp: btSensorData?.temp ?? serverData?.temp ?? null,
+    humid: btSensorData?.humid ?? serverData?.humid ?? null,
+    soil: btSensorData?.soil ?? serverData?.soil ?? null,
+    light: btSensorData?.light ?? serverData?.light ?? null,
   };
 
   useEffect(() => {
@@ -194,8 +212,13 @@ function Menu() {
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
+  const goToSetting = () => {
+    // 현재 식물 정보(ID 포함)를 가지고 세팅 페이지로 이동!
+    console.log("▶ goToSetting 함수 실행됨! 전달 데이터:", currentPlant);   
+    navigate('/setting', { state: { plant: currentPlant } }); 
+  };
 
-  if (sensorLoading && newData.temp === 0 && !btSensorData) {
+  if (sensorLoading && newData.temp === null && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
 
@@ -209,7 +232,16 @@ function Menu() {
             </div>
           </div>
           <div className="plant-info">
-            <h2 className='plant-nickname'>{currentPlant.plant_name}</h2>
+                    <h2 className='plant-nickname'>
+                {currentPlant.plant_name}
+                <span 
+                    onClick={goToSetting} 
+                    style={{ cursor: 'pointer', marginLeft: '10px', fontSize: '18px' }}
+                    title="기기 설정"
+                >
+                    ⚙️
+                </span>
+            </h2>
             <p className="plant-species">{currentPlant.species}</p>
             <p className="status-text">
               현재 상태: {currentPlant.status === 'dead' ? '사망 ☠️' : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
@@ -224,7 +256,7 @@ function Menu() {
             <div className="card sensor-card" key={sensor.id}>
               <div className={`icon-box ${sensor.color}`}>{sensor.icon}</div>
               <div className={`sensor-value ${sensor.id === 'soil' && newData[sensor.id] <= 30 ? 'warning' : ''}`}>
-                {newData[sensor.id]} {sensor.unit}
+                {newData[sensor.id] !== null ? `${newData[sensor.id]} ${sensor.unit}` : '--'}
               </div>
               <div className="sensor-label">{sensor.label}</div>
             </div>
@@ -254,7 +286,7 @@ function Menu() {
       <section className="dashboard-right">
         <div className="card control-panel">
           <h3>퀵 컨트롤</h3>
-          <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`} onClick={() => setIsAutoMode(!isAutoMode)}>
+          <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`} onClick={handleModeToggle}>
             <div className="toggle-label">{isAutoMode ? '자동 모드' : '수동 모드'}</div>
             <div className="toggle-track"><div className="toggle-knob"></div></div>
           </div>
@@ -271,9 +303,11 @@ function Menu() {
             <div className="card alert-box">
               <h3>알림</h3>
               <ul className="alert-list">
-                {statsData.dailyErrors?.[statsData.dailyErrors.length - 1]?.map((msg, idx) => (
-                  <li key={idx} className="alert-item warning">{msg}</li>
-                )) || <li className="alert-item">현재 알림이 없습니다.</li>}
+                {statsData.dailyErrors?.[statsData.dailyErrors.length - 1]
+                  ? [...statsData.dailyErrors[statsData.dailyErrors.length - 1]].reverse().map((msg, idx) => (
+                      <li key={idx} className="alert-item warning">{msg}</li>
+                    ))
+                  : <li className="alert-item">현재 알림이 없습니다.</li>}
               </ul>
             </div>
             <div className="card ai-diagnosis" onClick={() => navigate('/Chat', { state: { plant: currentPlant } })} style={{ cursor: 'pointer' }}>
@@ -317,7 +351,7 @@ function Menu() {
                   </button>
                 )}
               </>
-            ) : <div className="history-empty">최근 10일간 기록 없음 🌱</div>}
+            ) : <div className="history-empty">최근 10일간 기록 없음</div>}
           </div>
         )}
       </section>
