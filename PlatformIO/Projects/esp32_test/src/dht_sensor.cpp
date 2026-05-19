@@ -2,7 +2,7 @@
 #include <DHT.h>
 
 #define DHT_PIN 9      // 온습도 센서 out이 연결된 GPIO 9번 핀
-#define DHT_TYPE DHT11 // 센서 모델 (DHT11 기준, 만약 DHT22면 DHT22로 수정)
+#define DHT_TYPE DHT22
 
 DHT dht(DHT_PIN, DHT_TYPE);
 

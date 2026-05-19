@@ -2,7 +2,7 @@
 #include "pump.h"
 #include "water_logic.h"
 #include "soil_sensor.h"
-#include "dht_sensor.h" // [수정] 새 온습도 센서 헤더 연결
+#include "dht_sensor.h" // 온습도 센서 헤더
 #include "serial_cmd.h"
 #include "ble_cmd.h"
 #include <WiFi.h>
@@ -13,7 +13,9 @@
 const char* aiServerBaseUrl = "http://223.130.157.123:8080/plant/";
 const char* serverUrl = "http://223.130.157.123:8080/api/watering-log";
 const char* envServerUrl = "http://223.130.157.123:8080/api/environment-log";
-const int MY_PLANT_ID = 101;
+
+// [PDF 기준] 식물 고유 ID 초기 기본값 0으로 설정 [cite: 9]
+int MY_PLANT_ID = 0;
 
 unsigned long lastEnvLogMs = 0;
 const unsigned long REPORT_INTERVAL = 60000;
@@ -90,8 +92,8 @@ void sendEnvironmentLog() {
         http.addHeader("Content-Type", "application/json");
         
         int moisture = getMoisturePercent(); 
-        float temp = getTemperature(); // dht_sensor에서 가져옴
-        float humi = getHumidity();    // dht_sensor에서 가져옴
+        float temp = getTemperature(); // dht_sensor에서 정상 연동
+        float humi = getHumidity();    
 
         String json = "{\"plant_id\":" + String(MY_PLANT_ID) +
                       ",\"moisture_level\":" + String(moisture) + 
@@ -108,12 +110,24 @@ void setup() {
     Serial.begin(115200);
     delay(1500);
 
-    sensorInit(); // 토양 센서 초기화
-    dhtInit();    // [추가] 온습도 센서 초기화
+    // [핵심 고침] 온습도 센서 초기화를 무조건 다른 로직보다 먼저 실행!
+    dhtInit();
+    
+    // 토양 수분 센서 및 펌프 초기화
+    sensorInit(); 
     pumpInit();
-    waterInit();
+    
+    // 이제 센서들이 다 켜진 상태이므로 안심하고 모드 초기화 진행 (내부에서 STATUS 출력해도 안전)
+    waterInit(); 
 
+    // 저장된 식물 ID 로드 로직 (PDF 연동 반영)
     Preferences prefs;
+    prefs.begin("plant-data", true); 
+    MY_PLANT_ID = prefs.getInt("id", MY_PLANT_ID); 
+    prefs.end();
+    Serial.print("현재 식물 ID: ");
+    Serial.println(MY_PLANT_ID);
+
     prefs.begin("wifi-info", true);
     String savedSSID = prefs.getString("ssid", "");
     String savedPASS = prefs.getString("pass", "");
@@ -133,7 +147,7 @@ void setup() {
     }
 
     bleInit();
-    Serial.println("Ready. Cmds: WATER <mL>, PLANT:<Name>, STOP, MODE:AUTO");
+    Serial.println("Ready. Cmds: WATER <mL>, PLANT:<Name>, STOP, MODE:AUTO, SET_ID <ID>");
 }
 
 void loop() {
