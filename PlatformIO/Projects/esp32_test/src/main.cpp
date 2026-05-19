@@ -1,15 +1,14 @@
-//깃허브 연습
 #include <Arduino.h>
 #include "pump.h"
 #include "water_logic.h"
-#include "sensor.h"
+#include "soil_sensor.h"
+#include "dht_sensor.h" // [수정] 새 온습도 센서 헤더 연결
 #include "serial_cmd.h"
 #include "ble_cmd.h"
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Preferences.h>
-#include <ArduinoJson.h> // [필수] platformio.ini에 추가했는지 확인!
-
+#include <ArduinoJson.h> 
 
 const char* aiServerBaseUrl = "http://223.130.157.123:8080/plant/";
 const char* serverUrl = "http://223.130.157.123:8080/api/watering-log";
@@ -19,7 +18,6 @@ const int MY_PLANT_ID = 101;
 unsigned long lastEnvLogMs = 0;
 const unsigned long REPORT_INTERVAL = 60000;
 
-// [신규] AI 서버에서 식물 정보 가져오는 함수
 void fetchPlantConfigFromAI(String plantName) {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi not connected!");
@@ -27,7 +25,6 @@ void fetchPlantConfigFromAI(String plantName) {
     }
 
     HTTPClient http;
-    // URL 생성 (예: http://.../plant/바질)
     String url = String(aiServerBaseUrl) + plantName;
     
     Serial.print(">> AI 서버 요청 중: ");
@@ -40,17 +37,14 @@ void fetchPlantConfigFromAI(String plantName) {
         String payload = http.getString();
         Serial.println(">> AI 응답 수신: " + payload);
 
-        // JSON 파싱
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, payload);
 
         if (!error) {
-            // JSON에서 값 추출
             int minMoisture = doc["min_moisture"]; 
             int duration = doc["water_duration_ms"];
             const char* tip = doc["care_tip"];
 
-            // water_logic의 전역 변수 업데이트!
             ai_target_moisture = minMoisture;
             ai_water_duration = duration;
 
@@ -94,9 +88,16 @@ void sendEnvironmentLog() {
         HTTPClient http;
         http.begin(envServerUrl);
         http.addHeader("Content-Type", "application/json");
+        
         int moisture = getMoisturePercent(); 
+        float temp = getTemperature(); // dht_sensor에서 가져옴
+        float humi = getHumidity();    // dht_sensor에서 가져옴
+
         String json = "{\"plant_id\":" + String(MY_PLANT_ID) +
-                      ",\"moisture_level\":" + String(moisture) + "}";
+                      ",\"moisture_level\":" + String(moisture) + 
+                      ",\"temperature\":" + String(temp, 1) + 
+                      ",\"humidity\":" + String(humi, 1) + "}";
+                      
         int httpCode = http.POST(json);
         Serial.printf("[실시간 환경] 서버 전송 결과: %d\n", httpCode);
         http.end();
@@ -107,7 +108,8 @@ void setup() {
     Serial.begin(115200);
     delay(1500);
 
-    sensorInit();
+    sensorInit(); // 토양 센서 초기화
+    dhtInit();    // [추가] 온습도 센서 초기화
     pumpInit();
     waterInit();
 
