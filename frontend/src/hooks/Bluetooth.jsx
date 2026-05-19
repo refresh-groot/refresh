@@ -59,10 +59,33 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       console.log('📌 [4] RX Characteristic 가져오는 중...');
       const rxChar = await service.getCharacteristic(RX_UUID);
       
+      // [락 메커니즘을 위한 상태 변수 제어]
+      let isWriting = false;
+
       const sendCommand = async (command) => {
-        console.log(`📤 [sendCommand] 전송: "${command}"`);
-        const encoder = new TextEncoder();
-        await rxChar.writeValue(encoder.encode(command));
+        // 이전 명령어가 처리 중이면 락이 풀릴 때까지 대기 조율 (최대 3초)
+        let attempts = 0;
+        while (isWriting && attempts < 30) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        try {
+          isWriting = true; // 통신 시작 시 락 잠금
+          console.log(`📤 [sendCommand] 전송: "${command}"`);
+          const encoder = new TextEncoder();
+          
+          // 명령어 뒤에 개행문자(\n)를 추가하여 하드웨어 파싱 안정화 및 writeValue 실행
+          await rxChar.writeValue(encoder.encode(command + "\n"));
+          
+          // 하드웨어가 명령을 처리하고 숨 돌릴 수 있는 최소한의 시간(150ms) 보장
+          await new Promise(resolve => setTimeout(resolve, 150));
+        } catch (err) {
+          console.error("명령어 전송 중 실패:", err);
+          throw err;
+        } finally {
+          isWriting = false; // 전송이 끝나거나 에러가 나면 무조건 락 해제
+        }
       };
 
       // 5. TX Characteristic

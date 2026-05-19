@@ -122,12 +122,18 @@ const QuickMenu = ({ onClose, currentPlant }) => {
     setActiveParent(activeParent === idx ? null : idx);
   };
 
+  // [연타 방지를 위한 문지기 변수 선언]
+  const [isSending, setIsSending] = useState(false);
+
   const execCommand = async (cmd, name) => {
     if (!deviceName || !sendCommand) {
       setIsAlertOpen(true);
       return;
     }
+    if (isSending) return; // 이미 명령어가 날아가는 중이면 사용자의 클릭을 무시하고 차단합니다.
+
     try {
+      setIsSending(true); // 통신 시작과 동시에 버튼을 잠금 상태로 만듭니다.
       await sendCommand(cmd);
       if (cmd === 'MODE:AUTO') setIsAutoMode(true);
       if (cmd === 'MODE:MANUAL') setIsAutoMode(false);
@@ -136,6 +142,8 @@ const QuickMenu = ({ onClose, currentPlant }) => {
     } catch (error) {
       console.error('명령 전송 실패:', error);
       showToast('error', '명령 전송에 실패했습니다.');
+    } finally {
+      setIsSending(false); // 전송이 성공하든 에러가 나든 처리가 끝나면 다시 버튼 잠금을 해제합니다.
     }
   };
 
