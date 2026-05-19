@@ -26,7 +26,8 @@ if (!GEN_AI_KEY) {
 const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
 
 const plantModel = genAI.getGenerativeModel({
-  model: "gemini-3-flash-preview", // 모델명은 기존 그대로 유지
+  // ✅ [수정 완료] 불안정한 preview 모델 대신 가장 빠르고 안정적인 정식 모델로 변경!
+  model: "gemini-2.5-flash", 
   systemInstruction: {
     role: "system",
     parts: [{ text: `
@@ -53,9 +54,11 @@ const app = express(); // 익스프레스 애플리케이션 객체 생성
 
 app.set('trust proxy', 1); // 추가: 프록시 환경에서 세션 쿠키가 잘 전달되도록 설정
 
+// ✅ [수정 완료] 외부에서 접속하는 프론트엔드 주소를 추가하여 CORS 에러 원천 차단!
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://223.130.157.123:8080'
+  'http://223.130.157.123:8080',
+  'http://223.130.157.123:5173' // 추가된 프론트엔드 접속 주소
 ];
 
 /**

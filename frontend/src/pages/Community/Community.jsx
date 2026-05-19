@@ -64,6 +64,21 @@ const Community = () => {
   const Categories = [{name: '전체'}, {name: '질문'}, {name: '정보공유'}, {name: '자랑'}, {name: '고민'}];
   const sortOptions = [{ label: '최신순', value: 'new' }, { label: '좋아요순', value: 'likes' }, { label: '댓글순', value: 'chat' }];
 
+  const formatRelativeDate = (dateString) => {
+    console.log('날짜값:', dateString);
+  if (!dateString) return '';
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = Math.floor((now - date) / 1000); // 초 단위
+
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)}주 전`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)}개월 전`;
+  return `${Math.floor(diff / 31536000)}년 전`;
+};
   return (
     <div className="community-page">
       <div className="community-inner">
@@ -130,7 +145,7 @@ const Community = () => {
                   <span>{post.author}</span>
                   <span>❤️ {post.likes}</span>
                   <span>💬 {post.comments}</span>
-                  <span>{post.date}</span>
+                  <span>{formatRelativeDate(post.date)}</span>
                 </div>
               </div>
             ))}

@@ -6,7 +6,7 @@ module.exports = {
     recordEnvironment: async (envData) => {
         // 1. 먼저 환경 데이터를 DB에 저장
         const savedLog = await repository.save(envData);
-        const { plant_id, moisture_level, temperature, light_level } = savedLog;
+        const { plant_id, moisture_level, temperature, humidity, light_level } = savedLog;
 
         // 2. [지능형 로직] 식물 정보와 종별 기준값 가져오기
         const plant = await Plant.findOne({
@@ -102,6 +102,7 @@ module.exports = {
         const finalMoisture = [];
         const finalTemp = [];
         const finalLight = [];
+        const finalHumidity = [];
         const finalErrors = [];
 
         for (let i = 6; i >= 0; i--) {
@@ -122,6 +123,7 @@ module.exports = {
             finalMoisture.push(dayData ? Math.round(dayData.avg_moisture || 0) : 0);
             finalTemp.push(dayData && dayData.avg_temp ? parseFloat(Number(dayData.avg_temp).toFixed(1)) : 0);
             finalLight.push(dayData ? Math.round(dayData.avg_light || 0) : 0);
+            finalHumidity.push(dayData && dayData.avg_humidity ? parseFloat(Number(dayData.avg_humidity).toFixed(1)) : 0);
             finalErrors.push(errorMap[dateKey] || []);
         }
 
@@ -131,6 +133,7 @@ module.exports = {
             moistureData: finalMoisture,
             tempData: finalTemp,
             lightData: finalLight,
+            humidityData: finalHumidity,
             dailyErrors: finalErrors,
             thresholds: {
                 moisture: plant?.guide?.min_moisture ?? 30, 

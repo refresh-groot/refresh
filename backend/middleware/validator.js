@@ -19,7 +19,9 @@ module.exports = {
       }),
       nickname: Joi.string().min(2).max(20).required().messages({
         'string.empty': '닉네임을 입력해주세요.'
-      })
+      }),
+      // 👇 [추가] 프론트엔드에서 넘어오는 AI 동의 여부를 허용 (없어도 통과되도록 optional 처리)
+      isAiDataAllowed: Joi.boolean().optional()
     });
 
     const { error } = schema.validate(req.body);
@@ -59,9 +61,9 @@ module.exports = {
   // 회원 탈퇴
   Withdraw: (req, res, next) => {
     const schema = Joi.object({
-      password: Joi.string().required().messages({
-        'any.required': '비밀번호를 입력해주세요.',
-        'string.empty': '비밀번호는 비어있을 수 없습니다.'
+      // 소셜 로그인 유저(비밀번호 없음)도 탈퇴할 수 있도록 빈 문자열/null 허용 및 optional 처리
+      password: Joi.string().allow('', null).optional().messages({
+        'string.base': '비밀번호 형식이 올바르지 않습니다.'
       }),
     });
 
@@ -69,6 +71,7 @@ module.exports = {
     if (error) return res.status(400).json({ message: error.details[0].message });
     next();
   },
+  
   // 알림 설정
   UpdateAlert: (req, res, next) => {
     const schema = Joi.object({
@@ -83,4 +86,3 @@ module.exports = {
     next();
   }
 };
-

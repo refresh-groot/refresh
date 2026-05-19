@@ -52,7 +52,7 @@ module.exports = {
   },
 
   // 5. 회원가입 
-  signup: async ({ loginId, password, email, nickname }) => {
+  signup: async ({ loginId, password, email, nickname, isAiDataAllowed }) => {
     const existingId = await repository.findByLoginId(loginId);
     if (existingId) throw new Error('이미 존재하는 아이디입니다.');
 
@@ -66,6 +66,7 @@ module.exports = {
       password: hashedPassword,
       email,
       nickname,
+      isAiDataAllowed
     });
     return newUser;
   },
@@ -73,7 +74,7 @@ module.exports = {
   // 6. 로그인 
   login: async (loginId, password) => {
     const user = await repository.findByLoginId(loginId);
-    if (!user) throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
+    if (!user || user.status === 'WITHDRAWN') throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new Error('아이디 또는 비밀번호가 일치하지 않습니다.');
@@ -108,10 +109,18 @@ module.exports = {
     const user = await repository.findById(id);
     if (!user) throw new Error('유저를 찾을 수 없습니다.');
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
+    if (user.provider === 'local') {
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
+    }
 
-    await User.destroy({ where: { id } });
+    if (user.is_ai_data_allowed) {
+      await repository.anonymizeUser(id);
+      return { message: '회원 탈퇴가 완료되었습니다. 데이터는 비식별화되어 AI 학습용으로 안전하게 보존됩니다.' };
+    } else {
+      await repository.hardDeleteUser(id);
+      return { message: '회원 탈퇴가 완료되었으며, 모든 개인 데이터가 완전히 파기되었습니다.' };
+    }
   },
 
   // 12. 카카오 로그인

@@ -34,7 +34,8 @@ module.exports = {
                 [Sequelize.fn('DATE', Sequelize.col('created_at')), 'date'],
                 [Sequelize.fn('AVG', Sequelize.col('moisture_level')), 'avg_moisture'],
                 [Sequelize.fn('AVG', Sequelize.col('temperature')), 'avg_temp'],
-                [Sequelize.fn('AVG', Sequelize.col('light_level')), 'avg_light']
+                [Sequelize.fn('AVG', Sequelize.col('light_level')), 'avg_light'],
+                [Sequelize.fn('AVG', Sequelize.col('humidity')), 'avg_humidity']
             ],
             group: [Sequelize.fn('DATE', Sequelize.col('created_at'))],
             order: [[Sequelize.fn('DATE', Sequelize.col('created_at')), 'ASC']],
