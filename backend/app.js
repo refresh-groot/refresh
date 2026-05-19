@@ -26,7 +26,7 @@ if (!GEN_AI_KEY) {
 const genAI = new GoogleGenerativeAI(GEN_AI_KEY);
 
 const plantModel = genAI.getGenerativeModel({
-  model: "gemini-3-flash-preview", // 모델명은 기존 그대로 유지
+  model: "gemini-2.5-flash", // 모델명은 기존 그대로 유지
   systemInstruction: {
     role: "system",
     parts: [{ text: `
