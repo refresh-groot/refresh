@@ -61,7 +61,7 @@ module.exports = {
   // 회원 탈퇴
   Withdraw: (req, res, next) => {
     const schema = Joi.object({
-      // 👇 [수정] 소셜 로그인 유저(비밀번호 없음)도 탈퇴할 수 있도록 빈 문자열/null 허용 및 optional 처리
+      // 소셜 로그인 유저(비밀번호 없음)도 탈퇴할 수 있도록 빈 문자열/null 허용 및 optional 처리
       password: Joi.string().allow('', null).optional().messages({
         'string.base': '비밀번호 형식이 올바르지 않습니다.'
       }),
