@@ -17,13 +17,7 @@ const Bottom = ({ hidden }) => {
   ];
 
   const handleNavClick = (item) => {
-    if (item.action === 'logout') {
-      if (window.confirm('정말 로그아웃 하시겠습니까?')) {
-        navigate('/login');
-      }
-    } else {
-      navigate(item.path);
-    }
+    navigate(item.path);
   };
 
   const renderNavItem = (item) => {
@@ -43,11 +37,17 @@ const Bottom = ({ hidden }) => {
   return (
     <>
       <div className={`bottom-nav-container ${hidden ? 'hidden' : ''}`}>
-        {NAV_ITEMS.slice(0, 2).map(renderNavItem)}
+        <div className="nav-group-left">
+          {NAV_ITEMS.slice(0, 2).map(renderNavItem)}
+        </div>
+        
         <button className="quick-btn" onClick={() => setIsQuickOpen(!isQuickOpen)}>
           +
         </button>
-        {NAV_ITEMS.slice(2).map(renderNavItem)}
+
+        <div className="nav-group-right">
+          {NAV_ITEMS.slice(2).map(renderNavItem)}
+        </div>
       </div>
 
       {isQuickOpen && (
