@@ -57,8 +57,6 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
     1. 먼저 일반적인 채팅 비서처럼 다정하고 자유롭게 대답해. (사용자가 2가지 이상을 물어보면 문단을 나누어서 모두 길고 상세하게 대답해 줘!)
     2. 당신의 자유로운 텍스트 답변이 모두 끝난 후, **맨 마지막에만** 아두이노 제어 및 앱 UI 업데이트를 위한 아래 JSON 데이터를 딱 한 번 덧붙여.
 
-    👇 [출력 예시] 👇
-    어머, 사진을 보니 로즈마리 잎이 조금 말라 있네요! 🥺 물어보신 관리 팁도 함께 알려드릴게요. (중략... 자유롭고 풍성한 대답)
     {
         "ui_status": "잎 마름 (물 부족)",
         "ui_water_msg": "3일에 한 번, 200ml 급수 (※ 상황상 굳이 필요 없으면 빈칸 처리)",
@@ -112,22 +110,22 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
         )
         result_text = response.text                
         
-        # ✨ [핵심 방어 로직] 정규식으로 텍스트 속에서 { } JSON 덩어리만 쏙 찾아내기
+        # [핵심 방어 로직] 정규식으로 텍스트 속에서 { } JSON 덩어리만 쏙 찾아내기
         match = re.search(r'\{.*\}', result_text, re.DOTALL)
         
         if match:
             json_str = match.group(0) # 찾아낸 순수 JSON 문자열
             
-            # 전체 답변에서 JSON 덩어리와 마크다운(```)을 지워버리면 "자유롭게 떠든 대화 내용"만 남음!
+            # 전체 답변에서 JSON 덩어리를 지워 "자유로운 대화 내용"만 추출
             chat_text = result_text.replace(json_str, '').replace('```json', '').replace('```', '').strip()
             
             # 문자열을 파이썬 딕셔너리로 변환
             parsed_json = json.loads(json_str)
             
-            # ✨ 프론트엔드로 보낼 최종 데이터 조립 (대화 내용 + 제어 데이터 병합)
+            # 프론트엔드로 보낼 최종 데이터 조립
             final_data = {
                 "ui_status": parsed_json.get("ui_status", "진단 완료"),
-                "ui_guide": chat_text, # AI가 길게 작성한 다정한 답변 전체
+                "ui_guide": chat_text if chat_text else "질문에 대한 답변입니다. 🌱", 
                 "ui_water_msg": parsed_json.get("ui_water_msg", ""),
                 "pump_now": parsed_json.get("pump_now", False),
                 "min_moisture": parsed_json.get("min_moisture", 0),
@@ -136,17 +134,26 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
             return json.dumps(final_data)
             
         else:
-            # AI가 JSON을 아예 빼먹는 초유의 사태를 대비한 최후의 방어선
+            # ⭐ [수정 핵심 1] 사진이 없어서 AI가 JSON을 아예 빼먹었을 때의 방어선
+            # 스트림릿에서 KeyError가 나지 않도록 모든 필수 키값을 기본값으로 채워줍니다.
             return json.dumps({
-                "ui_status": "분석 완료", 
-                "ui_guide": result_text, # 찾지 못했으면 통째로 화면에 던짐
-                "pump_now": False
+                "ui_status": "텍스트 답변",
+                "ui_guide": result_text, # JSON이 없으므로 제미나이가 쓴 글 전체가 답변이 됩니다.
+                "ui_water_msg": "사진이 첨부되지 않아 정확한 물주기 처방이 어렵습니다. 😥",
+                "pump_now": False,
+                "min_moisture": 0,
+                "water_duration_ms": 0
             })
             
     except Exception as e:
+        # ⭐ [수정 핵심 2] 시스템 에러가 발생했을 때도 스트림릿이 터지지 않도록 규격을 완벽히 맞춥니다.
         return json.dumps({
-            "ui_status": "API 에러", 
-            "ui_guide": f"시스템 오류가 발생했습니다: {str(e)}"
+            "ui_status": "API 에러",
+            "ui_guide": f"시스템 오류가 발생했습니다: {str(e)}",
+            "ui_water_msg": "",
+            "pump_now": False,
+            "min_moisture": 0,
+            "water_duration_ms": 0
         })
 
 # ==============================================================================
