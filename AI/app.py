@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import os
 import json
 import re
-from google import genai       # 라이브러리 수정
+from google import genai       
 from dotenv import load_dotenv
 import PIL.Image
 
@@ -11,11 +11,8 @@ import PIL.Image
 # ==============================================================================
 load_dotenv("api.env", override=True)
 MY_KEY = os.getenv("GOOGLE_API_KEY") 
-client = genai.Client(api_key=MY_KEY) # 최신 클라이언트 방식 유지
+client = genai.Client(api_key=MY_KEY)
 
-# ==============================================================================
-# 2. Flask 서버 및 폴더 설정
-# ==============================================================================
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'temp_uploads'
@@ -26,11 +23,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 # ==============================================================================
 # 3. AI 진단 핵심 로직
 # ==============================================================================
-# 매개변수에 plant_species 추가
-# ==============================================================================
-# 3. AI 진단 핵심 로직 (Gemini 2.5 Flash + 비서 프롬프트 버전)
-# ==============================================================================
-def get_plant_diagnosis(image_path, user_message, history, plant_species): 
+def get_plant_diagnosis(image_path, user_message, history, plant_species, moisture_level=None, light_level=None, temperature=None, humidity=None): 
     history_text = ""
     try:
         if history:
@@ -46,12 +39,24 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
                     
                 history_text += f"- {role_name}: {content}\n" 
     except Exception as e:
-        print(f" [Warning] 대화 내역 파싱 무시됨: {e}")
         pass 
 
-    # ✨ [수정 1] ui_water_msg에 구체적인 작성 가이드라인(포맷)을 강제 주입
-    # ✨ [수정 1] ui_guide의 분량을 늘리고, 내용을 통합하도록 지시
-    # ✨ [수정 1] AI가 자유롭게 말하도록 족쇄를 풀고, JSON은 맨 뒤에 몰아서 출력하도록 지시
+    # 값이 없으면 빼는게 아니라 "데이터 없음"으로 강제 명시하여 과거 기억 차단!
+    def format_sensor(val, unit):
+        if val is not None and val != "":
+            return f"{val}{unit}"
+        return "데이터 없음 (센서 연결 끊김)"
+
+    sensor_lines = [
+        f"- 토양 수분: {format_sensor(moisture_level, '%')}",
+        f"- 현재 조도: {format_sensor(light_level, ' lux')}",
+        f"- 주변 온도: {format_sensor(temperature, '°C')}",
+        f"- 공기 습도: {format_sensor(humidity, '%')}"
+    ]
+
+    sensor_info_text = "\n[하드웨어 실시간 센서 측정값 (현재 시점)]\n" + "\n".join(sensor_lines)
+    sensor_info_text += "\n* 🚨 [강제 주의사항]: '데이터 없음'이라고 표기된 센서는 과거 대화에 수치가 있었더라도 현재 통신이 끊긴 상태입니다. 절대 과거 수치로 현재 상태를 유추하지 말고, 해당 센서값은 '알 수 없음'으로 취급하여 진단하세요.\n"
+
     format_instruction = """
     [답변 출력 규칙 - 매우 중요]
     1. 먼저 일반적인 채팅 비서처럼 다정하고 자유롭게 대답해. (사용자가 2가지 이상을 물어보면 문단을 나누어서 모두 길고 상세하게 대답해 줘!)
@@ -66,22 +71,21 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
     }
     """
 
-    # ✨ [수정 2] 복합 질문 대응과 상황에 맞는 물주기 처방 룰 추가
     system_rules = f"""
-    당신은 '스마트 화분 AI'로 식물을 키우는 사람을 위한 다정한 '원예 비서'입니다.
+    당신은 '지능형 식물 진단 시스템'에서 식물을 키우는 사람을 돕는 다정한 '원예 비서'입니다.
     
     [사전 정보]
-    - 사이드바 입력 식물 종: {plant_species} 
+    - 대상 식물 종: {plant_species} 
+    {sensor_info_text}
     
     {history_text}
     현재 사용자 질문: "{user_message}"
     
     [행동 수칙]
-    1. **자유롭고 풍성한 대화**: 기계적인 요약은 피하고, 사용자가 여러 개(예: 진단 + 팁)를 한 번에 물어보면 문단을 나누어 모두 친절하게 답해. 길고 상세할수록 좋아! 이모지도 팍팍 써.
-    2. **상황에 맞는 물주기 처방**: 매번 억지로 물주기 주기를 말할 필요 없어. 식물이 말라 보이거나, 사용자가 물주기에 대해 물어볼 때만 대화 흐름에 자연스럽게 녹여내.
-    3. **사진 분석 최우선**: 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 관찰해서 가장 먼저 언급해.
-    4. **[매우 중요] 예외 처리 (철벽 방어)**: 식물이 전혀 없는 사진이면 무조건 "인식 불가"로 세팅해. 억지로 꾸며내지 말고 "앗, 식물 사진이 아니네요 🥺"라고 부드럽게 거절해. 기기 오작동을 막기 위해 pump_now: false, water_duration_ms: 0 으로 강제 세팅해.
-    5. **하드웨어 제어 데이터 (숨겨진 데이터)**: 정상적인 식물이고 급수가 필요한 상황이라면 아두이노가 읽을 수 있도록 제어용 숫자를 정확히 계산해.
+    1. **데이터 기반 맞춤 진단**: 사진의 상태와 '실시간 센서 측정값(수분, 조도, 온도, 습도)'을 종합하여 진단해. 센서값이 정상적으로 제공되었다면, 해당 식물 종의 적정 환경 기준과 현재 수치를 비교해서 상세히 조언해줘. (예: "몬스테라인데 현재 온도가 15도라서 너무 춥네요!")
+    2. **하드웨어 제어 데이터**: 정상 식물이고 토양 수분이 해당 식물의 적정치보다 낮아 물이 필요하다면, JSON에 pump_now: true를 주고 water_duration_ms를 정밀하게 계산해. 단, 수분 데이터가 없으면 pump_now는 무조건 false로 둬.
+    3. **사진 분석 최우선**: 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 우선시해.
+    4. **예외 처리**: 식물이 전혀 없는 사진이면 "인식 불가"로 세팅하고 부드럽게 거절해. 기기 오작동 방지를 위해 pump_now: false로 고정.
     
     {format_instruction}
     """
@@ -92,17 +96,14 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
         try:
             with PIL.Image.open(image_path) as img_file: 
                 img = img_file.copy()
-                # ✨ 제미나이에게도 "사진 들어왔다!"고 빨간불 경고문 강제 삽입
-                alert_msg = "\n🚨[새로운 식물 사진이 방금 첨부되었습니다! 과거 대화보다 이 사진을 최우선으로 시각적 분석하세요!]🚨\n"
+                alert_msg = "\n🚨[새로운 식물 사진이 첨부됨! 이 사진을 최우선으로 시각적 분석하세요!]🚨\n"
                 inputs = [system_rules + alert_msg, img] 
         except Exception as e:                            
             return json.dumps({"ui_status": "오류", "ui_guide": f"이미지 처리 오류: {str(e)}"})
     else:
-        # 사진 없을 때의 텍스트 모드 우회
-        inputs = [system_rules + "\n[주의] 현재 사용자가 추가 사진을 올리지 않았습니다. 이전 대화 문맥과 텍스트만 보고 자연스럽게 이어가세요."]
+        inputs = [system_rules + "\n[주의] 사진 없음. 이전 문맥 및 센서/텍스트 데이터만 보고 자연스럽게 이어가세요."]
         
     try:
-        # 제미나이 2.5 Flash 호출 (자유도를 위해 temperature를 살짝 올림)
         response = client.models.generate_content(
             model='gemini-2.5-flash', 
             contents=inputs,
@@ -110,19 +111,12 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
         )
         result_text = response.text                
         
-        # [핵심 방어 로직] 정규식으로 텍스트 속에서 { } JSON 덩어리만 쏙 찾아내기
         match = re.search(r'\{.*\}', result_text, re.DOTALL)
-        
         if match:
-            json_str = match.group(0) # 찾아낸 순수 JSON 문자열
-            
-            # 전체 답변에서 JSON 덩어리를 지워 "자유로운 대화 내용"만 추출
+            json_str = match.group(0) 
             chat_text = result_text.replace(json_str, '').replace('```json', '').replace('```', '').strip()
-            
-            # 문자열을 파이썬 딕셔너리로 변환
             parsed_json = json.loads(json_str)
             
-            # 프론트엔드로 보낼 최종 데이터 조립
             final_data = {
                 "ui_status": parsed_json.get("ui_status", "진단 완료"),
                 "ui_guide": chat_text if chat_text else "질문에 대한 답변입니다. 🌱", 
@@ -134,19 +128,16 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species):
             return json.dumps(final_data)
             
         else:
-            # ⭐ [수정 핵심 1] 사진이 없어서 AI가 JSON을 아예 빼먹었을 때의 방어선
-            # 스트림릿에서 KeyError가 나지 않도록 모든 필수 키값을 기본값으로 채워줍니다.
             return json.dumps({
                 "ui_status": "텍스트 답변",
-                "ui_guide": result_text, # JSON이 없으므로 제미나이가 쓴 글 전체가 답변이 됩니다.
-                "ui_water_msg": "사진이 첨부되지 않아 정확한 물주기 처방이 어렵습니다. 😥",
+                "ui_guide": result_text, 
+                "ui_water_msg": "데이터 파싱 실패",
                 "pump_now": False,
                 "min_moisture": 0,
                 "water_duration_ms": 0
             })
             
     except Exception as e:
-        # ⭐ [수정 핵심 2] 시스템 에러가 발생했을 때도 스트림릿이 터지지 않도록 규격을 완벽히 맞춥니다.
         return json.dumps({
             "ui_status": "API 에러",
             "ui_guide": f"시스템 오류가 발생했습니다: {str(e)}",
@@ -168,8 +159,14 @@ def predict():
     print("\n📸 [Flask] 새로운 진단 요청 도착!")
     image_path = None
     user_message = ""
-    plant_species = "알 수 없는 식물" # 기본값
+    plant_species = "알 수 없는 식물" 
     history = []
+    
+    # 4가지 센서값 변수 초기화
+    moisture_level = None
+    light_level = None
+    temperature = None
+    humidity = None
     
     try:                                        
         if 'image' in request.files:
@@ -182,50 +179,51 @@ def predict():
                 
         req_json = request.get_json(silent=True) if request.is_json else None
 
-        # 메세지 추출
-        if request.form.get('message'):                                  
-            user_message = request.form.get('message')
-        elif req_json and 'message' in req_json: 
-            user_message = req_json.get('message')               
-            
-        # Node.js에서 보낸 plant_species 추출
-        if request.form.get('plant_species'):
-            plant_species = request.form.get('plant_species')
-        elif req_json and 'plant_species' in req_json:
-            plant_species = req_json.get('plant_species')
+        # 파라미터 안전 추출 헬퍼 함수
+        def get_param(key):
+            val = request.form.get(key)
+            if not val and req_json: val = req_json.get(key)
+            return val
 
-        # 히스토리 추출
-        raw_history = request.form.get('history') or (req_json.get('history') if req_json else None)                
+        user_message = get_param('message') or ""
+        plant_species = get_param('plant_species') or "알 수 없는 식물"
         
+        # ✨ 센서 데이터 추출 (팀원 Node.js 변수명 매칭)
+        moisture_level = get_param('moisture_level')
+        light_level = get_param('light_level')
+        temperature = get_param('temperature')
+        humidity = get_param('humidity')
+
+        raw_history = get_param('history')                
         if raw_history:                                               
             if isinstance(raw_history, str):
-                try:
-                    history = json.loads(raw_history)
-                except:
-                    history = []                                      
+                try: history = json.loads(raw_history)
+                except: history = []                                      
             elif isinstance(raw_history, list):                               
-                history = raw_history                                                 
+                history = raw_history                                                                                
                 
-        print(f"   └─ 타겟 식물: {plant_species}") # ✨ 어떤 식물인지 로그 출력
-        print(f"   └─ 질문 내용: {user_message if user_message else '(질문 없음)'}")
-        print(f"   └─ 이전 대화 개수: {len(history)}개")
+        print(f"   └─ 타겟 식물: {plant_species}") 
+        print(f"   └─ 수분:{moisture_level}% | 조도:{light_level}lux | 온도:{temperature}°C | 습도:{humidity}%")
         
         if image_path is None and not user_message:                      
             print("❌ [Error] 빈 요청입니다.")
             return jsonify({'error': '이미지 또는 질문을 보내주세요.'}), 400 
             
         print("🤖 [AI] 식물 상태 분석 시작...")
-        # ✨ get_plant_diagnosis에 plant_species 전달
-        result_json_str = get_plant_diagnosis(image_path, user_message, history, plant_species)                        
+        
+        # ✨ 함수 호출 시 4가지 센서값 넘겨주기
+        result_json_str = get_plant_diagnosis(
+            image_path, user_message, history, plant_species, 
+            moisture_level, light_level, temperature, humidity
+        )                        
         
         try:
             result_data = json.loads(result_json_str)
-        except json.JSONDecodeError:                                                                     
-            result_data = {                                                  
+        except json.JSONDecodeError:                                                                           
+            result_data = {                                  
                 "ui_status": "데이터 오류",
-                "ui_guide": "AI 응답을 해석하는 중 오류가 발생했습니다.",
-                "raw_data": result_json_str
-            }                                                                                         
+                "ui_guide": "AI 응답을 해석하는 중 오류가 발생했습니다."
+            }                                                                                                     
             
         print(f"✅ [Success] 응답 전송 완료 (상태: {result_data.get('ui_status', 'Unknown')})")
         return jsonify(result_data)
@@ -239,9 +237,6 @@ def predict():
             os.remove(image_path)                                            
             print("🧹 [Clean] 임시 이미지 파일 삭제 완료")
 
-# ==============================================================================
-# 5. 서버 실행부
-# ==============================================================================
 if __name__ == '__main__':
     print("🚀 [Start] 스마트 화분 Flask 서버가 실행되었습니다. (Port: 7860)")
-    app.run(host='0.0.0.0', port=7860, debug=False) # 🔵 팀원분의 허깅페이스 포트 반영
+    app.run(host='0.0.0.0', port=7860, debug=False)
