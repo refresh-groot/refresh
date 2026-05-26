@@ -17,21 +17,6 @@ const CommunityDetail = () => {
 
   const currentUser = JSON.parse(localStorage.getItem('user'));
 
-  // 함수는 컴포넌트 안, return 밖에 있어야 해요
-  const formatRelativeDate = (dateString) => {
-    if (!dateString) return '';
-    const now = new Date();
-    const date = new Date(dateString);
-    const diff = Math.floor((now - date) / 1000);
-    if (diff < 60) return '방금 전';
-    if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
-    if (diff < 2592000) return `${Math.floor(diff / 604800)}주 전`;
-    if (diff < 31536000) return `${Math.floor(diff / 2592000)}개월 전`;
-    return `${Math.floor(diff / 31536000)}년 전`;
-  };
-
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -102,6 +87,22 @@ const CommunityDetail = () => {
     currentUser.nickname === post.author
   );
 
+    const formatRelativeDate = (dateString) => {
+    console.log('날짜값:', dateString);
+  if (!dateString) return '';
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = Math.floor((now - date) / 1000); // 초 단위
+
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)}주 전`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)}개월 전`;
+  return `${Math.floor(diff / 31536000)}년 전`;
+};
+
   return (
     <div className="detail-page">
       <div className="detail-inner">
@@ -121,8 +122,8 @@ const CommunityDetail = () => {
             <div className="detail-avatar">{post.author?.slice(0, 2)}</div>
             <div>
               <div className="detail-author-name">{post.author}</div>
-              <div className="detail-author-date">{formatRelativeDate(post.date)}</div>
             </div>
+            <div className='community-detail-date'>{formatRelativeDate(post.date || post.createdAt)}</div>
           </div>
 
           {post.image && (

@@ -145,7 +145,7 @@ const Community = () => {
                   <span>{post.author}</span>
                   <span>❤️ {post.likes}</span>
                   <span>💬 {post.comments}</span>
-                  <span>{formatRelativeDate(post.date)}</span>
+                  <span>{formatRelativeDate(post.date || post.createdAt || post.created_at)}</span>
                 </div>
               </div>
             ))}

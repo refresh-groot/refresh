@@ -104,7 +104,9 @@
     color: #1a1a1a;
 }
 
-.detail-author-date {
+.community-detail-date {
+    margin-left: auto;
+    right: auto;
     font-size: 0.9rem;
     color: #aaa;
     margin-top: 2px;
