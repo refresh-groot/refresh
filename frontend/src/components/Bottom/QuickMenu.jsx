@@ -230,10 +230,25 @@ const QuickMenu = ({ onClose, currentPlant }) => {
       return;
     }
     if (item.special === 'plant') {
-      await fetchPlantList();
-      setShowPlantModal(true);
-      return;
+    setPlantLoading(true);
+    try {
+      const res = await api.get('/api/plants');
+      const data = res.data;
+      if (Array.isArray(data)) {
+        setPlantList(data);
+      } else if (data?.plants) {
+        setPlantList(data.plants);
+      } else {
+        setPlantList([]);
+      }
+    } catch (error) {
+      showToast('error', '식물 목록을 불러오지 못했습니다.');
+    } finally {
+      setPlantLoading(false);
     }
+    setShowPlantModal(true);  // fetch 완전히 끝난 후 모달 열기
+    return;
+  }
     if (item.special === 'cal') {
       if (!deviceName || !sendCommand) {
         setIsAlertOpen(true);
@@ -338,7 +353,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
                       alt={plant.plant_name}
                       style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
                     />
-                    <div>
+                    <div style={{textAlign: 'left' }}>
                       <div style={{ fontWeight: '600', fontSize: '15px', color: '#333' }}>{plant.plant_name}</div>
                       <div style={{ fontSize: '13px', color: '#888' }}>{plant.species}</div>
                     </div>
