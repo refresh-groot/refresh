@@ -3,7 +3,8 @@ import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
 import { useAuth } from '../../context/AuthContext';
 import { Bluetooth } from '../../hooks/Bluetooth';
-import { useNavigate, useLocation } from 'react-router-dom'; // useLocation 추가
+// ▼▼▼ [수정된 부분] 기존 코드 유지를 위해 useParams와 useLocation을 모두 가져옵니다 ▼▼▼
+import { useParams, useNavigate, useLocation } from 'react-router-dom'; 
 import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
 import { showToast } from '../../app/alert';
@@ -16,10 +17,25 @@ function Setting() {
   const navigate = useNavigate();
   const location = useLocation(); // location 추가
 
+  // ▼▼▼ [추가된 부분] URL에서 plantId를 직접 추출 (새로고침해도 절대 날아가지 않음) ▼▼▼
+  const { plantId: paramPlantId } = useParams();
+
   // 상세 페이지에서 넘겨준 식물 정보가 있는지 확인
   const plant = location.state?.plant; 
-  const plantId = plant?.id;
+  
+  // ▼▼▼ [추가된 부분] URL 파라미터가 있다면 우선 사용하고, 없으면 기존 location 방식을 씁니다 ▼▼▼
+  const plantId = paramPlantId || plant?.id;
+  
   console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
+
+  // ▼▼▼ [추가된 부분] 이미 연결된 상태에서 다른 식물 세팅창으로 들어오면 자동으로 ID 갱신 ▼▼▼
+  useEffect(() => {
+    if (plantId && sendCommand && deviceName) {
+      console.log(`🔄 [자동 동기화] ${plantId}번 식물 설정창 진입. 기기에 ID 전송 시도...`);
+      sendCommand(`SET_ID ${plantId}`).catch(err => console.error("자동 동기화 실패:", err));
+    }
+  }, [plantId, sendCommand, deviceName]);
+  // ▲▲▲ [추가된 부분] ▲▲▲
 
   const [bio, setBio] = useState('');
   const [isAlertOn, setIsAlertOn] = useState(false);
@@ -49,10 +65,10 @@ function Setting() {
     handleConnectSuccess(info); // 기기 이름 저장 (기존 기능)
 
     // 만약 세팅창에 들어올 때 식물 정보(ID)를 들고 왔다면? 기기로 바로 전송!
-    if (plantId && sendCommand) {
+    if (plantId && info.sendCommand) {
         console.log(`기존 식물(${plantId}) ID 연동 시도...`);
         try {
-            await sendCommand(`SET_ID ${plantId}`);
+            await info.sendCommand(`SET_ID ${plantId}`);
             showToast('success', `${plantId}번 식물과 연동되었습니다.`);
         } catch (err) {
             console.error("ID 전송 실패:", err);
@@ -116,6 +132,13 @@ const handleLogout = async () => {
       <div className="setting-inner">
 
         <div className="setting-left">
+          
+          {/* ▼▼▼ [추가된 부분] 눈으로 확인하기 위한 디버깅 박스 ▼▼▼ */}
+          <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '10px 15px', borderRadius: '8px', marginBottom: '15px', fontWeight: 'bold', fontSize: '14px', border: '1px solid #ffeeba' }}>
+            🧪 [디버깅용] 현재 설정 중인 식물 ID: {plantId || '없음(공용)'}
+          </div>
+          {/* ▲▲▲ [추가된 부분] ▲▲▲ */}
+
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon green">
@@ -149,7 +172,8 @@ const handleLogout = async () => {
             </div>
           </div>
 
-          {/* 블루투스 */}
+          {/* ▼▼▼ [추가/수정된 부분] 식물 ID가 있을 때만 블루투스 카드를 렌더링하도록 감싸기 ▼▼▼ */}
+          {plantId && (
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon purple">
@@ -188,6 +212,8 @@ const handleLogout = async () => {
               </div>
             </div>
           </div>
+          )}
+          {/* ▲▲▲ [추가/수정된 부분] ▲▲▲ */}
 
         </div>
 

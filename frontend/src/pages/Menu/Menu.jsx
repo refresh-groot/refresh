@@ -212,12 +212,13 @@ const handleWatering = async () => {
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
+  // goToSetting 함수 수정
   const goToSetting = () => {
-    // 현재 식물 정보(ID 포함)를 가지고 세팅 페이지로 이동!
-    console.log("▶ goToSetting 함수 실행됨! 전달 데이터:", currentPlant);   
-    navigate('/setting', { state: { plant: currentPlant } }); 
+    console.log("▶ goToSetting 함수 실행됨! 대상 식물 ID:", currentPlant.id);   
+    // state로 넘기지 않고 URL 자체에 ID를 박아버립니다.
+    navigate(`/setting/${currentPlant.id}`); 
   };
-
+  
   if (sensorLoading && newData.temp === null && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }

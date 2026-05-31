@@ -4,6 +4,8 @@ import './Profile.css';
 import { FaPlus, FaCalendarAlt, FaUserCircle, FaTrash } from 'react-icons/fa';
 import { LuPencilLine } from "react-icons/lu";
 import { useAuth } from '../../context/AuthContext';
+// ▼▼▼ [추가된 부분] 블루투스 Context를 가져옵니다 ▼▼▼
+import { useBluetooth } from '../../context/BluetoothContext'; 
 import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
 import EditPlantModal from './EditPlantModal';
@@ -15,6 +17,9 @@ function Profile() {
   const navigate = useNavigate();
   // AuthContext에서 로그인한 사용자 정보와 인증 로딩 상태를 가져옴
   const { user, loading: authLoading } = useAuth();
+  
+  // ▼▼▼ [추가된 부분] 블루투스 명령 전송 함수를 가져옵니다 ▼▼▼
+  const { sendCommand } = useBluetooth();
   
   // 모달 표시 및 데이터 관리를 위한 상태
   const [editingPlant, setEditingPlant] = useState(null); // 수정 중인 식물 객체
@@ -120,6 +125,22 @@ function Profile() {
 
       // [변화 1] 서버의 응답(ID가 들어있음)을 변수에 담음
       const res = await api.post('/api/plants', formData); 
+
+      // ▼▼▼ [새로 추가된 부분] 백엔드에서 발급해준 새 식물 ID를 기기로 전송 ▼▼▼
+      const newPlantId = res.data.id || res.data.plant_id; 
+
+      // 사용자가 모달에서 '기기 연동'을 미리 해두었다면 sendCommand가 존재함
+      if (sendCommand && newPlantId) {
+          console.log(`▶ 새 식물 DB 등록 완료! ESP32에 새 식물 ID(${newPlantId}) 맵핑 시도...`);
+          try {
+              await sendCommand(`SET_ID ${newPlantId}`);
+              // 성공 알림은 아래 showToast('success', '등록 완료')로 퉁치면 깔끔합니다.
+          } catch (err) {
+              console.error("ID 전송 실패:", err);
+              showToast('error', '기기 연동 중 문제가 발생했습니다.');
+          }
+      }
+      // ▲▲▲ [새로 추가된 부분] ▲▲▲
 
       showToast('success','등록 완료');
       fetchPlants();
