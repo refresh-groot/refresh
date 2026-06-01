@@ -123,14 +123,20 @@ module.exports = {
     }
   },
 
-  // 12. 카카오 로그인
+// 12. 카카오 로그인
   kakaoLogin: async (code) => {
     const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID; 
     const KAKAO_REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;
 
+    const params = new URLSearchParams();
+    params.append('grant_type', 'authorization_code');
+    params.append('client_id', KAKAO_CLIENT_ID);
+    params.append('redirect_uri', KAKAO_REDIRECT_URI);
+    params.append('code', code);
+
     const tokenResponse = await axios.post(
       'https://kauth.kakao.com/oauth/token',
-      { grant_type: 'authorization_code', client_id: KAKAO_CLIENT_ID, redirect_uri: KAKAO_REDIRECT_URI, code: code },
+      params,
       { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
     );
 
@@ -140,8 +146,8 @@ module.exports = {
 
     const userInfo = userInfoResponse.data;
     const snsId = userInfo.id.toString(); 
-    const nickname = userInfo.kakao_account.profile.nickname;
-    const email = userInfo.kakao_account.email || `${snsId}@kakao.com`; 
+    const nickname = userInfo.kakao_account?.profile?.nickname || `카카오_${snsId.substring(0, 5)}`;
+    const email = userInfo.kakao_account?.email || `${snsId}@kakao.com`; 
     const loginId = `kakao_${snsId}`; 
 
     let user = await repository.findBySnsIdAndProvider(snsId, 'kakao');
