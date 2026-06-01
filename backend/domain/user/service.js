@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const repository = require('./repository');
 const mailer = require('../../utils/mailer'); 
-const { User } = require('../index');
+const { User, Plant } = require('../index'); // 👈 [수정 1] Plant 모델 추가!
 const axios = require('axios');
 
 // 인증번호 임시 저장소
@@ -86,6 +86,12 @@ module.exports = {
   getUserById: async (id) => {
     return await repository.findById(id); 
   },
+
+  // ▼▼▼ [추가] 식물 정보 단건 조회를 위한 서비스 추가 ▼▼▼
+  getPlantById: async (plantId) => {
+    return await Plant.findByPk(plantId);
+  },
+  // ▲▲▲ [추가] ▲▲▲
 
   // 8. 프로필 조회 서비스
   getProfile: async (id) => {
