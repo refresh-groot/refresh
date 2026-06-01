@@ -103,6 +103,18 @@ module.exports = {
       }
       return res.status(500).json({ message: error.message });
     }
+  },
+  
+  // ▼▼▼ [추가] 기기 매핑 해제를 처리하는 컨트롤러 ▼▼▼
+  disconnectDevice: async (req, res) => {
+    try {
+      const { id } = req.params;
+      // DB에서 해당 식물의 device_name을 강제로 null로 변경합니다.
+      await repository.updateDeviceName(id, null); 
+      return res.status(200).json({ message: '기기 연동이 성공적으로 해제되었습니다.' });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
   }
   // ▲▲▲ [추가] ▲▲▲
 };
