@@ -23,7 +23,8 @@ if not os.path.exists(UPLOAD_FOLDER):
 # ==============================================================================
 # 3. AI 진단 핵심 로직
 # ==============================================================================
-def get_plant_diagnosis(image_path, user_message, history, plant_species, moisture_level=None, light_level=None, temperature=None, humidity=None): 
+# 파라미터 이름을 바뀐 데이터에 맞게 직관적으로 수정 (moisture_level -> soil 등)
+def get_plant_diagnosis(image_path, user_message, history, plant_species, soil=None, light=None, temp=None, water_level=None): 
     history_text = ""
     try:
         if history:
@@ -47,15 +48,16 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species, moistu
             return f"{val}{unit}"
         return "데이터 없음 (센서 연결 끊김)"
 
+    # AI가 인식할 센서 이름도 변경 ('공기 습도' -> '물탱크 물 잔량')
     sensor_lines = [
-        f"- 토양 수분: {format_sensor(moisture_level, '%')}",
-        f"- 현재 조도: {format_sensor(light_level, ' lux')}",
-        f"- 주변 온도: {format_sensor(temperature, '°C')}",
-        f"- 공기 습도: {format_sensor(humidity, '%')}"
+        f"- 토양 수분: {format_sensor(soil, '%')}",
+        f"- 현재 조도: {format_sensor(light, ' lux')}",
+        f"- 주변 온도: {format_sensor(temp, '°C')}",
+        f"- 물탱크 물 잔량: {format_sensor(water_level, '%')} (주의: 공기 습도가 아님!)"
     ]
 
     sensor_info_text = "\n[하드웨어 실시간 센서 측정값 (현재 시점)]\n" + "\n".join(sensor_lines)
-    sensor_info_text += "\n* 🚨 [강제 주의사항]: '데이터 없음'이라고 표기된 센서는 과거 대화에 수치가 있었더라도 현재 통신이 끊긴 상태입니다. 절대 과거 수치로 현재 상태를 유추하지 말고, 해당 센서값은 '알 수 없음'으로 취급하여 진단하세요.\n"
+    sensor_info_text += "\n* 🚨 [강제 주의사항]: '데이터 없음'이라고 표기된 센서는 통신이 끊긴 상태입니다. 절대 과거 수치로 현재 상태를 유추하지 말고, 해당 센서값은 '알 수 없음'으로 취급하세요.\n"
 
     format_instruction = """
     [답변 출력 규칙 - 매우 중요]
@@ -63,6 +65,7 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species, moistu
     2. 텍스트 답변이 모두 끝난 후, **맨 마지막에만** 아두이노 제어를 위한 JSON 데이터를 딱 한 번 덧붙여. 
     🚨[경고] JSON 안의 값(value)은 절대 고정된 숫자를 쓰지 마! 반드시 {plant_species}의 식물학적 특성을 분석해서 **네가 직접 계산한 진짜 수치**로 빈칸을 채워 넣어!
 
+    ```json
     {
         "ui_status": "<현재 상태 요약 (문자열)>",
         "ui_water_msg": "<급수 조언 (문자열)>",
@@ -70,8 +73,10 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species, moistu
         "min_moisture": <해당 식물에 맞는 토양 수분 하한선 (정수형 숫자, 예: 15~50 사이)>,
         "water_duration_ms": <1회 급수에 적절한 펌프 가동 시간 (정수형 숫자, 예: 1000~3000 사이)>
     }
+    ```
     """
 
+    # AI 핑계 차단용 규칙 추가됨 (행동 수칙 1번 🚨 주목)
     system_rules = f"""
     당신은 '지능형 식물 진단 시스템'에서 식물을 키우는 사람을 돕는 다정한 '원예 비서'입니다.
     
@@ -83,8 +88,9 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species, moistu
     현재 사용자 질문: "{user_message}"
     
     [행동 수칙]
-    1. **데이터 기반 맞춤 진단**: 사진의 상태와 '실시간 센서 측정값(수분, 조도, 온도, 습도)'을 종합하여 진단해. 센서값이 정상적으로 제공되었다면, 해당 식물 종의 적정 환경 기준과 현재 수치를 비교해서 상세히 조언해줘. (예: "몬스테라인데 현재 온도가 15도라서 너무 춥네요!")
-    2. **하드웨어 제어 데이터 (항상 출력)**: 해당 식물 종에 맞는 최적의 토양 수분 하한선(`min_moisture`)과 1회 급수 시간(`water_duration_ms`)은 지금 상태와 상관없이 '자동 급수 기준점'으로 쓰이므로 **항상 일관되게 계산해서 JSON에 포함해.** 그리고 만약 '지금 당장' 토양 수분이 기준치보다 낮아 급수가 시급하다면 `pump_now: true`를, 지금은 충분하다면 `false`를 줘.
+    1. **데이터 기반 맞춤 진단**: 사진 상태와 '실시간 센서 측정값'을 종합하여 진단해. 센서값이 제공되었다면 그 수치를 언급하며 조언해 줘.
+    🚨 단, 센서값이 '데이터 없음'이거나 누락된 상태라면 "센서값이 없지만~", "현재 센서를 알 수 없어~" 같은 변명이나 안내는 **절대 일절 하지 말고**, 그냥 사진과 사용자 질문에만 집중해서 아주 자연스럽게 대답해!
+    2. **하드웨어 제어 데이터 (항상 출력)**: 해당 식물 종에 맞는 최적의 토양 수분 하한선(`min_moisture`)과 1회 급수 시간(`water_duration_ms`)은 지금 상태와 상관없이 '자동 급수 기준점'으로 쓰이므로 **항상 일관되게 계산해서 JSON에 포함해.** 그리고 만약 '지금 당장' 토양 수분이 기준치보다 낮아 급수가 시급하다면 `pump_now: true`를, 지금은 충분하거나 알 수 없다면 `false`를 줘.
     3. **사진 분석 최우선**: 새로운 사진이 들어왔다면 과거 대화보다 방금 들어온 사진의 시각적 증거를 우선시해.
     4. **예외 처리**: 식물이 전혀 없는 사진이면 "인식 불가"로 세팅하고 부드럽게 거절해. 기기 오작동 방지를 위해 pump_now: false로 고정.
     
@@ -163,12 +169,6 @@ def predict():
     plant_species = "알 수 없는 식물" 
     history = []
     
-    # 4가지 센서값 변수 초기화
-    moisture_level = None
-    light_level = None
-    temperature = None
-    humidity = None
-    
     try:                                        
         if 'image' in request.files:
             file = request.files['image'] 
@@ -189,11 +189,12 @@ def predict():
         user_message = get_param('message') or ""
         plant_species = get_param('plant_species') or "알 수 없는 식물"
         
-        # ✨ 센서 데이터 추출 (팀원 Node.js 변수명 매칭)
-        moisture_level = get_param('moisture_level')
-        light_level = get_param('light_level')
-        temperature = get_param('temperature')
-        humidity = get_param('humidity')
+        # 🚨 [핵심 수정 구간] 팀원이 쏴주는 실제 변수명으로 쏙쏙 뽑아냅니다!
+        soil = get_param('soil')
+        light = get_param('light')
+        temp = get_param('temp')
+        # humid라는 이름으로 들어오지만 우리는 물탱크 잔량(water_level)으로 씁니다!
+        water_level = get_param('humid') 
 
         raw_history = get_param('history')                
         if raw_history:                                               
@@ -201,10 +202,10 @@ def predict():
                 try: history = json.loads(raw_history)
                 except: history = []                                      
             elif isinstance(raw_history, list):                               
-                history = raw_history                                                                                
+                history = raw_history                                                                                                              
                 
         print(f"   └─ 타겟 식물: {plant_species}") 
-        print(f"   └─ 수분:{moisture_level}% | 조도:{light_level}lux | 온도:{temperature}°C | 습도:{humidity}%")
+        print(f"   └─ 수분:{soil}% | 조도:{light}lux | 온도:{temp}°C | 물잔량:{water_level}%")
         
         if image_path is None and not user_message:                      
             print("❌ [Error] 빈 요청입니다.")
@@ -212,19 +213,19 @@ def predict():
             
         print("🤖 [AI] 식물 상태 분석 시작...")
         
-        # ✨ 함수 호출 시 4가지 센서값 넘겨주기
+        # 수정된 변수들을 함수로 전달
         result_json_str = get_plant_diagnosis(
             image_path, user_message, history, plant_species, 
-            moisture_level, light_level, temperature, humidity
+            soil, light, temp, water_level
         )                        
         
         try:
             result_data = json.loads(result_json_str)
-        except json.JSONDecodeError:                                                                           
+        except json.JSONDecodeError:                                                                   
             result_data = {                                  
                 "ui_status": "데이터 오류",
                 "ui_guide": "AI 응답을 해석하는 중 오류가 발생했습니다."
-            }                                                                                                     
+            }                                                                                                   
             
         print(f"✅ [Success] 응답 전송 완료 (상태: {result_data.get('ui_status', 'Unknown')})")
         return jsonify(result_data)
