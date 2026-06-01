@@ -1,5 +1,5 @@
 // 모드에 상관없이 항상 클라우드 서버 주소를 사용하도록 변경
-export const SERVER_URL = "";
+export const SERVER_URL = "http://223.130.157.123.nip.io:8080";
 
 // 2. 앱 기본 정보
 export const APP_NAME = "Refresh";
