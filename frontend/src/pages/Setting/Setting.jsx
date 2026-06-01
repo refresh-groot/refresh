@@ -29,6 +29,9 @@ function Setting() {
   
   console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
 
+  // ▼▼▼ [추가] 연결 끊기를 위해 Bluetooth.jsx에서 넘겨준 전체 객체를 기억하는 상태 ▼▼▼
+  const [bleInfo, setBleInfo] = useState(null);
+
   // ▼▼▼ [추가된 부분] 이미 연결된 상태에서 다른 식물 세팅창으로 들어오면 자동으로 ID 갱신 ▼▼▼
   useEffect(() => {
     if (plantId && sendCommand && deviceName) {
@@ -57,6 +60,16 @@ function Setting() {
         const res = await api.get(url);
         setBio(res.data.bio || '');
         setIsAlertOn(res.data.isAlertOn || false);
+
+        // ▼▼▼ [추가된 부분] 서버에서 식물 정보를 가져오면 기기 이름 상태 업데이트 ▼▼▼
+        if (res.data.plant && res.data.plant.device_name) {
+            handleConnectSuccess({ deviceName: res.data.plant.device_name });
+            console.log("✅ DB 기기 정보 동기화 완료:", res.data.plant.device_name);
+        } else {
+            handleConnectSuccess(null); // 기기 정보 없으면 초기화
+        }
+        // ▲▲▲ [추가된 부분] ▲▲▲
+
       } catch (e) {
         console.error('프로필 불러오기 실패:', e);
       } finally {
@@ -69,6 +82,7 @@ function Setting() {
   // 블루투스 연결 성공 시 자동으로 ID를 쏴주는 함수
   const handleBleSuccess = async (info) => {
     handleConnectSuccess(info); // 기기 이름 저장 (기존 기능)
+    setBleInfo(info); // [추가] disconnectBluetooth가 포함된 객체를 상태에 저장
 
     // 만약 세팅창에 들어올 때 식물 정보(ID)를 들고 왔다면? 기기로 바로 전송!
     if (plantId && info.sendCommand) {
@@ -100,6 +114,29 @@ function Setting() {
     }
   };
   
+  // ▼▼▼ [추가] 사용자가 수동으로 연결을 해제할 때 호출되는 함수 ▼▼▼
+  const handleDisconnectClick = async () => {
+    try {
+        // 1. 서버 DB에서 이 식물의 매핑 정보(device_name)를 비움
+        await api.delete(`/api/plants/${plantId}/device`);
+        console.log("✅ DB 기기 매핑 해제 성공");
+        
+        // 2. 물리적 블루투스 연결 차단
+        if (bleInfo?.disconnectBluetooth) {
+            bleInfo.disconnectBluetooth();
+        }
+        
+        // 3. UI 상태 리셋
+        setBleInfo(null);
+        handleConnectSuccess(null); // Context의 기기명 초기화
+        showToast('success', '기기 연동이 해제되었습니다.');
+    } catch (err) {
+        console.error("연동 해제 실패:", err);
+        showToast('error', '연동 해제 중 오류가 발생했습니다.');
+    }
+  };
+  // ▲▲▲ [추가] ▲▲▲
+
   const handleBioSave = async () => {
     setBioSaving(true);
     try {
@@ -209,12 +246,22 @@ const handleLogout = async () => {
                     {deviceName ? '연결됨' : 'ESP32_PUMP 기기를 검색하세요'}
                   </div>
                 </div>
+                {/* ▼▼▼ [수정] 기기 연결됨 상태일 때, 클릭하면 연동이 해제되는 버튼으로 변경 ▼▼▼ */}
                 {deviceName && (
-                  <div className="ble-pill">
-                    <div className="ble-dot" />연결됨
+                  <div 
+                    className="ble-pill" 
+                    onClick={handleDisconnectClick}
+                    style={{ cursor: 'pointer', backgroundColor: '#ffebee', color: '#e53935', border: '1px solid #ffcdd2' }}
+                    title="클릭하여 연결 해제"
+                  >
+                    <div className="ble-dot" style={{ backgroundColor: '#e53935' }}/>연결 해제
                   </div>
                 )}
+                {/* ▲▲▲ [수정] ▲▲▲ */}
               </div>
+              
+              {/* ▼▼▼ [수정] 기기가 연결되어 있지 않을 때만 '기기 연결' 버튼 섹션을 보여줍니다 ▼▼▼ */}
+              {!deviceName && (
               <div className="s-row no-border">
                 <div className="s-row-icon" style={{ background: '#f0f0f0' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="#aaa">
@@ -227,10 +274,11 @@ const handleLogout = async () => {
                 </div>
                 <Bluetooth onConnectSuccess={handleBleSuccess} />
               </div>
+              )}
+              {/* ▲▲▲ [수정] ▲▲▲ */}
             </div>
           </div>
           )}
-          {/* ▲▲▲ [추가/수정된 부분] ▲▲▲ */}
 
         </div>
 

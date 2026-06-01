@@ -128,8 +128,18 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       device.addEventListener('gattserverdisconnected', handleDisconnect);
       setConnectedDevice(device);
 
+      // ▼▼▼ [추가] 사용자가 원할 때 블루투스를 강제로 끊는 함수 ▼▼▼
+      const disconnectBluetooth = () => {
+          if (device && device.gatt.connected) {
+              device.gatt.disconnect();
+              console.log("✂️ [BLE] 사용자에 의해 연결 해제됨");
+          }
+      };
+      // ▲▲▲ [추가] ▲▲▲
+
       if (onConnectSuccess) {
-        onConnectSuccess({ device, sendCommand, deviceName: device.name });
+        // [수정] 반환 객체에 disconnectBluetooth 함수 추가
+        onConnectSuccess({ device, sendCommand, deviceName: device.name, disconnectBluetooth });
       }
 
       showToast('success', '블루투스 연동 성공!');

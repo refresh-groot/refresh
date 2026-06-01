@@ -20,6 +20,9 @@ router.patch('/:id/archive', controller.archivePlant);
 
 // ▼▼▼ [추가] 기기 매핑용 라우터 ▼▼▼
 router.put('/:id/device', controller.updateDevice);
+
+// ▼▼▼ [추가] 기기 매핑 해제용 라우터 ▼▼▼
+router.delete('/:id/device', controller.disconnectDevice);
 // ▲▲▲ [추가] ▲▲▲
 
 module.exports = router;
