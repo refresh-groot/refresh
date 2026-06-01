@@ -29,5 +29,21 @@ module.exports = {
   archiveWithReason: async (plantId, reason) => {
     // 상태값을 무조건 'archived'로 고정하여 전달
     return await repository.updateStatusWithReason(plantId, 'archived', reason);
+  },
+
+  // ▼▼▼ [추가] 기기 매핑 및 하이재킹 검증 로직 ▼▼▼
+  mapDeviceToPlant: async (plantId, device_name) => {
+    // 1. 이미 다른 식물(다른 ID)이 이 기기를 쓰고 있는지 확인
+    const existingPlant = await repository.findByDeviceId(device_name);
+    
+    // 내 식물이 아닌 다른 식물이 기기를 이미 선점했다면 에러 발생
+    if (existingPlant && existingPlant.id != plantId) {
+      throw new Error('이미 다른 식물에 매핑된 기기입니다. 기존 매핑을 해제해주세요.');
+    }
+    
+    // 2. 문제없으면 업데이트 진행
+    await repository.updateDeviceName(plantId, device_name);
+    return { plantId, device_name };
   }
+  // ▲▲▲ [추가] ▲▲▲
 };

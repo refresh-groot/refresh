@@ -38,5 +38,15 @@ module.exports = {
       order: sequelize.random(), 
       attributes: ['mini_tip']   
     });
+  },
+
+  // ▼▼▼ [추가] 기기 매핑을 위한 리포지토리 함수 ▼▼▼
+  findByDeviceId: async (device_name) => {
+    return await Plant.findOne({ where: { device_name } });
+  },
+  
+  updateDeviceName: async (plantId, device_name) => {
+    return await Plant.update({ device_name }, { where: { id: plantId } });
   }
+  // ▲▲▲ [추가] ▲▲▲
 };

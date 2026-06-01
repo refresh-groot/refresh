@@ -1,3 +1,4 @@
+// frontend/src/pages/Setting/Setting.jsx
 import React, { useState, useEffect } from 'react';
 import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
@@ -45,10 +46,15 @@ function Setting() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawPassword, setWithdrawPassword] = useState('');
 
+  // ▼▼▼ [수정된 부분] plantId가 바뀔 때마다 다시 프로필/알림 상태를 가져오도록 의존성 배열 수정 ▼▼▼
   useEffect(() => {
     const fetchProfile = async () => {
+      // plantId가 있으면 뒤에 쿼리 스트링으로 붙입니다.
+      const url = plantId ? `/api/user/profile?plantId=${plantId}` : '/api/user/profile';
+      
       try {
-        const res = await api.get('/api/user/profile');
+        setLoading(true);
+        const res = await api.get(url);
         setBio(res.data.bio || '');
         setIsAlertOn(res.data.isAlertOn || false);
       } catch (e) {
@@ -58,7 +64,7 @@ function Setting() {
       }
     };
     fetchProfile();
-  }, []);
+  }, [plantId]);
 
   // 블루투스 연결 성공 시 자동으로 ID를 쏴주는 함수
   const handleBleSuccess = async (info) => {
@@ -69,7 +75,24 @@ function Setting() {
         console.log(`기존 식물(${plantId}) ID 연동 시도...`);
         try {
             await info.sendCommand(`SET_ID ${plantId}`);
-            showToast('success', `${plantId}번 식물과 연동되었습니다.`);
+            
+            // ▼▼▼ [추가된 부분] 서버 DB에 기기 매핑 정보 저장 요청 ▼▼▼
+            try {
+                // 백엔드에 plantId와 기기 이름(deviceName)을 묶어서 업데이트 요청
+                await api.put(`/api/plants/${plantId}/device`, { device_name: info.deviceName });
+                console.log('서버 DB 기기 매핑 완료');
+                showToast('success', `${plantId}번 식물과 연동되었습니다.`);
+            } catch (dbErr) {
+                console.error("서버 DB 매핑 실패:", dbErr);
+                // 백엔드에서 중복 기기(409) 에러를 뱉으면 팝업 띄우기
+                if (dbErr.response?.status === 409) {
+                    Swal.fire('연동 실패', '이미 다른 식물과 연결된 기기입니다.', 'error');
+                } else {
+                    showToast('error', '서버 데이터 저장 중 오류가 발생했습니다.');
+                }
+            }
+            // ▲▲▲ [추가된 부분] ▲▲▲
+            
         } catch (err) {
             console.error("ID 전송 실패:", err);
             showToast('error', '기기 연동 중 오류가 발생했습니다.');
@@ -132,12 +155,6 @@ const handleLogout = async () => {
       <div className="setting-inner">
 
         <div className="setting-left">
-          
-          {/* ▼▼▼ [추가된 부분] 눈으로 확인하기 위한 디버깅 박스 ▼▼▼ */}
-          <div style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '10px 15px', borderRadius: '8px', marginBottom: '15px', fontWeight: 'bold', fontSize: '14px', border: '1px solid #ffeeba' }}>
-            🧪 [디버깅용] 현재 설정 중인 식물 ID: {plantId || '없음(공용)'}
-          </div>
-          {/* ▲▲▲ [추가된 부분] ▲▲▲ */}
 
           <div className="s-card">
             <div className="s-card-header">
