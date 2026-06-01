@@ -291,7 +291,7 @@ function Menu() {
             </h2>
             <p className="plant-species">{currentPlant.species}</p>
             <p className="status-text">
-              현재 상태: {currentPlant.status === 'dead' ? '사망 ☠️' : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
+              현재 상태: {getStatusText()}
             </p>
             <div className="growth-day">함께한 지 {calculateDays(currentPlant.reg_date)}일째</div>
           </div>
@@ -314,9 +314,9 @@ function Menu() {
         <div className="card chart-card">
           <div className="chart-controls-container">
             <div className='tab-buttons'>
-              {['soil', 'temp', 'humid', 'light'].map(id => (
+              {['soil', 'temp', 'light'].map(id => (
                 <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id === 'humid' ? '습도' : '조도'}
+                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : '조도'}
                 </button>
               ))}
             </div>
@@ -332,7 +332,7 @@ function Menu() {
 
       <section className="dashboard-right">
         <div className="card control-panel">
-          <h3>퀵 컨트롤</h3>
+          <h3>급수 제어</h3>
           <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`} onClick={handleModeToggle}>
             <div className="toggle-label">{isAutoMode ? '자동 모드' : '수동 모드'}</div>
             <div className="toggle-track"><div className="toggle-knob"></div></div>
@@ -348,15 +348,32 @@ function Menu() {
         {!showHistory ? (
           <>
             <div className="card alert-box">
-              <h3>알림</h3>
-              <ul className="alert-list">
-                {statsData.dailyErrors?.[statsData.dailyErrors.length - 1]
-                  ? [...statsData.dailyErrors[statsData.dailyErrors.length - 1]].reverse().map((msg, idx) => (
-                      <li key={idx} className="alert-item warning">{msg}</li>
-                    ))
-                  : <li className="alert-item">현재 알림이 없습니다.</li>}
-              </ul>
-            </div>
+      <h3>알림</h3>
+      {!isAlertOn ? (
+      <ul className="alert-list">
+        <li className="alert-item">
+          알림이 꺼져 있습니다.{' '}
+          <span
+          onClick={goToSetting}
+          style={{ color: '#2ecc71', cursor: 'pointer', fontWeight: '600' }}
+          >
+          설정에서 켜기 →
+            </span>
+            </li>
+            </ul>
+            ) : (
+            <ul className="alert-list">
+            {notifications.filter(n => n.type === 'ERROR').slice(0, 5).length > 0
+            ? notifications.filter(n => n.type === 'ERROR').slice(0, 5).map((n, idx) => (
+            <li key={idx} className={`alert-item ${n.is_read ? '' : 'warning'}`}>
+              {n.message}
+            </li>
+            ))
+            : <li className="alert-item">현재 알림이 없습니다.</li>
+            }
+            </ul>
+            )}
+          </div>
             <div className="card ai-diagnosis" onClick={() => navigate('/Chat', { state: { plant: currentPlant } })} style={{ cursor: 'pointer' }}>
               <p>내 식물 아픈 곳은 없을까?<br /><strong>AI 진단 받기</strong></p>
             </div>
