@@ -251,7 +251,7 @@ function Menu() {
   ];
 
   const goToSetting = () => {
-    navigate(`/setting/${currentPlant.id}`); 
+    navigate('/setting', { state: { plant: currentPlant } }); 
   };
 
   if (sensorLoading && newData.temp === null && !btSensorData) {
