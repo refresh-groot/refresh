@@ -61,16 +61,6 @@ function Setting() {
         const res = await api.get(url);
         setBio(res.data.bio || '');
         setIsAlertOn(res.data.isAlertOn || false);
-
-        // ▼▼▼ [추가된 부분] 서버에서 식물 정보를 가져오면 기기 이름 상태 업데이트 ▼▼▼
-        if (res.data.plant && res.data.plant.device_name) {
-            handleConnectSuccess({ deviceName: res.data.plant.device_name });
-            console.log("✅ DB 기기 정보 동기화 완료:", res.data.plant.device_name);
-        } else {
-            handleConnectSuccess(null); // 기기 정보 없으면 초기화
-        }
-        // ▲▲▲ [추가된 부분] ▲▲▲
-
       } catch (e) {
         console.error('프로필 불러오기 실패:', e);
       } finally {

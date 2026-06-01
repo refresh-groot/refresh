@@ -110,26 +110,8 @@ module.exports = {
   getProfile: async (req, res) => {
     try {
       const id = req.session.user.id;
-      const { plantId } = req.query; // URL 쿼리에서 plantId를 받아옵니다.
-
-      // 1. 유저 프로필 정보 가져오기
       const userProfile = await service.getProfile(id);
-
-      // 2. [추가] plantId가 있다면 해당 식물 정보도 조회
-      let plantData = null;
-      if (plantId) {
-        // service 혹은 repository를 사용하여 식물 조회
-        // 예: const Plant = require('../index').Plant;
-        // plantData = await Plant.findOne({ where: { id: plantId, user_id: id } });
-        // (프로젝트 구조에 맞춰서 service.getPlantById 등 기존에 있는 함수를 쓰셔도 됩니다)
-        plantData = await service.getPlantById(plantId); 
-      }
-
-      // 3. 식물 정보(plantData)를 응답 객체에 포함
-      return res.status(200).json({
-        ...userProfile, // 기존 유저 정보 (nickname, bio 등)
-        plant: plantData // 식물 정보를 추가
-      });
+      return res.status(200).json(userProfile);
     } catch (error) {
       return res.status(404).json({ message: error.message });
     }
