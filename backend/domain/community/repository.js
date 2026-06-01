@@ -26,7 +26,6 @@ module.exports = {
       order,
       limit,   // 10개만 가져오기
       offset,  // 시작 지점 설정
-      attributes: ['id', 'category', 'title', 'content', 'user_id', 'photo_url', 'like_count', 'comment_count', 'created_at'],
       include: [{ model: User, as: 'Author', attributes: ['nickname'] }]
     });
   },
