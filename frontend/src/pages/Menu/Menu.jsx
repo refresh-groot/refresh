@@ -9,11 +9,13 @@ import defaultImg from '../../assets/img/default.png';
 import PlantChart from './Chart';
 import { showToast } from '../../app/alert';
 import { useBluetooth } from '../../context/BluetoothContext';
+import api from '../../api/axios';
 
 function Menu() {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [isAlertOn, setIsAlertOn] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('soil');
   const [isReLoading, setIsReLoading] = useState(false);
   const [statsData, setStatsData] = useState({});
@@ -23,7 +25,7 @@ function Menu() {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
-  const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate } = useBluetooth();
+  const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate, isConnected, } = useBluetooth();
 
   const receivedPlant = location.state?.plant;
   const [currentPlant, setCurrentPlant] = useState(() => {
@@ -208,7 +210,7 @@ const handleWatering = async () => {
 
   const SENSOR_CONFIG = [
     { id: 'temp', label: '온도', unit: '°C', icon: <FaTemperatureHigh />, color: 'temp' },
-    { id: 'humid', label: '습도', unit: '%', icon: <FaTint />, color: 'humid' },
+    { id: 'humid', label: '물 잔량', unit: '%', icon: <FaTint />, color: 'humid' }, //이름 바꾸기 대기
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
@@ -218,10 +220,48 @@ const handleWatering = async () => {
     // state로 넘기지 않고 URL 자체에 ID를 박아버립니다.
     navigate(`/setting/${currentPlant.id}`); 
   };
+
+  useEffect(() => {
+  const fetchAlertSetting = async () => {
+    try {
+      const res = await api.get('/api/user/profile');
+      setIsAlertOn(res.data.isAlertOn || false);
+    } catch (e) {
+      console.error('알림 설정 불러오기 실패:', e);
+    }
+  };
+  fetchAlertSetting();
+}, []);
+
+const fetchNotifications = useCallback(async () => {
+  if (!currentPlant?.id) return;
+  try {
+    const res = await api.get(`/api/notifications/${currentPlant.id}`);
+    setNotifications(res.data);
+  } catch (e) {
+    console.error('알림 조회 실패:', e);
+  }
+}, [currentPlant?.id]);
+
+useEffect(() => {
+  fetchNotifications();
+  const interval = setInterval(fetchNotifications, 30000); // 30초 폴링
+  return () => clearInterval(interval);
+}, [fetchNotifications]);
   
   if (sensorLoading && newData.temp === null && !btSensorData) {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
+
+  const getStatusText = () => {
+  if (currentPlant.status === 'dead' || currentPlant.status === 'archived') {
+    return '사망 ☠️';
+  }
+  if (!isConnected) {
+    return '기기 미연결 📵';
+  }
+  return '기기 연결됨 🔗';
+};
 
   return (
     <div className="menu-dashboard">
@@ -245,7 +285,7 @@ const handleWatering = async () => {
             </h2>
             <p className="plant-species">{currentPlant.species}</p>
             <p className="status-text">
-              현재 상태: {currentPlant.status === 'dead' ? '사망 ☠️' : (newData.soil < 30 ? '목마름 💧' : '양호함 😊')}
+            현재 상태: {getStatusText()}
             </p>
             <div className="growth-day">함께한 지 {calculateDays(currentPlant.reg_date)}일째</div>
           </div>
@@ -268,9 +308,9 @@ const handleWatering = async () => {
         <div className="card chart-card">
           <div className="chart-controls-container">
             <div className='tab-buttons'>
-              {['soil', 'temp', 'humid', 'light'].map(id => (
+              {['soil', 'temp', 'light'].map(id => (
                 <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id === 'humid' ? '습도' : '조도'}
+                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도'  : '조도'}
                 </button>
               ))}
             </div>
@@ -286,7 +326,7 @@ const handleWatering = async () => {
 
       <section className="dashboard-right">
         <div className="card control-panel">
-          <h3>퀵 컨트롤</h3>
+          <h3>급수 제어</h3>
           <div className={`mode-toggle-box ${isAutoMode ? 'auto' : 'manual'}`} onClick={handleModeToggle}>
             <div className="toggle-label">{isAutoMode ? '자동 모드' : '수동 모드'}</div>
             <div className="toggle-track"><div className="toggle-knob"></div></div>
@@ -301,16 +341,33 @@ const handleWatering = async () => {
 
         {!showHistory ? (
           <>
-            <div className="card alert-box">
-              <h3>알림</h3>
-              <ul className="alert-list">
-                {statsData.dailyErrors?.[statsData.dailyErrors.length - 1]
-                  ? [...statsData.dailyErrors[statsData.dailyErrors.length - 1]].reverse().map((msg, idx) => (
-                      <li key={idx} className="alert-item warning">{msg}</li>
-                    ))
-                  : <li className="alert-item">현재 알림이 없습니다.</li>}
-              </ul>
-            </div>
+      <div className="card alert-box">
+      <h3>알림</h3>
+      {!isAlertOn ? (
+      <ul className="alert-list">
+        <li className="alert-item">
+          알림이 꺼져 있습니다.{' '}
+          <span
+          onClick={goToSetting}
+          style={{ color: '#2ecc71', cursor: 'pointer', fontWeight: '600' }}
+          >
+          설정에서 켜기 →
+            </span>
+            </li>
+            </ul>
+            ) : (
+            <ul className="alert-list">
+            {notifications.filter(n => n.type === 'ERROR').slice(0, 5).length > 0
+            ? notifications.filter(n => n.type === 'ERROR').slice(0, 5).map((n, idx) => (
+            <li key={idx} className={`alert-item ${n.is_read ? '' : 'warning'}`}>
+              {n.message}
+            </li>
+            ))
+            : <li className="alert-item">현재 알림이 없습니다.</li>
+            }
+            </ul>
+            )}
+          </div>
             <div className="card ai-diagnosis" onClick={() => navigate('/Chat', { state: { plant: currentPlant } })} style={{ cursor: 'pointer' }}>
               <p>내 식물 아픈 곳은 없을까?<br /><strong>AI 진단 받기</strong></p>
             </div>

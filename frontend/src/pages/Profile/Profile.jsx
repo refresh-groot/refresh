@@ -20,6 +20,8 @@ function Profile() {
   
   // ▼▼▼ [추가된 부분] 블루투스 명령 전송 함수를 가져옵니다 ▼▼▼
   const { sendCommand } = useBluetooth();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedPlantId, setSelectedPlantId] = useState(null);
   
   // 모달 표시 및 데이터 관리를 위한 상태
   const [editingPlant, setEditingPlant] = useState(null); // 수정 중인 식물 객체
@@ -157,30 +159,24 @@ function Profile() {
   /* ===============================
      API: 식물 삭제 (DELETE)
   =============================== */
-  const handleDelete = async (id, e) => {
-    // 카드 클릭 이벤트(상세 페이지 이동)가 발생하지 않도록 이벤트 전파 중단
-    e.stopPropagation();
+const handleDelete = (id, e) => {
+  e.stopPropagation();
+  setSelectedPlantId(id);
+  setShowDeleteModal(true);
+};
 
-    const result = await Swal.fire({
-      title: '정말 삭제하시겠습니까?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: '삭제',
-      cancelButtonText: '취소',
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      // 영구 삭제 모드로 API 호출
-      await api.delete(`/api/plants/${id}?mode=permanent`);
-      await fetchPlants();
-      showToast('success', '식물 삭제 완료');
-    } catch (error) {
-      console.error('삭제 실패:', error);
-      Swal.fire('오류', '식물 삭제에 실패했습니다.', 'error');
-    }
-  };
+const confirmDelete = async () => {
+  try {
+    await api.delete(`/api/plants/${selectedPlantId}?mode=permanent`);
+    await fetchPlants();
+    showToast('success', '식물 삭제 완료');
+    setShowDeleteModal(false);
+    setSelectedPlantId(null);
+  } catch (error) {
+    console.error('삭제 실패:', error);
+    Swal.fire('오류', '식물 삭제에 실패했습니다.', 'error');
+  }
+};
 
   // 식물 카드 클릭 시 상세(메뉴) 페이지로 이동하며 식물 데이터 전달
   const handlePlantClick = (plant) => {
@@ -302,6 +298,35 @@ function Profile() {
     onClose={() => setEditingPlant(null)}
     onSaved={fetchPlants}
   />
+)}
+
+{showDeleteModal && (
+  <div
+    className="modal-overlay"
+    onClick={() => setShowDeleteModal(false)}
+  >
+    <div
+      className="delete-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>식물 삭제</h2>
+      <p>정말 이 식물을 삭제하시겠습니까?<br/>삭제된 데이터는 복구할 수 없습니다.</p>
+      <div className="delete-btn-group">
+        <button
+          className="cancel-btn"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          취소
+        </button>
+        <button
+          className="delete-btn"
+          onClick={confirmDelete}
+        >
+          삭제
+        </button>
+      </div>
+    </div>
+  </div>
 )}
     </div>
   );

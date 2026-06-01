@@ -4,6 +4,7 @@ import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
 import { useAuth } from '../../context/AuthContext';
 import { Bluetooth } from '../../hooks/Bluetooth';
+import { useSensorData } from '../../hooks/useSensorData';
 // ▼▼▼ [수정된 부분] 기존 코드 유지를 위해 useParams와 useLocation을 모두 가져옵니다 ▼▼▼
 import { useParams, useNavigate, useLocation } from 'react-router-dom'; 
 import { showAlert } from '../../app/alert';
@@ -14,7 +15,7 @@ import './Setting.css';
 
 function Setting() {
   const { user, logout } = useAuth();
-  const { deviceName, handleConnectSuccess, sendCommand } = useBluetooth(); // sendCommand 추가
+  const { deviceName, handleConnectSuccess, sendCommand, setSensorData } = useBluetooth(); // sendCommand 추가
   const navigate = useNavigate();
   const location = useLocation(); // location 추가
 
@@ -28,7 +29,7 @@ function Setting() {
   const plantId = paramPlantId || plant?.id;
   
   console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
-
+  const { sensorData } = useSensorData(plantId);
   // ▼▼▼ [추가] 연결 끊기를 위해 Bluetooth.jsx에서 넘겨준 전체 객체를 기억하는 상태 ▼▼▼
   const [bleInfo, setBleInfo] = useState(null);
 
@@ -136,6 +137,31 @@ function Setting() {
     }
   };
   // ▲▲▲ [추가] ▲▲▲
+
+  // handleBleSuccess 함수 바로 아래에 추가
+
+const handleMessage = (text) => {
+  console.log('📥 ESP32 수신:', text)
+
+  // ① 자동 급수 완료 감지
+  if (text.includes('WATER_DONE')) {
+    window.dispatchEvent(new CustomEvent('wateringDone'))
+    showToast('success', '자동 급수가 완료되었습니다.')
+    return
+  }
+
+  // ② STATE 명령 응답 파싱
+  if (text.includes('Soil:')) {
+    const soil = text.match(/Soil:(\d+)/)?.[1]
+    const temp = text.match(/Temp:([\d.]+)/)?.[1]
+    const humid = text.match(/Humid:([\d.]+)/)?.[1]
+    setSensorData({
+      soil: soil ? parseInt(soil) : null,
+      temp: temp ? parseFloat(temp) : null,
+      humid: humid ? parseFloat(humid) : null,
+    })
+  }
+}
 
   const handleBioSave = async () => {
     setBioSaving(true);
@@ -272,7 +298,9 @@ const handleLogout = async () => {
                   <div className="s-row-label">기기 연결</div>
                   <div className="s-row-sub">ESP32_PUMP 검색 후 연결</div>
                 </div>
-                <Bluetooth onConnectSuccess={handleBleSuccess} />
+                <Bluetooth 
+                onConnectSuccess={handleBleSuccess}
+                onMessageReceived={handleMessage} />
               </div>
               )}
               {/* ▲▲▲ [수정] ▲▲▲ */}

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios';
+import { useSensorData } from '../../hooks/useSensorData';
 import { FaPlus, FaHistory, FaPaperPlane, FaUser, FaTimes } from "react-icons/fa";
 import Typewriter from './Typewriter';
 
@@ -28,6 +29,7 @@ function Chat() {
   const location = useLocation();
   const plant = location.state?.plant || { id: 0, plant_name: '반려식물' };
 
+  const {sensorData} = useSensorData(plant.id);
   // ─── UI 상태 ───────────────────────────────────────────────────────────────
 
   // 사이드바(기록 패널)가 열려있는지 여부
@@ -315,9 +317,8 @@ function Chat() {
     sender: 'user',
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   };
-
   setMessages((prev) => [...prev, userMessage]);
-  
+
   const imagesToUpload = [...selectImage];
   setInputText('');
   setSelectImage([]);
@@ -329,7 +330,21 @@ function Chat() {
       formData.append('session_id', currentSessionId);
     }
     formData.append('question', textToSend);
-    
+    if (sensorData) {
+      // null 값은 제외하고 값이 있는 센서 데이터만 전송
+      const validSensorData = Object.fromEntries(
+        Object.entries(sensorData).filter(([_, v]) => v !== null && v !== undefined)
+      );
+
+      if (Object.keys(validSensorData).length > 0) {
+        formData.append('sensor_data', JSON.stringify(validSensorData));
+        console.log("서버로 전송할 센서 데이터:", validSensorData);
+      }
+    }
+    console.log("서버로 전송할 데이터 확인:");
+formData.forEach((value, key) => {
+  console.log(`${key}:`, value);
+});
     imagesToUpload.forEach(img => {
       formData.append('images', img.file); 
     });

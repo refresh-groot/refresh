@@ -38,6 +38,7 @@ const Community = () => {
         
         // 데이터 구조 안전하게 받기
         if (res.data && res.data.posts) {
+          console.log('📌 서버에서 받은 전체 게시글:', res.data.posts);
           setPosts(res.data.posts);
           setTotalPages(res.data.totalPages || 1);
         } else {
@@ -145,7 +146,7 @@ const Community = () => {
                   <span>{post.author}</span>
                   <span>❤️ {post.likes}</span>
                   <span>💬 {post.comments}</span>
-                  <span>{formatRelativeDate(post.date || post.createdAt || post.created_at)}</span>
+                  <span>{formatRelativeDate(post.date || post.createdAt)}</span>
                 </div>
               </div>
             ))}
