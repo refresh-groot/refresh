@@ -1,11 +1,11 @@
+// Profile.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import { FaPlus, FaCalendarAlt, FaUserCircle, FaTrash } from 'react-icons/fa';
 import { LuPencilLine } from "react-icons/lu";
 import { useAuth } from '../../context/AuthContext';
-// ▼▼▼ [추가된 부분] 블루투스 Context를 가져옵니다 ▼▼▼
-import { useBluetooth } from '../../context/BluetoothContext'; 
+import { useBluetooth } from '../../context/BluetoothContext'; // 동료 추가: 블루투스 Context
 import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
 import EditPlantModal from './EditPlantModal';
@@ -18,7 +18,7 @@ function Profile() {
   // AuthContext에서 로그인한 사용자 정보와 인증 로딩 상태를 가져옴
   const { user, loading: authLoading } = useAuth();
   
-  // ▼▼▼ [추가된 부분] 블루투스 명령 전송 함수를 가져옵니다 ▼▼▼
+  // 동료 추가: 블루투스 명령 전송 및 커스텀 삭제 모달 상태
   const { sendCommand } = useBluetooth();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPlantId, setSelectedPlantId] = useState(null);
@@ -112,7 +112,7 @@ function Profile() {
 
   /* ===============================
      API: 식물 등록 (POST)
-  =============================== */
+  ============================== */
   const handleSavePlant = async (nickname, species, date, file) => {
     try {
       const safeSpecies =
@@ -128,7 +128,7 @@ function Profile() {
       // [변화 1] 서버의 응답(ID가 들어있음)을 변수에 담음
       const res = await api.post('/api/plants', formData); 
 
-      // ▼▼▼ [새로 추가된 부분] 백엔드에서 발급해준 새 식물 ID를 기기로 전송 ▼▼▼
+      // 동료 추가된 부분: 백엔드에서 발급해준 새 식물 ID를 기기에 전송
       const newPlantId = res.data.id || res.data.plant_id; 
 
       // 사용자가 모달에서 '기기 연동'을 미리 해두었다면 sendCommand가 존재함
@@ -136,18 +136,16 @@ function Profile() {
           console.log(`▶ 새 식물 DB 등록 완료! ESP32에 새 식물 ID(${newPlantId}) 맵핑 시도...`);
           try {
               await sendCommand(`SET_ID ${newPlantId}`);
-              // 성공 알림은 아래 showToast('success', '등록 완료')로 퉁치면 깔끔합니다.
           } catch (err) {
               console.error("ID 전송 실패:", err);
               showToast('error', '기기 연동 중 문제가 발생했습니다.');
           }
       }
-      // ▲▲▲ [새로 추가된 부분] ▲▲▲
 
       showToast('success','등록 완료');
       fetchPlants();
 
-    // [변화 2] 응답 데이터(ID 포함)를 모달(AddPlantModal)로 돌려줌
+      // [변화 2] 응답 데이터(ID 포함)를 모달(AddPlantModal)로 돌려줌
       return res.data; 
     } catch (error) {
       console.error('식물 등록 실패:', error);
@@ -157,35 +155,34 @@ function Profile() {
   };
 
   /* ===============================
-     API: 식물 삭제 (DELETE)
+     API: 식물 삭제 (DELETE) - 동료 변경본 적용
   =============================== */
-const handleDelete = (id, e) => {
-  e.stopPropagation();
-  setSelectedPlantId(id);
-  setShowDeleteModal(true);
-};
+  const handleDelete = (id, e) => {
+    e.stopPropagation();
+    setSelectedPlantId(id);
+    setShowDeleteModal(true);
+  };
 
-const confirmDelete = async () => {
-  try {
-    await api.delete(`/api/plants/${selectedPlantId}?mode=permanent`);
-    await fetchPlants();
-    showToast('success', '식물 삭제 완료');
-    setShowDeleteModal(false);
-    setSelectedPlantId(null);
-  } catch (error) {
-    console.error('삭제 실패:', error);
-    Swal.fire('오류', '식물 삭제에 실패했습니다.', 'error');
-  }
-};
+  const confirmDelete = async () => {
+    try {
+      await api.delete(`/api/plants/${selectedPlantId}?mode=permanent`);
+      await fetchPlants();
+      showToast('success', '식물 삭제 완료');
+      setShowDeleteModal(false);
+      setSelectedPlantId(null);
+    } catch (error) {
+      console.error('삭제 실패:', error);
+      Swal.fire('오류', '식물 삭제에 실패했습니다.', 'error');
+    }
+  };
 
   // 식물 카드 클릭 시 상세(메뉴) 페이지로 이동하며 식물 데이터 전달
   const handlePlantClick = (plant) => {
     navigate('/menu', { state: { plant } });
   };
 
-
   /* ===============================
-    UI 렌더링
+     UI 렌더링
   =============================== */
   return (
     <div className="profile-container">
@@ -204,84 +201,84 @@ const confirmDelete = async () => {
       <div className="profile-tab-menu">
         <button className={currentTab === 'all' ?  'active' : ''}
         onClick={() => setCurrentTab('all')}>전체</button>
-      <button className={currentTab === 'alive' ? 'active' : ''}
-      onClick={() => setCurrentTab('alive')}>생존</button>
-      <button className={currentTab === 'dead' ? 'active' : ''}
-      onClick={() => setCurrentTab('dead')}>사망</button>
+        <button className={currentTab === 'alive' ? 'active' : ''}
+        onClick={() => setCurrentTab('alive')}>생존</button>
+        <button className={currentTab === 'dead' ? 'active' : ''}
+        onClick={() => setCurrentTab('dead')}>사망</button>
       </div>
 
       <hr className="divider" />
 
       {/* 식물 목록 그리드 */}
       <div className="plant-list-wrapper">
-  {loading ? (
-    <div className="loading-message">식물 목록을 불러오는 중...</div>
-  ) : filteredPlants.length === 0 ? (
-    <div className="empty-message">등록된 식물이 없습니다.</div>
-  ) : (
-    filteredPlants.map((plant) => (
-      <div
-        key={plant.id}
-        // 사망한 식물은 시각적으로 구분하기 위해 dead 클래스 추가
-        className={`plant-item solid-item ${plant.status === 'archived' ? 'dead' : ''}`}
-        onClick={() => handlePlantClick(plant)}
-      >
-        {/* 사망 뱃지 표시 */}
-        {plant.status === 'archived' && (
-          <div className="death-badge">
-            {plant.death_reason || '사망'}
-          </div>
+        {loading ? (
+          <div className="loading-message">식물 목록을 불러오는 중...</div>
+        ) : filteredPlants.length === 0 ? (
+          <div className="empty-message">등록된 식물이 없습니다.</div>
+        ) : (
+          filteredPlants.map((plant) => (
+            <div
+              key={plant.id}
+              // 사망한 식물은 시각적으로 구분하기 위해 dead 클래스 추가
+              className={`plant-item solid-item ${plant.status === 'archived' ? 'dead' : ''}`}
+              onClick={() => handlePlantClick(plant)}
+            >
+              {/* 사망 뱃지 표시 */}
+              {plant.status === 'archived' && (
+                <div className="death-badge">
+                  {plant.death_reason || '사망'}
+                </div>
+              )}
+              <div className="item-img-box">
+                {/* 백엔드 서버 주소를 포함하여 이미지 경로 설정 */}
+                <img
+                  src={`${plant.photo_url}`}
+                  alt={plant.species}
+                />
+              </div>
+
+              <div className="item-info">
+                <div className="info-top">
+                  <span className="plant-nickname">{plant.plant_name}</span>
+                  <span className="plant-name-tag">
+                    {plant.species}
+                  </span>
+                  {plant.status === 'archived' && <span className="dead-icon">☠️</span>}
+                </div>
+                <div className="info-bottom">
+                  <FaCalendarAlt /> {plant.reg_date}
+                </div>
+              </div>
+
+              {/* 수정 및 삭제 버튼 (이벤트 전파 방지 처리됨) */}
+              <button
+                className="edit-btn-box"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingPlant(plant);
+                }}>
+                <LuPencilLine />
+              </button>
+              <button
+                className="delete-btn-box"
+                onClick={(e) => handleDelete(plant.id, e)}>
+                <FaTrash />
+              </button>
+            </div>
+          ))
         )}
-        <div className="item-img-box">
-          {/* 백엔드 서버 주소를 포함하여 이미지 경로 설정 */}
-          <img
-            src={`${plant.photo_url}`}
-            alt={plant.species}
-          />
-        </div>
 
-        <div className="item-info">
-          <div className="info-top">
-            <span className="plant-nickname">{plant.plant_name}</span>
-            <span className="plant-name-tag">
-              {plant.species}
-            </span>
-            {plant.status === 'archived' && <span className="dead-icon">☠️</span>}
-          </div>
-          <div className="info-bottom">
-            <FaCalendarAlt /> {plant.reg_date}
+        {/* 식물 추가 버튼 카드 */}
+        <div
+          className="plant-item dashed-item"
+          onClick={() => setIsModalOpen(true)}
+        >
+          <div className="add-content">
+            <FaPlus className="plus-icon" />
+            <span>식물 추가하기</span>
           </div>
         </div>
-
-        {/* 수정 및 삭제 버튼 (이벤트 전파 방지 처리됨) */}
-        <button
-          className="edit-btn-box"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditingPlant(plant);
-          }}>
-          <LuPencilLine />
-        </button>
-        <button
-          className="delete-btn-box"
-          onClick={(e) => handleDelete(plant.id, e)}>
-          <FaTrash />
-        </button>
       </div>
-    ))
-  )}
-
-  {/* 식물 추가 버튼 카드 */}
-  <div
-    className="plant-item dashed-item"
-    onClick={() => setIsModalOpen(true)}
-  >
-    <div className="add-content">
-      <FaPlus className="plus-icon" />
-      <span>식물 추가하기</span>
-    </div>
-  </div>
-</div>
 
       {/* 식물 추가 모달 */}
       {isModalOpen && (
@@ -293,41 +290,42 @@ const confirmDelete = async () => {
 
       {/* 식물 수정 모달 */}
       {editingPlant && (
-  <EditPlantModal
-    plant={editingPlant}
-    onClose={() => setEditingPlant(null)}
-    onSaved={fetchPlants}
-  />
-)}
+        <EditPlantModal
+          plant={editingPlant}
+          onClose={() => setEditingPlant(null)}
+          onSaved={fetchPlants}
+        />
+      )}
 
-{showDeleteModal && (
-  <div
-    className="modal-overlay"
-    onClick={() => setShowDeleteModal(false)}
-  >
-    <div
-      className="delete-modal"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h2>식물 삭제</h2>
-      <p>정말 이 식물을 삭제하시겠습니까?<br/>삭제된 데이터는 복구할 수 없습니다.</p>
-      <div className="delete-btn-group">
-        <button
-          className="cancel-btn"
+      {/* 동료 추가된 부분: 커스텀 식물 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div
+          className="modal-overlay"
           onClick={() => setShowDeleteModal(false)}
         >
-          취소
-        </button>
-        <button
-          className="delete-btn"
-          onClick={confirmDelete}
-        >
-          삭제
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+          <div
+            className="delete-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>식물 삭제</h2>
+            <p>정말 이 식물을 삭제하시겠습니까?<br/>삭제된 데이터는 복구할 수 없습니다.</p>
+            <div className="delete-btn-group">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className="delete-btn"
+                onClick={confirmDelete}
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+//user/controller
 const service = require('./service');
 
 module.exports = {

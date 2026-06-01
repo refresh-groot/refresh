@@ -18,11 +18,4 @@ router.delete('/:id', controller.removePlant);
 // 데이터를 부분적으로 수정하므로 PATCH 메서드를 사용
 router.patch('/:id/archive', controller.archivePlant);
 
-// ▼▼▼ [추가] 기기 매핑용 라우터 ▼▼▼
-router.put('/:id/device', controller.updateDevice);
-
-// ▼▼▼ [추가] 기기 매핑 해제용 라우터 ▼▼▼
-router.delete('/:id/device', controller.disconnectDevice);
-// ▲▲▲ [추가] ▲▲▲
-
 module.exports = router;

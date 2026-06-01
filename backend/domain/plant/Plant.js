@@ -1,3 +1,4 @@
+//plant.js
 const Sequelize = require('sequelize');
 
 class Plant extends Sequelize.Model {
@@ -46,11 +47,6 @@ class Plant extends Sequelize.Model {
           defaultValue: 'active',
           allowNull: false,
           comment: '식물 상태 (활성, 보관함, 삭제 대기)',
-        },
-        device_name: {
-          type: Sequelize.STRING(50),
-          allowNull: true,
-          comment: '매핑된 블루투스 기기 이름',
         },
         // [추가] 사망 이유 저장 컬럼
         death_reason: {

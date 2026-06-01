@@ -123,7 +123,7 @@ module.exports = {
     }
   },
 
-// 12. 카카오 로그인
+  // 12. 카카오 로그인
   kakaoLogin: async (code) => {
     const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID; 
     const KAKAO_REDIRECT_URI = process.env.KAKAO_REDIRECT_URI;

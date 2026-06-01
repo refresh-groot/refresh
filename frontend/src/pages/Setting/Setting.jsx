@@ -4,9 +4,8 @@ import { FaBluetooth } from 'react-icons/fa';
 import { useBluetooth } from '../../context/BluetoothContext';
 import { useAuth } from '../../context/AuthContext';
 import { Bluetooth } from '../../hooks/Bluetooth';
-import { useSensorData } from '../../hooks/useSensorData';
-// ▼▼▼ [수정된 부분] 기존 코드 유지를 위해 useParams와 useLocation을 모두 가져옵니다 ▼▼▼
-import { useParams, useNavigate, useLocation } from 'react-router-dom'; 
+import { useSensorData } from '../../hooks/useSensorData'; // 동료 추가
+import { useNavigate, useLocation } from 'react-router-dom'; 
 import { showAlert } from '../../app/alert';
 import Swal from 'sweetalert2';
 import { showToast } from '../../app/alert';
@@ -15,32 +14,19 @@ import './Setting.css';
 
 function Setting() {
   const { user, logout } = useAuth();
-  const { deviceName, handleConnectSuccess, sendCommand, setSensorData } = useBluetooth(); // sendCommand 추가
+  // 동료 추가: setSensorData
+  const { deviceName, handleConnectSuccess, sendCommand, setSensorData } = useBluetooth(); 
   const navigate = useNavigate();
-  const location = useLocation(); // location 추가
-
-  // ▼▼▼ [추가된 부분] URL에서 plantId를 직접 추출 (새로고침해도 절대 날아가지 않음) ▼▼▼
-  const { plantId: paramPlantId } = useParams();
+  const location = useLocation(); 
 
   // 상세 페이지에서 넘겨준 식물 정보가 있는지 확인
   const plant = location.state?.plant; 
+  const plantId = plant?.id;
   
-  // ▼▼▼ [추가된 부분] URL 파라미터가 있다면 우선 사용하고, 없으면 기존 location 방식을 씁니다 ▼▼▼
-  const plantId = paramPlantId || plant?.id;
-  
-  console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
+  // 동료 추가: 센서 데이터 훅 사용
   const { sensorData } = useSensorData(plantId);
-  // ▼▼▼ [추가] 연결 끊기를 위해 Bluetooth.jsx에서 넘겨준 전체 객체를 기억하는 상태 ▼▼▼
-  const [bleInfo, setBleInfo] = useState(null);
 
-  // ▼▼▼ [추가된 부분] 이미 연결된 상태에서 다른 식물 세팅창으로 들어오면 자동으로 ID 갱신 ▼▼▼
-  useEffect(() => {
-    if (plantId && sendCommand && deviceName) {
-      console.log(`🔄 [자동 동기화] ${plantId}번 식물 설정창 진입. 기기에 ID 전송 시도...`);
-      sendCommand(`SET_ID ${plantId}`).catch(err => console.error("자동 동기화 실패:", err));
-    }
-  }, [plantId, sendCommand, deviceName]);
-  // ▲▲▲ [추가된 부분] ▲▲▲
+  console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
 
   const [bio, setBio] = useState('');
   const [isAlertOn, setIsAlertOn] = useState(false);
@@ -50,15 +36,10 @@ function Setting() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawPassword, setWithdrawPassword] = useState('');
 
-  // ▼▼▼ [수정된 부분] plantId가 바뀔 때마다 다시 프로필/알림 상태를 가져오도록 의존성 배열 수정 ▼▼▼
   useEffect(() => {
     const fetchProfile = async () => {
-      // plantId가 있으면 뒤에 쿼리 스트링으로 붙입니다.
-      const url = plantId ? `/api/user/profile?plantId=${plantId}` : '/api/user/profile';
-      
       try {
-        setLoading(true);
-        const res = await api.get(url);
+        const res = await api.get('/api/user/profile');
         setBio(res.data.bio || '');
         setIsAlertOn(res.data.isAlertOn || false);
       } catch (e) {
@@ -68,36 +49,17 @@ function Setting() {
       }
     };
     fetchProfile();
-  }, [plantId]);
+  }, []);
 
   // 블루투스 연결 성공 시 자동으로 ID를 쏴주는 함수
   const handleBleSuccess = async (info) => {
-    handleConnectSuccess(info); // 기기 이름 저장 (기존 기능)
-    setBleInfo(info); // [추가] disconnectBluetooth가 포함된 객체를 상태에 저장
+    handleConnectSuccess(info); 
 
-    // 만약 세팅창에 들어올 때 식물 정보(ID)를 들고 왔다면? 기기로 바로 전송!
-    if (plantId && info.sendCommand) {
+    if (plantId && sendCommand) {
         console.log(`기존 식물(${plantId}) ID 연동 시도...`);
         try {
-            await info.sendCommand(`SET_ID ${plantId}`);
-            
-            // ▼▼▼ [추가된 부분] 서버 DB에 기기 매핑 정보 저장 요청 ▼▼▼
-            try {
-                // 백엔드에 plantId와 기기 이름(deviceName)을 묶어서 업데이트 요청
-                await api.put(`/api/plants/${plantId}/device`, { device_name: info.deviceName });
-                console.log('서버 DB 기기 매핑 완료');
-                showToast('success', `${plantId}번 식물과 연동되었습니다.`);
-            } catch (dbErr) {
-                console.error("서버 DB 매핑 실패:", dbErr);
-                // 백엔드에서 중복 기기(409) 에러를 뱉으면 팝업 띄우기
-                if (dbErr.response?.status === 409) {
-                    Swal.fire('연동 실패', '이미 다른 식물과 연결된 기기입니다.', 'error');
-                } else {
-                    showToast('error', '서버 데이터 저장 중 오류가 발생했습니다.');
-                }
-            }
-            // ▲▲▲ [추가된 부분] ▲▲▲
-            
+            await sendCommand(`SET_ID ${plantId}`);
+            showToast('success', `${plantId}번 식물과 연동되었습니다.`);
         } catch (err) {
             console.error("ID 전송 실패:", err);
             showToast('error', '기기 연동 중 오류가 발생했습니다.');
@@ -105,53 +67,29 @@ function Setting() {
     }
   };
   
-  // ▼▼▼ [추가] 사용자가 수동으로 연결을 해제할 때 호출되는 함수 ▼▼▼
-  const handleDisconnectClick = async () => {
-    try {
-        // 1. 서버 DB에서 이 식물의 매핑 정보(device_name)를 비움
-        await api.delete(`/api/plants/${plantId}/device`);
-        console.log("✅ DB 기기 매핑 해제 성공");
-        
-        // 2. 물리적 블루투스 연결 차단
-        if (bleInfo?.disconnectBluetooth) {
-            bleInfo.disconnectBluetooth();
-        }
-        
-        // 3. UI 상태 리셋
-        setBleInfo(null);
-        handleConnectSuccess(null); // Context의 기기명 초기화
-        showToast('success', '기기 연동이 해제되었습니다.');
-    } catch (err) {
-        console.error("연동 해제 실패:", err);
-        showToast('error', '연동 해제 중 오류가 발생했습니다.');
+  // 동료 추가: 메시지 파싱 및 처리 로직
+  const handleMessage = (text) => {
+    console.log('📥 ESP32 수신:', text)
+
+    // ① 자동 급수 완료 감지
+    if (text.includes('WATER_DONE')) {
+      window.dispatchEvent(new CustomEvent('wateringDone'))
+      showToast('success', '자동 급수가 완료되었습니다.')
+      return
     }
-  };
-  // ▲▲▲ [추가] ▲▲▲
 
-  // handleBleSuccess 함수 바로 아래에 추가
-
-const handleMessage = (text) => {
-  console.log('📥 ESP32 수신:', text)
-
-  // ① 자동 급수 완료 감지
-  if (text.includes('WATER_DONE')) {
-    window.dispatchEvent(new CustomEvent('wateringDone'))
-    showToast('success', '자동 급수가 완료되었습니다.')
-    return
+    // ② STATE 명령 응답 파싱
+    if (text.includes('Soil:')) {
+      const soil = text.match(/Soil:(\d+)/)?.[1]
+      const temp = text.match(/Temp:([\d.]+)/)?.[1]
+      const humid = text.match(/Humid:([\d.]+)/)?.[1]
+      setSensorData({
+        soil: soil ? parseInt(soil) : null,
+        temp: temp ? parseFloat(temp) : null,
+        humid: humid ? parseFloat(humid) : null,
+      })
+    }
   }
-
-  // ② STATE 명령 응답 파싱
-  if (text.includes('Soil:')) {
-    const soil = text.match(/Soil:(\d+)/)?.[1]
-    const temp = text.match(/Temp:([\d.]+)/)?.[1]
-    const humid = text.match(/Humid:([\d.]+)/)?.[1]
-    setSensorData({
-      soil: soil ? parseInt(soil) : null,
-      temp: temp ? parseFloat(temp) : null,
-      humid: humid ? parseFloat(humid) : null,
-    })
-  }
-}
 
   const handleBioSave = async () => {
     setBioSaving(true);
@@ -176,7 +114,7 @@ const handleMessage = (text) => {
     }
   };
 
-const handleLogout = async () => {
+  const handleLogout = async () => {
     localStorage.removeItem('user');
     await logout();
     showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
@@ -208,7 +146,6 @@ const handleLogout = async () => {
       <div className="setting-inner">
 
         <div className="setting-left">
-
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon green">
@@ -242,8 +179,7 @@ const handleLogout = async () => {
             </div>
           </div>
 
-          {/* ▼▼▼ [추가/수정된 부분] 식물 ID가 있을 때만 블루투스 카드를 렌더링하도록 감싸기 ▼▼▼ */}
-          {plantId && (
+          {/* 블루투스 */}
           <div className="s-card">
             <div className="s-card-header">
               <div className="s-card-icon purple">
@@ -262,22 +198,12 @@ const handleLogout = async () => {
                     {deviceName ? '연결됨' : 'ESP32_PUMP 기기를 검색하세요'}
                   </div>
                 </div>
-                {/* ▼▼▼ [수정] 기기 연결됨 상태일 때, 클릭하면 연동이 해제되는 버튼으로 변경 ▼▼▼ */}
                 {deviceName && (
-                  <div 
-                    className="ble-pill" 
-                    onClick={handleDisconnectClick}
-                    style={{ cursor: 'pointer', backgroundColor: '#ffebee', color: '#e53935', border: '1px solid #ffcdd2' }}
-                    title="클릭하여 연결 해제"
-                  >
-                    <div className="ble-dot" style={{ backgroundColor: '#e53935' }}/>연결 해제
+                  <div className="ble-pill">
+                    <div className="ble-dot" />연결됨
                   </div>
                 )}
-                {/* ▲▲▲ [수정] ▲▲▲ */}
               </div>
-              
-              {/* ▼▼▼ [수정] 기기가 연결되어 있지 않을 때만 '기기 연결' 버튼 섹션을 보여줍니다 ▼▼▼ */}
-              {!deviceName && (
               <div className="s-row no-border">
                 <div className="s-row-icon" style={{ background: '#f0f0f0' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="#aaa">
@@ -288,16 +214,13 @@ const handleLogout = async () => {
                   <div className="s-row-label">기기 연결</div>
                   <div className="s-row-sub">ESP32_PUMP 검색 후 연결</div>
                 </div>
+                {/* 동료 추가된 부분 */}
                 <Bluetooth 
-                onConnectSuccess={handleBleSuccess}
-                onMessageReceived={handleMessage} />
+                  onConnectSuccess={handleBleSuccess} 
+                  onMessageReceived={handleMessage} />
               </div>
-              )}
-              {/* ▲▲▲ [수정] ▲▲▲ */}
             </div>
           </div>
-          )}
-
         </div>
 
         {/* ── 오른쪽 ── */}

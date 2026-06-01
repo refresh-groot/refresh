@@ -1,35 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+//bluetooth.jsx
+import React, { useState } from 'react';
 import { FaBluetooth } from 'react-icons/fa';
 import { showToast } from '../app/alert';
 
 export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
   const [connectedDevice, setConnectedDevice] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  
-  // [추가] 하트비트 인터벌을 저장할 Ref
-  const heartbeatInterval = useRef(null);
 
   const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
   const RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
   const TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
-  // [추가] 컴포넌트가 언마운트될 때 하트비트 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
-    };
-  }, []);
-
   const handleDisconnect = (event) => {
     const device = event.target;
     console.warn(`⚠️ [BLE] 연결 끊김 - 기기명: ${device.name}`);
     setConnectedDevice(null);
-    
-    // [추가] 기기 연결이 끊어지면 하트비트 정지
-    if (heartbeatInterval.current) {
-      clearInterval(heartbeatInterval.current);
-    }
-    
     if (onConnectSuccess) onConnectSuccess(null);
   };
 
@@ -59,7 +44,7 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       }
 
       console.log('✅ [1] 기기 선택 완료');
-      console.log('   - name:', device.name);
+      console.log('   - name:', device.name);
       
       // 2. GATT 연결
       console.log('📌 [2] GATT 서버 연결 시도...');
@@ -88,12 +73,7 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
 
         try {
           isWriting = true; // 통신 시작 시 락 잠금
-          
-          // [수정] 15초마다 보내는 PING 명령어가 콘솔을 도배하지 않도록 예외 처리
-          if (command !== "STATE") {
-            console.log(`📤 [sendCommand] 전송: "${command}"`);
-          }
-          
+          console.log(`📤 [sendCommand] 전송: "${command}"`);
           const encoder = new TextEncoder();
           
           // 명령어 뒤에 개행문자(\n)를 추가하여 하드웨어 파싱 안정화 및 writeValue 실행
@@ -118,43 +98,24 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       
       txChar.addEventListener('characteristicvaluechanged', (event) => {
         const receivedText = new TextDecoder().decode(event.target.value);
-        // [수정] STATE 응답이 콘솔을 도배하지 않도록 예외 처리
-        if (!receivedText.includes("STATE")) {
-          console.log(`📥 [받음]: ${receivedText}`);
-        }
+        console.log(`📥 [받음]: ${receivedText}`);
         if (onMessageReceived) onMessageReceived(receivedText);
       });
 
       device.addEventListener('gattserverdisconnected', handleDisconnect);
       setConnectedDevice(device);
 
-      // ▼▼▼ [추가] 사용자가 원할 때 블루투스를 강제로 끊는 함수 ▼▼▼
-      const disconnectBluetooth = () => {
-          if (device && device.gatt.connected) {
-              device.gatt.disconnect();
-              console.log("✂️ [BLE] 사용자에 의해 연결 해제됨");
-          }
-      };
-      // ▲▲▲ [추가] ▲▲▲
-
       if (onConnectSuccess) {
-        // [수정] 반환 객체에 disconnectBluetooth 함수 추가
-        onConnectSuccess({ device, sendCommand, deviceName: device.name, disconnectBluetooth });
+        onConnectSuccess({ device, sendCommand, deviceName: device.name });
       }
 
       showToast('success', '블루투스 연동 성공!');
-
-      // [추가] 하트비트(Keep-Alive) 로직: 15초마다 "STATE" 명령을 보내 연결 유지
-      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
-      heartbeatInterval.current = setInterval(() => {
-        sendCommand("STATE").catch(e => console.error("Heartbeat 에러:", e));
-      }, 15000);
 
     } catch (error) {
       console.error('❌ 블루투스 오류 발생:', error);
 
       if (error.name === 'NotFoundError') {
-        console.warn('   → 사용자가 팝업에서 취소함');
+        console.warn('   → 사용자가 팝업에서 취소함');
       } else {
         alert(`연결 오류: ${error.message}`);
       }

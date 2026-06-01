@@ -4,39 +4,39 @@ const repository = require('./repository');
 
 module.exports = {
   addPlant: async (req, res) => {
-    try {
-      // [중요] any()로 받을 때는 req.files(배열)를 확인해야 합니다.
-      const file = req.files && req.files.length > 0 ? req.files[0] : null;
-      
-      const { plant_name, species, reg_date } = req.body || {};
+  try {
+    // [중요] any()로 받을 때는 req.files(배열)를 확인해야 합니다.
+    const file = req.files && req.files.length > 0 ? req.files[0] : null;
+    
+    const { plant_name, species, reg_date } = req.body || {};
 
-      if (!plant_name) {
-        return res.status(400).json({ message: '식물 이름을 입력해주세요.' });
-      }
-
-      if (!req.session || !req.session.user) {
-        return res.status(401).json({ message: '로그인이 필요합니다.' });
-      }
-
-      const userId = req.session.user.id;
-      
-      // 파일이 있으면 저장된 파일명을 사용하고, 없으면 기본 이미지를 사용합니다.
-      const photo_url = file ? `/uploads/${file.filename}` : '/uploads/default.png';
-
-      const newPlant = await service.addPlant({
-        user_id: userId,
-        plant_name,
-        species,
-        reg_date,
-        photo_url 
-      });
-      
-      return res.status(201).json({ message: '식물이 성공적으로 등록되었습니다!', plant: newPlant });
-    } catch (error) {
-      console.error('식물 등록 에러:', error);
-      return res.status(500).json({ message: error.message });
+    if (!plant_name) {
+      return res.status(400).json({ message: '식물 이름을 입력해주세요.' });
     }
-  },
+
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ message: '로그인이 필요합니다.' });
+    }
+
+    const userId = req.session.user.id;
+    
+    // 파일이 있으면 저장된 파일명을 사용하고, 없으면 기본 이미지를 사용합니다.
+    const photo_url = file ? `/uploads/${file.filename}` : '/uploads/default.png';
+
+    const newPlant = await service.addPlant({
+      user_id: userId,
+      plant_name,
+      species,
+      reg_date,
+      photo_url 
+    });
+    
+    return res.status(201).json({ message: '식물이 성공적으로 등록되었습니다!', plant: newPlant });
+  } catch (error) {
+    console.error('식물 등록 에러:', error);
+    return res.status(500).json({ message: error.message });
+  }
+},
   
   removePlant: async (req, res) => {
     try {
@@ -67,7 +67,6 @@ module.exports = {
       return res.status(500).json({ message: error.message });
     }
   },
-  
   archivePlant: async (req, res) => {
     try {
       const { id } = req.params;
@@ -82,39 +81,5 @@ module.exports = {
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
-  },
-
-  // ▼▼▼ [추가] 기기 매핑 (device_name 저장)을 처리하는 컨트롤러 ▼▼▼
-  updateDevice: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { device_name } = req.body;
-
-      if (!device_name) {
-        return res.status(400).json({ message: '기기 이름이 없습니다.' });
-      }
-
-      const updatedPlant = await service.mapDeviceToPlant(id, device_name);
-      return res.status(200).json({ message: '기기 매핑이 완료되었습니다.', plant: updatedPlant });
-    } catch (error) {
-      // 하이재킹 에러(이미 매핑된 기기) 등을 여기서 처리해서 프론트로 넘겨줍니다.
-      if (error.message.includes('이미 매핑된 기기')) {
-          return res.status(409).json({ message: error.message });
-      }
-      return res.status(500).json({ message: error.message });
-    }
-  },
-  
-  // ▼▼▼ [추가] 기기 매핑 해제를 처리하는 컨트롤러 ▼▼▼
-  disconnectDevice: async (req, res) => {
-    try {
-      const { id } = req.params;
-      // DB에서 해당 식물의 device_name을 강제로 null로 변경합니다.
-      await repository.updateDeviceName(id, null); 
-      return res.status(200).json({ message: '기기 연동이 성공적으로 해제되었습니다.' });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
   }
-  // ▲▲▲ [추가] ▲▲▲
 };
