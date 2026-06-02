@@ -29,8 +29,8 @@ function Menu() {
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
   
-  // 동료 추가: isConnected
-  const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate, isConnected } = useBluetooth();
+  // 동료 추가: isConnected 대신 deviceName 사용
+  const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate, deviceName } = useBluetooth();
 
   const receivedPlant = location.state?.plant;
   const [currentPlant, setCurrentPlant] = useState(() => {
@@ -263,10 +263,10 @@ function Menu() {
     if (currentPlant.status === 'dead' || currentPlant.status === 'archived') {
         return '사망 ☠️';
     }
-    if (!isConnected) {
+    if (!deviceName) {
         return '기기 미연결 📵';
     }
-    return '기기 연결됨 🔗';
+    return `${deviceName} 연결됨 🔗`;
   };
 
   return (
