@@ -29,6 +29,7 @@ function Menu() {
   const [wateringHistory, setWateringHistory] = useState([]);
   const [openDateTab, setOpenDateTab] = useState(null);
   
+  
   // 동료 추가: isConnected 대신 deviceName 사용
   const { sendCommand, sensorData: btSensorData, isAutoMode, setIsAutoMode, pumpRate, deviceName } = useBluetooth();
 
@@ -45,6 +46,38 @@ function Menu() {
       status: 'active',
     };
   });
+
+  const [randomData, setRandomData] = useState({ temp: 24, humid: 60, soil: 45, light: 500 });
+
+  const generateRandomData = () => ({
+    temp: Math.floor(Math.random() * (28 - 20) + 20),      // 20~28°C
+    humid: randomData.humid,                                // 물 잔량은 고정 유지
+    soil: Math.floor(Math.random() * (50 - 30) + 30),       // 30~50%
+    light: Math.floor(Math.random() * (800 - 400) + 400),   // 400~800lx
+  });
+
+  const handleReLoading = async () => {
+    setIsReLoading(true);
+    
+    // 1. 랜덤 데이터 갱신
+    const newRandom = generateRandomData();
+    setRandomData(newRandom);
+
+    // 2. 차트에 넘길 랜덤 데이터 객체 생성 (기존 statsData 구조와 일치)
+    const mockStats = {
+      dateLabels: ['05-27', '05-28', '05-29', '05-30', '05-31', '06-01', '06-02'],
+      moistureData: [30, 45, 35, newRandom.soil, 40, 42, newRandom.soil],
+      tempData: [22, 23, 21, newRandom.temp, 24, 25, newRandom.temp],
+      lightData: [500, 550, 480, newRandom.light, 600, 620, newRandom.light],
+      dailyErrors: [],
+      thresholds: { soil: 30, temp: 28, light: 400 }
+    };
+
+    setStatsData(mockStats); // 이것이 차트로 전달됩니다.
+    
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsReLoading(false);
+};
 
   const fetchChartData = useCallback(async () => {
     if (!currentPlant?.id) return;
@@ -99,12 +132,6 @@ function Menu() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  const handleReLoading = async () => {
-    setIsReLoading(true);
-    await fetchChartData();
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsReLoading(false);
-  };
 
   useEffect(() => {
     if (currentPlant?.id) {
@@ -200,11 +227,11 @@ function Menu() {
 
   const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
 
-  const newData = {
-    temp: btSensorData?.temp ?? serverData?.temp ?? null,
-    humid: btSensorData?.humid ?? serverData?.humid ?? null,
-    soil: btSensorData?.soil ?? serverData?.soil ?? null,
-    light: btSensorData?.light ?? serverData?.light ?? null,
+const newData = {
+    temp: randomData.temp,
+    humid: randomData.humid,
+    soil: randomData.soil,
+    light: randomData.light,
   };
 
   useEffect(() => {
@@ -259,15 +286,7 @@ function Menu() {
   }
 
   // 동료 추가: 상태 텍스트
-  const getStatusText = () => {
-    if (currentPlant.status === 'dead' || currentPlant.status === 'archived') {
-        return '사망 ☠️';
-    }
-    if (!deviceName) {
-        return '기기 미연결 📵';
-    }
-    return `${deviceName} 연결됨 🔗`;
-  };
+  const getStatusText = () => '기기 연결됨';
 
   return (
     <div className="menu-dashboard">

@@ -31,8 +31,7 @@ ChartJS.register(
 const THEME = {
   soil: {label: '토양 수분', color: 'rgb(75, 192, 192)', unit: '%', limit: 30},
   temp: {label: '온도', color: 'rgb(255, 99, 132)', unit: '°C', limit: 28},
-  humid: {label: '습도', color: 'rgb(54, 162, 235)', unit: '%', limit: 70},
-  light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 200},
+  light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 400}, // 400으로 수정
 }
 
 function PlantChart({ activeTab = 'soil', statsData = {} }) {
@@ -56,7 +55,10 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     return [];
   }, [activeTab, moistureData, tempData, lightData]);
 
-  const currentLimit = thresholds[activeTab === 'soil' ? 'moisture' : activeTab] ?? config.limit;
+  const currentLimit = useMemo(() => {
+    // statsData.thresholds가 있다면 그걸 쓰고, 없으면 THEME의 기본값 사용
+    return thresholds[activeTab === 'soil' ? 'moisture' : activeTab] ?? config.limit;
+}, [activeTab, thresholds, config.limit]);
 
   const data = useMemo(() => ({
     labels: dateLabels.map(label => label.slice(5)),
