@@ -117,7 +117,6 @@ function Setting() {
   const handleLogout = async () => {
     localStorage.removeItem('user');
     await logout();
-    showAlert('success', '성공', '로그아웃에 성공했습니다.', 1500);
     navigate('/login');
   };
 
@@ -127,7 +126,7 @@ function Setting() {
       await api.delete('/api/user/withdraw', { data: { password: withdrawPassword } });
       localStorage.removeItem('user');
       setShowWithdrawModal(false);
-      showAlert('success', '완료', '회원 탈퇴가 완료되었습니다.', 1000)
+      showToast('success', '완료', '회원 탈퇴가 완료되었습니다.', 1000)
         .then(() => navigate('/login'));
     } catch (e) {
       const msg = e.response?.status === 401

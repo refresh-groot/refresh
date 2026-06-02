@@ -56,6 +56,7 @@ function Chat() {
   // 현재 진행 중인 대화의 세션 ID
   // 메시지 전송 시 서버에 함께 보내 같은 대화 스레드에 기록되도록 함
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  
 
   // ─── DOM 참조 ──────────────────────────────────────────────────────────────
 
@@ -418,8 +419,10 @@ formData.forEach((value, key) => {
   };
 
   const handleRenameChat = async (sessionId, newName) => {
+    console.log("Rename 호출됨:", sessionId, newName);
     try {
       await axios.put(`/api/diagnosis-logs/session/${sessionId}`, { title: newName });
+      console.log("Rename 성공");
       setChatHistory(prev =>
         prev.map(chat => chat.id === sessionId ? { ...chat, title: newName } : chat)
       );
@@ -429,8 +432,10 @@ formData.forEach((value, key) => {
   };
 
   const handleDeleteChat = async (sessionId) => {
+    console.log("Delete 호출됨:", sessionId);
     try {
       await axios.delete(`/api/diagnosis-logs/session/${sessionId}`);
+      console.log("Delete 성공");
       await fetchChatHistory();
       if (currentSessionId === sessionId || (currentSessionId === null && sessionId === 'no_session')) {
         handleNewChat();

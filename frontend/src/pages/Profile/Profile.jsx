@@ -317,7 +317,7 @@ function Profile() {
                 취소
               </button>
               <button
-                className="delete-btn"
+                className="profile-delete-btn"
                 onClick={confirmDelete}
               >
                 삭제

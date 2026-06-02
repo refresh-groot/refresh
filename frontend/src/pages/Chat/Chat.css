@@ -665,6 +665,34 @@
     animation: pcFadeOut 0.2s ease-in forwards !important;
   }
 
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000; /* 사이드바보다 위에 오도록 */
+}
+
+/* 범용 모달 박스 */
+.custom-modal {
+  background: white; border-radius: 16px; padding: 24px;
+  width: 300px; text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.custom-modal h2 { font-size: 18px; margin-bottom: 20px; color: #333; }
+
+/* 입력창 스타일 */
+.modal-input {
+  width: 100%; padding: 10px; margin-bottom: 20px;
+  border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+}
+
+/* 버튼 그룹 */
+.modal-btn-group { display: flex; gap: 10px; }
+.btn-confirm { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #7f77dd; color: white; cursor: pointer; }
+.btn-cancel { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; color: #555; cursor: pointer; }
+.btn-delete { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #e74c3c; color: white; cursor: pointer; }
+
 @keyframes slideUp {
   from{ opacity: 0; transform: translateY(10px);}
   to { opacity: 1; transform:  translateY(0);}

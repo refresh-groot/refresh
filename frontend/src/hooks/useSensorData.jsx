@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { SERVER_URL } from '../app/constants';
 // 기본 메뉴화면 카드 4개 관리
-export const useSensorData = (plantId, intervalTime = 600000) => {
+export const useSensorData = (plantId, intervalTime = 90000) => {
 const [sensorData, setSensorData] = useState({
     temp: 0,
     humid: 0,
