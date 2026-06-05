@@ -26,7 +26,7 @@ const fetchData = async () => {
         light: serverData?.light_level ?? null,
         humid: serverData?.humidity ?? null
     });
-
+    
     setSensorData(newData);
         console.log("실시간 데이터 동기화 완료:", newData);
     } catch (error) {
@@ -43,5 +43,5 @@ const fetchData = async () => {
     return () => clearInterval(timer);
     }, [plantId, intervalTime]);
 
-    return { sensorData, loading };
+    return { sensorData, loading, fetchData };
 };

@@ -101,6 +101,7 @@ function Menu() {
 
   const handleReLoading = async () => {
     setIsReLoading(true);
+    await fetchSensorData();
     await fetchChartData();
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsReLoading(false);
@@ -198,7 +199,7 @@ function Menu() {
     }
   }, [showHistory, fetchWateringHistory]);
 
-  const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
+  const { sensorData: serverData, loading: sensorLoading, fetchData: fetchSensorData } = useSensorData(currentPlant.id, 600000);
 
   const newData = {
     temp: btSensorData?.temp ?? serverData?.temp ?? null,
