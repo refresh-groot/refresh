@@ -4,10 +4,10 @@ import { SERVER_URL } from '../app/constants';
 // 기본 메뉴화면 카드 4개 관리
 export const useSensorData = (plantId, intervalTime = 90000) => {
 const [sensorData, setSensorData] = useState({
-    temp: 0,
-    humid: 0,
-    soil: 0,
-    light: 0
+    temp: null,
+    humid: null,
+    soil: null,
+    light: null
 });
 const [loading, setLoading] = useState(true);
 

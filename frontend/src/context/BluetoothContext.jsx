@@ -40,10 +40,12 @@ const handleBleMessage = (text) => {
     const soil = text.match(/Soil:(\d+)/)?.[1];
     const temp = text.match(/Temp:([\d.]+)/)?.[1];
     const humi = text.match(/Humi:([\d.]+)/)?.[1];
+    const light = text.match(/Light:(\d+)/)?.[1];
     setSensorData({
       soil: soil ? parseInt(soil) : null,
       temp: temp ? parseFloat(temp) : null,
       humid: humi ? parseFloat(humi) : null,
+      light: light ? parseInt(light) : null,
     });
   }
 };
