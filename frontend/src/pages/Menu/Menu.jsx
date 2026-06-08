@@ -132,6 +132,13 @@ function Menu() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
+  const handleReLoading = async () => {
+    setIsReLoading(true);
+    await fetchSensorData();
+    await fetchChartData();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsReLoading(false);
+  };
 
   useEffect(() => {
     if (currentPlant?.id) {
@@ -225,7 +232,7 @@ function Menu() {
     }
   }, [showHistory, fetchWateringHistory]);
 
-  const { sensorData: serverData, loading: sensorLoading } = useSensorData(currentPlant.id, 600000);
+  const { sensorData: serverData, loading: sensorLoading, fetchData: fetchSensorData } = useSensorData(currentPlant.id, 600000);
 
 const newData = {
     temp: randomData.temp,

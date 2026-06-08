@@ -32,7 +32,7 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       // 1. 기기 선택
       console.log('📌 [1] 기기 선택 팝업 오픈 중...');
       const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
+        filters: [{namePrefix: 'ESP32' }] ,
         optionalServices: [SERVICE_UUID]
       });
 
@@ -106,7 +106,7 @@ export const Bluetooth = ({ onConnectSuccess, onMessageReceived }) => {
       setConnectedDevice(device);
 
       if (onConnectSuccess) {
-        onConnectSuccess({ device, sendCommand, deviceName: device.name });
+        onConnectSuccess({ device, sendCommand, deviceName: device.name, txChar });
       }
 
       showToast('success', '블루투스 연동 성공!');
