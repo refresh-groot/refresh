@@ -45,8 +45,23 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     thresholds = {}
   } = statsData;
   
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState({ date: '', errors: [] });
 
   const config = THEME[activeTab];
+
+  const handleChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const index = elements[0].index;
+      const date = dateLabels[index];
+      const errors = dailyErrors[index] || [];
+
+      if (errors.length > 0) {
+        setModalData({ date, errors });
+        setIsModalOpen(true);
+      }
+    }
+  };
 
   const currentData = useMemo(() => {
     if (activeTab === 'soil') return moistureData;
@@ -57,6 +72,7 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
 
   const currentLimit = useMemo(() => {
     // statsData.thresholds가 있다면 그걸 쓰고, 없으면 THEME의 기본값 사용
+    console.log("currentLimit 실행 중, thresholds:", thresholds);
     return thresholds[activeTab === 'soil' ? 'moisture' : activeTab] ?? config.limit;
 }, [activeTab, thresholds, config.limit]);
 
@@ -77,6 +93,12 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     responsive: true,
     maintainAspectRatio: false,
     layout: { padding: { right: 20 } },
+    interaction: {
+    mode: 'nearest', // 마우스 근처의 포인트를 찾음
+    intersect: false, // 점 위에 정확히 있지 않아도 작동
+    axis: 'x' // x축 기준으로 마우스가 지나가기만 해도 툴팁 활성화
+  },
+    onClick: handleChartClick,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -85,7 +107,9 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
             const index = tooltipItems[0].dataIndex;
             const errors = dailyErrors[index];
             if (errors && errors.length > 0) {
-              return ['', '⚠️ 에러 이력:', ...errors];
+              const limitedErrors = errors.slice(0, 3);
+              const displayErrors = errors.length > 3 ? [...limitedErrors, '... 더보기'] : limitedErrors;
+              return ['', '⚠️ 에러 이력:', ...displayErrors];
             }
             return [];
           }
@@ -120,7 +144,22 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
   return (
     <div className='Chart-canvas'>
       <Line data={data} options={options} />
+      {isModalOpen && (
+        <div className="error-modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="error-modal-content" onClick={e => e.stopPropagation()}>
+            <h3>⚠️ {modalData.date} 에러 리포트</h3>
+
+            <div className="error-list">
+              {modalData.errors.map((err, i) => (
+                <div key={i} className="error-item">• {err}</div>
+              ))}
+            </div>
+            <button className="close-btn" onClick={() => setIsModalOpen(false)}>x</button>
+          </div>
+        </div>
+      )}
     </div>
+    
   );
 }
 

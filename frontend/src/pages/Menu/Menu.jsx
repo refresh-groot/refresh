@@ -357,15 +357,29 @@ const newData = {
             </ul>
             ) : (
             <ul className="alert-list">
-            {notifications.filter(n => n.type === 'ERROR').slice(0, 5).length > 0
-            ? notifications.filter(n => n.type === 'ERROR').slice(0, 5).map((n, idx) => (
-            <li key={idx} className={`alert-item ${n.is_read ? '' : 'warning'}`}>
-              {n.message}
-            </li>
-            ))
-            : <li className="alert-item">현재 알림이 없습니다.</li>
-            }
-            </ul>
+      {notifications.filter(n => n.type === 'ERROR').slice(0, 5).length > 0 ? (
+      notifications
+      .filter(n => n.type === 'ERROR')
+      .slice(0, 5)
+      .map((n, idx) => {
+        const isDanger = n.message.includes('0%') || n.message.includes('저온') || n.message.includes('위험');
+        return (
+          <li key={idx} className={`alert-item ${isDanger ? 'danger' : 'warning'}`}>
+          <div className="alert-content">
+          <span className="alert-text">{n.message}</span>
+          </div>
+          <span className="alert-time">
+            {new Date(n.createdAt).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
+            {' '}
+            {formatTimeOnly(n.createdAt)}
+          </span>
+          </li>
+          );
+          })
+          ) : (
+          <li className="alert-item empty">현재 알림이 없습니다.</li>
+          )}
+          </ul>
             )}
           </div>
             <div className="card ai-diagnosis" onClick={() => navigate('/Chat', { state: { plant: currentPlant } })} style={{ cursor: 'pointer' }}>
