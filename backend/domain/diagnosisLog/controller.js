@@ -4,7 +4,7 @@ const service = require('./service');
 const addDiagnosisLog = async (req, res) => {
     try {
         const { plantId } = req.params;
-        const { question, title, session_id } = req.body; 
+        const { question, title, session_id, sensor_data } = req.body; // 👈 sensor_data 추가!
         const files = req.files;
 
         const newLog = await service.addDiagnosisLog({
@@ -12,7 +12,8 @@ const addDiagnosisLog = async (req, res) => {
             files,
             question,
             title,
-            sessionId: session_id // 서비스로 전달
+            sessionId: session_id,
+            sensorData: sensor_data // 👈 서비스로 전달하도록 추가!
         });
 
         res.status(200).json(newLog);
