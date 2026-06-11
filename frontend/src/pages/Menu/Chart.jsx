@@ -1,5 +1,4 @@
-import React, {useState, useMemo} from 'react';
-// 필요한 부품들 불러오기
+import React, {useState, useMemo, useCallback} from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,7 +8,6 @@ import {
   Title,
   Tooltip,
   Legend,
-  layouts,
   Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
@@ -30,8 +28,9 @@ ChartJS.register(
 
 const THEME = {
   soil: {label: '토양 수분', color: 'rgb(75, 192, 192)', unit: '%', limit: 30},
+  humid: {label: '습도', color: 'rgb(48, 51, 214)', unit: '%', limit: 30},
   temp: {label: '온도', color: 'rgb(255, 99, 132)', unit: '°C', limit: 28},
-  light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 400}, // 400으로 수정
+  light: {label: '조도', color: 'rgb(255, 205, 86)', unit: 'lx', limit: 400},
 }
 
 function PlantChart({ activeTab = 'soil', statsData = {} }) {
@@ -41,6 +40,7 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     moistureData = [],
     tempData = [],
     lightData = [],
+    humidData = [],
     dailyErrors = [],
     thresholds = {}
   } = statsData;
@@ -50,25 +50,26 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
 
   const config = THEME[activeTab];
 
-  const handleChartClick = (event, elements) => {
-    if (elements.length > 0) {
-      const index = elements[0].index;
-      const date = dateLabels[index];
-      const errors = dailyErrors[index] || [];
+  const handleChartClick = useCallback((event, elements) => {
+  if (elements.length > 0) {
+    const index = elements[0].index;
+    const date = dateLabels[index];
+    const errors = dailyErrors[index] || [];
 
-      if (errors.length > 0) {
-        setModalData({ date, errors });
-        setIsModalOpen(true);
-      }
+    if (errors.length > 0) {
+      setModalData({ date, errors });
+      setIsModalOpen(true);
     }
-  };
+  }
+  }, [dateLabels, dailyErrors]);
 
   const currentData = useMemo(() => {
     if (activeTab === 'soil') return moistureData;
+    if (activeTab === 'humid') return humidData;
     if (activeTab === 'temp') return tempData;
     if (activeTab === 'light') return lightData;
     return [];
-  }, [activeTab, moistureData, tempData, lightData]);
+  }, [activeTab, moistureData,humidData, tempData, lightData]);
 
   const currentLimit = useMemo(() => {
     // statsData.thresholds가 있다면 그걸 쓰고, 없으면 THEME의 기본값 사용
@@ -94,9 +95,9 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     maintainAspectRatio: false,
     layout: { padding: { right: 20 } },
     interaction: {
-    mode: 'nearest', // 마우스 근처의 포인트를 찾음
-    intersect: false, // 점 위에 정확히 있지 않아도 작동
-    axis: 'x' // x축 기준으로 마우스가 지나가기만 해도 툴팁 활성화
+    mode: 'nearest', 
+    intersect: false,
+    axis: 'x'
   },
     onClick: handleChartClick,
     plugins: {
@@ -139,7 +140,7 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
         title: { display: true, text: config.unit }
       }
     }
-  }), [config, currentLimit, dailyErrors]);
+  }), [config, currentLimit, dailyErrors, handleChartClick]);
 
   return (
     <div className='Chart-canvas'>

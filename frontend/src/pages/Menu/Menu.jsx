@@ -247,7 +247,7 @@ const newData = {
   // Sensor Config 수정
   const SENSOR_CONFIG = [
     { id: 'temp', label: '온도', unit: '°C', icon: <FaTemperatureHigh />, color: 'temp' },
-    { id: 'humid', label: '물 잔량', unit: '%', icon: <FaTint />, color: 'humid' },
+    { id: 'humid', label: '습도', unit: '%', icon: <FaTint />, color: 'humid' },
     { id: 'soil', label: '토양 수분', unit: '%', icon: <FaLeaf />, color: 'soil' },
     { id: 'light', label: '조도', unit: 'lx', icon: <FaSun />, color: 'light' },
   ];
@@ -308,9 +308,9 @@ const newData = {
         <div className="card chart-card">
           <div className="chart-controls-container">
             <div className='tab-buttons'>
-              {['soil', 'temp', 'light'].map(id => (
+              {['soil','humid', 'temp', 'light'].map(id => (
                 <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
-                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : '조도'}
+                  {id === 'soil' ? '토양수분' : id === 'temp' ? '온도' : id ==='humid' ? '습도'  : '조도'}
                 </button>
               ))}
             </div>
