@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 // AI 서버 통신 함수 
-const requestAIAnalysis = async (file, question ,plantSpecies) => {
+const requestAIAnalysis = async (file, question ,plantSpecies, sensorData) => {
     try {
         // [방어 로직] 파일이나 질문 둘 중 하나는 있어야 통신
         if (!file && !question) {
@@ -27,7 +27,14 @@ const requestAIAnalysis = async (file, question ,plantSpecies) => {
             formData.append('message', question);
         }
 
-        if (plantSpecies) formData.append('plant_species', plantSpecies); //추가 파이썬 서버로 식물 종 보냄
+        if (plantSpecies) formData.append('plant_species', plantSpecies);
+        if (plantSpecies) formData.append('plant_species', plantSpecies);
+        // 🚨 form-data 숫자 소실 버그 우회를 위해 문자열 상태 그대로 포장하여 안전하게 전송
+        if (sensorData) {
+            const sensorString = typeof sensorData === 'string' ? sensorData : JSON.stringify(sensorData);
+            formData.append('sensor_data', sensorString);
+            console.log("📦 [Node -> Python] sensor_data 패킹 완료:", sensorString);
+        }
 
         const pythonServerUrl = 'https://ys1235-smartplant.hf.space/predict'.trim();
         
@@ -58,7 +65,7 @@ const requestAIAnalysis = async (file, question ,plantSpecies) => {
 
 module.exports = {
     // 1. 진단방 생성 (AI 분석 + DB 저장)
-    addDiagnosisLog: async ({ plantId, files, question, title, sessionId }) => {
+    addDiagnosisLog: async ({ plantId, files, question, title, sessionId, sensorData }) => {
         // [수정] 여러 장의 파일(files) 경로를 콤마(,)로 합쳐서 저장하도록 변경
         const imageUrl = (files && files.length > 0) 
             ? files.map(f => `/uploads/${f.filename}`).join(',') 
@@ -71,7 +78,7 @@ module.exports = {
         // [수정] file 대신 files 배열 존재 여부 확인
         if ((files && files.length > 0) || question) {
              // [수정] AI 분석 함수로 파일 배열 전달
-             aiResponse = await requestAIAnalysis(files, question, plantSpecies);
+             aiResponse = await requestAIAnalysis(files, question, plantSpecies, sensorData);
         }
 
         const finalResult = aiResponse.ui_status || '상담 완료';
