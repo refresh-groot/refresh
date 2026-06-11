@@ -188,15 +188,28 @@ def predict():
             if not val and req_json: val = req_json.get(key)
             return val
 
-        user_message = get_param('message') or ""
+        # 🚨 [최종 완벽 수정본] 어떤 이름표로 오든 다 잡아냅니다!
+        # 1. 질문: 'message'로 오든 'question'으로 오든 다 받기
+        user_message = get_param('message') or get_param('question') or ""
         plant_species = get_param('plant_species') or "알 수 없는 식물"
         
-        # 🚨 [핵심 수정 구간] 팀원이 쏴주는 실제 변수명으로 쏙쏙 뽑아냅니다!
-        soil = get_param('soil')
-        light = get_param('light')
-        temp = get_param('temp')
-        # humid라는 이름으로 들어오지만 우리는 물탱크 잔량(water_level)으로 씁니다!
-        water_level = get_param('humid') 
+        # 2. 센서값: 일단 낱개 이름표 찾기
+        soil = get_param('soil') or get_param('moisture_level')
+        light = get_param('light') or get_param('light_level')
+        temp = get_param('temp') or get_param('temperature')
+        water_level = get_param('humid') or get_param('humidity')
+
+        # 3. 만약 프론트가 'sensor_data'라는 비닐봉지(JSON)에 통째로 담아 보냈다면? 봉지 뜯어서 적용!
+        sensor_data_str = get_param('sensor_data')
+        if sensor_data_str:
+            try:
+                sensors = json.loads(sensor_data_str)
+                soil = sensors.get('soil', soil)
+                light = sensors.get('light', light)
+                temp = sensors.get('temp', temp)
+                water_level = sensors.get('humid', water_level)
+            except Exception as e:
+                print(f"⚠️ [Warning] 센서 데이터 JSON 파싱 실패: {e}")
 
         raw_history = get_param('history')                
         if raw_history:                                               
