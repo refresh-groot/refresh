@@ -5,7 +5,7 @@ module.exports = {
     findAllByPlantId: async (plantId) => {
         return await Notification.findAll({
             where: { plant_id: plantId },
-            order: [['created_at', 'ASC']] // 최신 알림부터
+            order: [['created_at', 'DESC']] // 최신 알림부터
         });
     },
 
