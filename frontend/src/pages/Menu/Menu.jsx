@@ -53,6 +53,7 @@ function Menu() {
       const response = await fetch(`${SERVER_URL}/api/environment-log/stats/${currentPlant.id}`);
       if (!response.ok) throw new Error('차트 데이터를 불러오지 못했습니다.');
       const data = await response.json();
+      console.log("백엔드가 보내준 차트 데이터 전체:", data);
       setStatsData(data);
     } catch (error) {
       console.error('차트 연동 에러: ', error);

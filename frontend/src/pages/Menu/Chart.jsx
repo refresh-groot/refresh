@@ -40,7 +40,7 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
     moistureData = [],
     tempData = [],
     lightData = [],
-    humidData = [],
+    humidityData = [],
     dailyErrors = [],
     thresholds = {}
   } = statsData;
@@ -65,11 +65,11 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
 
   const currentData = useMemo(() => {
     if (activeTab === 'soil') return moistureData;
-    if (activeTab === 'humid') return humidData;
+    if (activeTab === 'humid') return humidityData;
     if (activeTab === 'temp') return tempData;
     if (activeTab === 'light') return lightData;
     return [];
-  }, [activeTab, moistureData,humidData, tempData, lightData]);
+  }, [activeTab, moistureData,humidityData, tempData, lightData]);
 
   const currentLimit = useMemo(() => {
     // statsData.thresholds가 있다면 그걸 쓰고, 없으면 THEME의 기본값 사용
