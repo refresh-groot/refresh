@@ -24,7 +24,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 # 3. AI 진단 핵심 로직
 # ==============================================================================
 # 파라미터 이름을 바뀐 데이터에 맞게 직관적으로 수정 (moisture_level -> soil 등)
-def get_plant_diagnosis(image_path, user_message, history, plant_species, soil=None, light=None, temp=None, water_level=None): 
+def get_plant_diagnosis(image_path, user_message, history, plant_species, soil=None, light=None, temp=None, humidity=None): 
     history_text = ""
     try:
         if history:
@@ -53,7 +53,7 @@ def get_plant_diagnosis(image_path, user_message, history, plant_species, soil=N
         f"- 토양 수분: {format_sensor(soil, '%')}",
         f"- 현재 조도: {format_sensor(light, ' lux')}",
         f"- 주변 온도: {format_sensor(temp, '°C')}",
-        f"- 물탱크 물 잔량: {format_sensor(water_level, '%')} (주의: 공기 습도가 아님!)"
+        f"- 대기 습도: {format_sensor(humidity, '%')} (주의: 공기 습도가 아님!)"
     ]
 
     sensor_info_text = "\n[하드웨어 실시간 센서 측정값 (현재 시점)]\n" + "\n".join(sensor_lines)
@@ -197,7 +197,7 @@ def predict():
         soil = get_param('soil') or get_param('moisture_level')
         light = get_param('light') or get_param('light_level')
         temp = get_param('temp') or get_param('temperature')
-        water_level = get_param('humid') or get_param('humidity')
+        humidity = get_param('humid') or get_param('humidity')
 
         # 3. 만약 프론트가 'sensor_data'라는 비닐봉지(JSON)에 통째로 담아 보냈다면? 봉지 뜯어서 적용!
         sensor_data_str = get_param('sensor_data')
@@ -207,7 +207,7 @@ def predict():
                 soil = sensors.get('soil', soil)
                 light = sensors.get('light', light)
                 temp = sensors.get('temp', temp)
-                water_level = sensors.get('humid', water_level)
+                humidity = sensors.get('humid', humidity)
             except Exception as e:
                 print(f"⚠️ [Warning] 센서 데이터 JSON 파싱 실패: {e}")
 
@@ -220,7 +220,7 @@ def predict():
                 history = raw_history                                                                                                              
                 
         print(f"   └─ 타겟 식물: {plant_species}") 
-        print(f"   └─ 수분:{soil}% | 조도:{light}lux | 온도:{temp}°C | 물잔량:{water_level}%")
+        print(f"   └─ 수분:{soil}% | 조도:{light}lux | 온도:{temp}°C | 물잔량:{humidity}%")
         
         if image_path is None and not user_message:                      
             print("❌ [Error] 빈 요청입니다.")
@@ -231,7 +231,7 @@ def predict():
         # 수정된 변수들을 함수로 전달
         result_json_str = get_plant_diagnosis(
             image_path, user_message, history, plant_species, 
-            soil, light, temp, water_level
+            soil, light, temp, humidity
         )                        
         
         try:
