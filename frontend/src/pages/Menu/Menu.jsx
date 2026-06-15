@@ -157,7 +157,9 @@ function Menu() {
     }
     try {
       await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`);
-      const response = await fetch(`${SERVER_URL}/api/watering-log`, {
+      
+      // [수정] 프론트엔드 직접 DB 저장 로직 주석 처리 (더블 로깅 방지)
+      /* const response = await fetch(`${SERVER_URL}/api/watering-log`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,9 +169,17 @@ function Menu() {
         })
       });
       if (!response.ok) throw new Error('급수 실패');
+      */
+
       showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
-      fetchWateringHistory();
-      fetchChartData();
+      
+      // [추가] 하드웨어가 급수를 마치고 꽉 찬 센서값 로그를 DB에 올릴 시간을 벌어줍니다.
+      // 수동 급수 시간(waterDuration)이 끝난 직후 1.5초의 여유를 두고 화면을 갱신합니다.
+      setTimeout(() => {
+        fetchWateringHistory();
+        fetchChartData();
+      }, (waterDuration * 1000) + 1500);
+
     } catch (error) {
       showToast('error', '급수에 실패했습니다.');
     }
@@ -201,7 +211,7 @@ function Menu() {
     }
   }, [showHistory, fetchWateringHistory]);
 
-  const { sensorData: serverData, loading: sensorLoading, fetchData: fetchSensorData } = useSensorData(currentPlant.id, 600000);
+  const { sensorData: serverData, loading: sensorLoading, fetchData: fetchSensorData } = useSensorData(currentPlant.id, 10000);
 
 const newData = {
     temp: btSensorData?.temp ?? serverData?.temp ?? null,
