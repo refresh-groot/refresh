@@ -655,6 +655,13 @@
     color: #333;
 }
 
+.view-more-history{
+    border: none;
+    background: none;
+    outline: none;
+    cursor: pointer;
+}
+
 @keyframes fadeInUp {
     from {
     opacity: 0;

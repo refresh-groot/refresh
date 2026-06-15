@@ -261,8 +261,15 @@ const newData = {
     return <div className="loading">데이터를 불러오는 중입니다...</div>;
   }
 
-  // 동료 추가: 상태 텍스트
-  const getStatusText = () => '기기 연결됨';
+  const getStatusText = () => {
+  if (currentPlant.status === 'dead' || currentPlant.status === 'archived') {
+    return '사망 ☠️';
+  }
+  if (!deviceName) {
+    return '기기 미연결 📵';
+  }
+  return `${deviceName} 연결됨 🔗`;
+};
 
   return (
     <div className="menu-dashboard">
