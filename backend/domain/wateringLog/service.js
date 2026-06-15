@@ -3,6 +3,13 @@ const { Notification } = require('../index');
 
 module.exports = {
     recordWatering: async (logData) => {
+        // ⭐ [더블 로깅 방어막 추가] 
+        // moisture_level 값이 null, undefined이거나, 너무 터무니없는 값(예: 0)일 경우 DB 저장을 막습니다.
+        if (logData.moisture_level == null || logData.moisture_level === undefined || logData.moisture_level <= 0) {
+            console.log("⚠️ 센서값이 없는 급수 로그는 저장하지 않습니다. (더블 로깅 방어)");
+            return null; // 여기서 함수를 끝내버려서 repository.save()가 실행되지 않게 함
+        }
+
         const savedLog = await repository.save(logData);
 
         // --- [시간 포맷팅 로직] ---
