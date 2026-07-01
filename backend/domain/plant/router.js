@@ -18,4 +18,6 @@ router.delete('/:id', controller.removePlant);
 // 데이터를 부분적으로 수정하므로 PATCH 메서드를 사용
 router.patch('/:id/archive', controller.archivePlant);
 
+// 4. 자동 급수 내용 이동
+router.get('/:id/hardware', controller.getHardwareSettings);
 module.exports = router;

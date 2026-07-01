@@ -81,5 +81,26 @@ module.exports = {
     } catch (error) {
       return res.status(500).json({ message: error.message });
     }
+  },
+  getHardwareSettings: async (req, res) => {
+    try {
+      const plantId = req.params.id; // 라우터의 /:id (식물 고유번호) 가져오기
+      
+      const plant = await Plant.findByPk(plantId);
+      
+      if (!plant) {
+        return res.status(404).json({ message: "해당 식물을 찾을 수 없습니다." });
+      }
+      
+      // 아두이노가 읽기 쉽게 딱 숫자만 JSON으로 던져줍니다.
+      return res.status(200).json({
+        min_moisture: plant.min_moisture,
+        water_duration_ms: plant.water_duration_ms
+      });
+      
+    } catch (error) {
+      console.error("❌ 하드웨어 설정 조회 에러:", error);
+      return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+    }
   }
 };
