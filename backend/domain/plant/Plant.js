@@ -54,6 +54,18 @@ class Plant extends Sequelize.Model {
           allowNull: true,
           comment: '식물 사망 이유 (물 부족, 과습, 빛 부족, 병충해, 기타)',
         },
+        min_moisture: {
+          type: Sequelize.INTEGER,
+          allowNull: true, // 진단 받기 전엔 값이 없을 수 있으므로 true
+          defaultValue: 30, // 혹시 모를 상황을 대비한 기본값 30%
+          comment: 'AI가 설정한 자동 급수 수분 하한선 (%)',
+        },
+        water_duration_ms: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          defaultValue: 2000, // 기본값 2초(2000ms)
+          comment: 'AI가 설정한 1회 자동 급수 가동 시간 (ms)',
+        },
       },
       {
         sequelize,

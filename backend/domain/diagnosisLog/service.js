@@ -117,6 +117,21 @@ module.exports = {
             title: title,
             session_id: sessionId 
         });
+        
+        if (aiResponse.min_moisture !== undefined && aiResponse.water_duration_ms !== undefined) {
+            try {
+                // 상단에 이미 선언된 Plant 모델을 사용하여 UPDATE 쿼리 실행
+                await Plant.update({
+                    min_moisture: aiResponse.min_moisture,          // 수분 하한선 저장
+                    water_duration_ms: aiResponse.water_duration_ms // 펌프 시간 저장
+                }, {
+                    where: { id: plantId } // 현재 진단받은 그 식물의 서랍장만 찾아서!
+                });
+                console.log(`✅ [DB 저장] 식물(ID: ${plantId}) 아두이노 기준값 업데이트 완료! (수분: ${aiResponse.min_moisture}%, 시간: ${aiResponse.water_duration_ms}ms)`);
+            } catch (err) {
+                console.error("❌ Plant DB 업데이트 실패:", err);
+            }
+        }
 
         return newLog;
     },
