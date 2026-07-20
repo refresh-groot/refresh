@@ -85,8 +85,8 @@ app.use(cookieParser(process.env.COOKIE_SECRET || 'smartplant-secret'));
  * 2. 세션 설정
  */
 app.use(session({
-  resave: true,               // [수정] false -> true
-  saveUninitialized: true,    // [수정] false -> true
+  resave: false,               
+  saveUninitialized: false,    
   secret: process.env.COOKIE_SECRET || 'smartplant-secret',
   cookie: { 
     httpOnly: true, // 자바스크립트로 쿠키 탈취 방지
