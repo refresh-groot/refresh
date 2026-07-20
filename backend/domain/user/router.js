@@ -5,7 +5,7 @@ const validator = require('../../middleware/validator');
 
 // 회원가입
 router.post('/signup', validator.Signup, controller.signup);
-router.post('/check/id', validator.CheckId, controller.checkloginId);
+router.post('/check/id', validator.CheckId, controller.checkLoginId);
 router.post('/check/nickname', validator.CheckNickname, controller.checkNickname);
 router.post('/email/send', controller.sendEmail);   
 router.post('/email/verify', controller.verifyEmail); 

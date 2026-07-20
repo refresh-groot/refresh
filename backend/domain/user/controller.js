@@ -1,14 +1,14 @@
-//user/controller
 const service = require('./service');
 
 module.exports = {
   // 1. 아이디 중복 확인
-  checkloginId: async (req, res) => {
+  checkLoginId: async (req, res) => { // 변경점: checkloginId -> checkLoginId (카멜케이스)
     try {
       const { loginId } = req.body;
       const result = await service.checkLoginId(loginId);
       return res.status(200).json(result);
     } catch (error) {
+      console.error("아이디 중복 확인 에러:", error); // 변경점: 에러 로깅 통일
       return res.status(500).json({ message: '서버 에러', error: error.message });
     }
   },
@@ -20,6 +20,7 @@ module.exports = {
       const result = await service.checkNickname(nickname);
       return res.status(200).json(result);
     } catch (error) {
+      console.error("닉네임 중복 확인 에러:", error);
       return res.status(500).json({ message: '서버 에러', error: error.message });
     }
   },
@@ -31,7 +32,7 @@ module.exports = {
       const result = await service.sendEmailCode(email);
       return res.status(200).json(result);
     } catch (error) {
-      console.error(error);
+      console.error("이메일 인증 발송 에러:", error);
       return res.status(500).json({ message: '메일 전송 실패', error: error.message });
     }
   },
@@ -45,6 +46,7 @@ module.exports = {
       const result = await service.verifyEmailCode(email, code);
       return res.status(200).json({ message: '이메일 인증 성공!', result });
     } catch (error) {
+      console.error("이메일 인증 확인 에러:", error);
       return res.status(400).json({ message: error.message });
     }
   },
@@ -57,6 +59,7 @@ module.exports = {
       await service.signup({ loginId, password, email, nickname, isAiDataAllowed });
       return res.status(201).json({ message: '회원가입이 완료되었습니다.' });
     } catch (error) {
+      console.error("회원가입 에러:", error);
       return res.status(400).json({ message: error.message });
     }
   },
@@ -83,6 +86,7 @@ module.exports = {
       });
 
     } catch (error) {
+      console.error("로그인 에러:", error);
       return res.status(401).json({ message: error.message });
     }
   },
@@ -114,6 +118,7 @@ module.exports = {
       const userProfile = await service.getProfile(id);
       return res.status(200).json(userProfile);
     } catch (error) {
+      console.error("프로필 조회 에러:", error);
       return res.status(404).json({ message: error.message });
     }
   },
@@ -130,7 +135,7 @@ module.exports = {
 
       return res.status(200).json({ message: '소개글이 수정되었습니다.' });
     } catch (error) {
-      console.error(error);
+      console.error("프로필 수정 에러:", error);
       return res.status(500).json({ message: '서버 에러' });
     }
   },
@@ -147,7 +152,7 @@ module.exports = {
         message: `알림이 ${isAlertOn ? '켜졌습니다' : '꺼졌습니다'}.` 
       });
     } catch (error) {
-      console.error(error);
+      console.error("알림 설정 업데이트 에러:", error);
       return res.status(500).json({ message: '서버 에러' });
     }
   },
@@ -171,85 +176,160 @@ module.exports = {
       if (error.message.includes('비밀번호')) {
         return res.status(401).json({ message: error.message });
       }
-      console.error(error);
+      console.error("회원 탈퇴 처리 에러:", error);
       return res.status(500).json({ message: '서버 에러' });
     }
   },
 
-  // 계정 실재 여부를 확인하는 미들웨어
+  // 계정 실재 여부를 확인하는 미들웨어 (보안 로직 강화)
   validateUser: async (req, res, next) => {
     try {
-      if (req.session && req.session.user) {
-        // Service를 통해 유저 조회
-        const user = await service.getUserById(req.session.user.id);
-        
-        if (!user) {
-          return req.session.destroy(() => {
-            res.clearCookie('connect.sid');
-            return res.status(401).json({ message: '존재하지 않거나 삭제된 계정입니다.' });
-          });
-        }
+      // 1. 세션이나 유저 정보가 아예 없으면 즉시 차단 (기존에는 이 로직이 없어 비로그인 통과 위험이 있었음)
+      if (!req.session || !req.session.user) {
+        return res.status(401).json({ message: '로그인 정보가 없습니다.' });
       }
+
+      // 2. Service를 통해 DB에 유저가 실제로 존재하는지 조회
+      const user = await service.getUserById(req.session.user.id);
+      
+      if (!user || user.status === 'WITHDRAWN') {
+
+          return req.session.destroy(() => {
+              res.clearCookie('connect.sid');
+              return res.status(401).json({
+                  message:'존재하지 않거나 탈퇴한 계정입니다.'
+              });
+          });
+
+      }
+      
+      // 3. 모든 검증을 통과했을 때만 다음 로직으로 이동
       next();
     } catch (error) {
-      console.error("유저 검증 중 에러:", error);
-      next();
+      console.error("유저 미들웨어 검증 중 에러:", error);
+      // 에러 발생 시 통과시키지 않고 에러 반환
+      return res.status(500).json({ message: '인증 서버 통신 에러' });
     }
   },
 
-  // 12. 카카오 로그인
+// 12. 카카오 로그인
   kakaoLogin: async (req, res) => {
     try {
-      const { code } = req.query; 
+      const { code } = req.query; // 카카오가 전달해준 인가 코드
+      
+      if (!code) {
+        console.error('❌ 카카오 인가 코드가 없습니다.');
+        return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=no_code`);
+      }
+
+      // 서비스 로직을 통해 카카오 유저 정보 반환
       const user = await service.kakaoLogin(code);
 
-      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
+      // 세션 객체에 유저 정보 할당
+      req.session.user = { 
+        id: user.id, 
+        nickname: user.nickname, 
+        loginId: user.loginId 
+      };
+      
+      // 세션 저장 후 프론트엔드로 리다이렉트
+      req.session.save(() => {
+        return res.redirect(process.env.CLIENT_URL || 'http://223.130.157.123:5173/');
+      });
     } catch (error) {
       console.error('❌ 카카오 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://223.130.157.123:5173/login?error=kakao_failed');
+      return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=kakao_failed`);
     }
   },
 
-  // 13. 구글 로그인 컨트롤러
+  // 13. 구글 로그인
   googleLogin: async (req, res) => {
     try {
-      const { code } = req.query; 
+      const { code } = req.query; // 구글이 전달해준 인가 코드
+      
+      if (!code) {
+        console.error('❌ 구글 인가 코드가 없습니다.');
+        return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=no_code`);
+      }
+
+      // 서비스 로직을 통해 구글 유저 정보 반환
       const user = await service.googleLogin(code);
 
-      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
+      // 세션 객체에 유저 정보 할당
+      req.session.user = { 
+        id: user.id, 
+        nickname: user.nickname, 
+        loginId: user.loginId 
+      };
+      
+      // 세션 저장 후 프론트엔드로 리다이렉트
+      req.session.save(() => {
+        return res.redirect(process.env.CLIENT_URL || 'http://223.130.157.123:5173/');
+      });
     } catch (error) {
       console.error('❌ 구글 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://223.130.157.123:5173/login?error=google_failed');
+      return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=google_failed`);
     }
   },
 
-  // 14. 네이버 로그인 컨트롤러
+// 14. 네이버 로그인 컨트롤러
   naverLogin: async (req, res) => {
     try {
+      // 네이버는 인가 코드(code)와 상태 토큰(state)을 함께 전달받습니다.
       const { code, state } = req.query; 
+      
+      if (!code) {
+        console.error('❌ 네이버 인가 코드가 없습니다.');
+        return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=no_code`);
+      }
+
+      // 서비스 로직을 통해 네이버 유저 정보 반환
       const user = await service.naverLogin(code, state);
 
-      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
+      // 세션 객체에 유저 정보 할당
+      req.session.user = { 
+        id: user.id, 
+        nickname: user.nickname, 
+        loginId: user.loginId 
+      };
+      
+      // 세션 저장 후 프론트엔드로 리다이렉트
+      req.session.save(() => {
+        return res.redirect(process.env.CLIENT_URL || 'http://223.130.157.123:5173/');
+      });
     } catch (error) {
       console.error('❌ 네이버 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://223.130.157.123:5173/login?error=naver_failed');
+      return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=naver_failed`);
     }
   },
 
   // 15. 깃허브 로그인 컨트롤러
   githubLogin: async (req, res) => {
     try {
-      const { code } = req.query; 
+      const { code } = req.query; // 깃허브가 전달해준 인가 코드
+      
+      if (!code) {
+        console.error('❌ 깃허브 인가 코드가 없습니다.');
+        return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=no_code`);
+      }
+
+      // 서비스 로직을 통해 깃허브 유저 정보 반환
       const user = await service.githubLogin(code);
 
-      req.session.user = { id: user.id, nickname: user.nickname, loginId: user.loginId };
-      req.session.save(() => res.redirect('http://223.130.157.123:5173/'));
+      // 세션 객체에 유저 정보 할당
+      req.session.user = { 
+        id: user.id, 
+        nickname: user.nickname, 
+        loginId: user.loginId 
+      };
+      
+      // 세션 저장 후 프론트엔드로 리다이렉트
+      req.session.save(() => {
+        return res.redirect(process.env.CLIENT_URL || 'http://223.130.157.123:5173/');
+      });
     } catch (error) {
       console.error('❌ 깃허브 로그인 에러:', error.response?.data || error.message);
-      return res.redirect('http://223.130.157.123:5173/login?error=github_failed');
+      return res.redirect(`${process.env.CLIENT_URL || 'http://223.130.157.123:5173'}/login?error=github_failed`);
     }
   }
 };
