@@ -256,31 +256,6 @@ function Login() {
     }
   };
 
-  const handleKakaoLogin = () => {
-    const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID;
-    const REDIRECT_URI = `${SERVER_URL}/api/user/auth/kakao/callback`;
-    window.location.href = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
-  };
-
-  const handleGoogleLogin = () => {
-    const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const REDIRECT_URI = `${SERVER_URL}/api/user/auth/google/callback`;
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=email profile`;
-  };
-
-  const handleNaverLogin = () => {
-    const NAVER_CLIENT_ID = import.meta.env.VITE_NAVER_CLIENT_ID;
-    const REDIRECT_URI = `${SERVER_URL}/api/user/auth/naver/callback`;
-    const state = Math.random().toString(36).substring(2);
-    window.location.href = `https://nid.naver.com/oauth2.0/authorize?client_id=${NAVER_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&state=${state}`;
-  };
-
-  const handleGithubLogin = () => {
-    const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-    const REDIRECT_URI = `${SERVER_URL}/api/user/auth/github/callback`; 
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user:email`;
-  };
-
   return (
     <div className="login-container">
       <form className="login-form" onSubmit={handleLogin}>
@@ -298,12 +273,6 @@ function Login() {
             <button className='signin-btn' type='submit' disabled={isLoading}>
               {isLoading ? '로그인 중...' : '로그인'}
             </button>
-            <div className="social-login">
-              <button type="button" className="kakao-btn" onClick={handleKakaoLogin}><RiKakaoTalkFill /></button>
-              <button type="button" className="google-btn" onClick={handleGoogleLogin}><FcGoogle /></button>
-              <button type="button" className="naver-btn" onClick={handleNaverLogin}><SiNaver /></button>
-              <button type="button" className="github-btn" onClick={handleGithubLogin}><FaGithub /></button>
-            </div>
           </div>
         )}
         
