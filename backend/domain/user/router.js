@@ -24,9 +24,5 @@ router.delete('/withdraw', validator.Withdraw, controller.withdraw);
 
 // 세션 체크 및 소셜 로그인 콜백
 router.get('/check', controller.check);
-router.get('/auth/kakao/callback', controller.kakaoLogin);
-router.get('/auth/google/callback', controller.googleLogin);
-router.get('/auth/naver/callback', controller.naverLogin);
-router.get('/auth/github/callback', controller.githubLogin);
 
 module.exports = router;
