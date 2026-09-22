@@ -27,7 +27,7 @@ module.exports = {
     return await User.findByPk(id);
   },
 
-  // 5. 일반 회원가입
+  // 5. 회원가입
   createUser: async ({
     loginId,
     password,
@@ -45,43 +45,14 @@ module.exports = {
     });
   },
 
-  // 6. 소셜 ID + Provider 조회
-  findBySnsIdAndProvider: async (snsId, provider) => {
-    return await User.findOne({
-      where: {
-        snsId,
-        provider
-      }
-    });
-  },
-
-  // 7. 소셜 회원 생성
-  createSocialUser: async ({
-    loginId,
-    email,
-    nickname,
-    provider,
-    snsId
-  }) => {
-    return await User.create({
-      loginId,
-      password: null,
-      email,
-      nickname,
-      provider,
-      snsId,
-      status: 'ACTIVE'
-    });
-  },
-
-  // 8. 회원 완전 삭제
+  // 6. 회원 완전 삭제
   hardDeleteUser: async (id) => {
     return await User.destroy({
       where: { id }
     });
   },
 
-  // 9. 회원 익명화
+  // 7. 회원 익명화
   anonymizeUser: async (id) => {
     const randomSuffix = Date.now().toString().slice(-6);
 
@@ -91,8 +62,7 @@ module.exports = {
         password: 'WIPED_PASSWORD',
         email: `deleted_${id}_${randomSuffix}@refresh.com`,
         nickname: `withdrawn_${id}_${randomSuffix}`,
-        status: 'WITHDRAWN',
-        snsId: null
+        status: 'WITHDRAWN'
       },
       {
         where: { id }

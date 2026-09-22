@@ -125,11 +125,8 @@ module.exports = {
     const user = await repository.findById(id);
     if (!user) throw new Error('유저를 찾을 수 없습니다.');
 
-    // 일반(로컬) 가입자인 경우에만 비밀번호 검증 진행
-    if (user.provider === 'local') {
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error('비밀번호가 일치하지 않습니다.');
 
     // AI 학습 데이터 동의 여부에 따른 분기 처리
     if (user.isAiDataAllowed) {
@@ -139,134 +136,5 @@ module.exports = {
       await repository.hardDeleteUser(id);
       return { message: '회원 탈퇴가 완료되었으며, 모든 개인 데이터가 완전히 파기되었습니다.' };
     }
-  },
-
-  // 12. 카카오 로그인
-  kakaoLogin: async (code) => {
-    const params = new URLSearchParams();
-    params.append('grant_type', 'authorization_code');
-    params.append('client_id', process.env.KAKAO_CLIENT_ID);
-    params.append('redirect_uri', process.env.KAKAO_REDIRECT_URI); 
-    params.append('client_secret', process.env.KAKAO_CLIENT_SECRET); 
-    params.append('code', code);
-    
-    const tokenResponse = await axios.post(
-      'https://kauth.kakao.com/oauth/token',
-      params,
-      { headers: { 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' } }
-    );
-
-    const userInfoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}`, 'Content-type': 'application/x-www-form-urlencoded;charset=utf-8' },
-    });
-
-    const userInfo = userInfoResponse.data;
-    const snsId = userInfo.id.toString(); 
-    const nickname = userInfo.kakao_account?.profile?.nickname || `카카오_${snsId.substring(0, 5)}`;
-    const email = userInfo.kakao_account?.email || `${snsId}@kakao.com`; 
-    const loginId = `kakao_${snsId}`; 
-
-    let user = await repository.findBySnsIdAndProvider(snsId, 'kakao');
-    if (user && user.status === 'WITHDRAWN') {
-      throw new Error('탈퇴한 계정입니다.');
-    }
-    if (!user) {
-      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'kakao', snsId });
-    }
-    return user; 
-  },
-
-  // 13. 구글 로그인
-  googleLogin: async (code) => {
-    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
-      client_id: process.env.GOOGLE_CLIENT_ID, 
-      client_secret: process.env.GOOGLE_CLIENT_SECRET, 
-      code, 
-      grant_type: 'authorization_code', 
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI
-    });
-
-    const userInfoResponse = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
-    });
-
-    const userInfo = userInfoResponse.data;
-    const snsId = userInfo.id.toString();
-    const email = userInfo.email;
-    const nickname = userInfo.name || `구글_${snsId.substring(0, 5)}`;
-    const loginId = `google_${snsId}`;
-
-    let user = await repository.findBySnsIdAndProvider(snsId, 'google');
-    if (user && user.status === 'WITHDRAWN') {
-      throw new Error('탈퇴한 계정입니다.');
-    }
-    if (!user) {
-      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'google', snsId });
-    }
-    return user;
-  },
-
-  // 14. 네이버 로그인
-  naverLogin: async (code, state) => {
-    const tokenUrl = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${process.env.NAVER_CLIENT_ID}&client_secret=${process.env.NAVER_CLIENT_SECRET}&code=${code}&state=${state}`;
-    const tokenResponse = await axios.get(tokenUrl);
-
-    const userInfoResponse = await axios.get('https://openapi.naver.com/v1/nid/me', {
-      headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` },
-    });
-
-    const userInfo = userInfoResponse.data.response;
-    const snsId = userInfo.id.toString();
-    const email = userInfo.email;
-    const nickname = userInfo.nickname || `네이버_${snsId.substring(0, 5)}`;
-    const loginId = `naver_${snsId}`;
-
-    let user = await repository.findBySnsIdAndProvider(snsId, 'naver');
-    if (user && user.status === 'WITHDRAWN') {
-      throw new Error('탈퇴한 계정입니다.');
-    }
-    if (!user) {
-      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'naver', snsId });
-    }
-    return user;
-  },
-
-  // 15. 깃허브 로그인
-  githubLogin: async (code) => {
-    const tokenResponse = await axios.post('https://github.com/login/oauth/access_token', {
-      client_id: process.env.GITHUB_CLIENT_ID, 
-      client_secret: process.env.GITHUB_CLIENT_SECRET, 
-      code
-    }, { headers: { Accept: 'application/json' } });
-
-    const accessToken = tokenResponse.data.access_token;
-
-    const userInfoResponse = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    const userInfo = userInfoResponse.data;
-    const snsId = userInfo.id.toString();
-    const nickname = userInfo.login || `깃허브_${snsId.substring(0, 5)}`;
-    const loginId = `github_${snsId}`;
-
-    // 깃허브 이메일 비공개 방어 로직 (배열 비어있을 경우 안전장치)
-    let email = userInfo.email;
-    if (!email) {
-      const emailResponse = await axios.get('https://api.github.com/user/emails', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const primaryEmail = emailResponse.data.find(e => e.primary && e.verified);
-      email = primaryEmail ? primaryEmail.email : `${snsId}@github.com`;
-    }
-
-    let user = await repository.findBySnsIdAndProvider(snsId, 'github');
-    if (user && user.status === 'WITHDRAWN') {
-      throw new Error('탈퇴한 계정입니다.');
-    }
-    if (!user) {
-      user = await repository.createSocialUser({ loginId, email, nickname, provider: 'github', snsId });
-    }
-    return user;
   }
 };
