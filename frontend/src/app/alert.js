@@ -1,27 +1,43 @@
 import { MAIN_COLOR } from './constants';
 import Swal from 'sweetalert2';
 
+const AppSwal = Swal.mixin({
+  confirmButtonText: '확인',
+  confirmButtonColor: MAIN_COLOR,
+  buttonsStyling: false,
+  customClass: {
+    popup: 'refresh-alert-popup',
+    title: 'refresh-alert-title',
+    htmlContainer: 'refresh-alert-text',
+    confirmButton: 'refresh-alert-confirm',
+    cancelButton: 'refresh-alert-cancel',
+  },
+});
+
 export const showAlert = (icon, title, text, timer) => {
-  return Swal.fire({
-    icon: icon, // 'success', 'error', 'warning', 'info'
-    title: title,
-    text: text,
+  return AppSwal.fire({
+    icon: icon === 'fail' ? 'error' : icon,
+    title,
+    text,
     timer: timer,
     timerProgressBar: timer ? true : false,
-    showConfirmButton: timer ? true : false,
-    confirmButtonColor: MAIN_COLOR,
+    showConfirmButton: !timer,
   });
 };
 
-export const showToast = (icon, title) => {
-    const Toast = Swal.mixin({
+export const showToast = (icon, title, text, timer = 2200) => {
+    const Toast = AppSwal.mixin({
         toast: true,
-        position: 'bottom-end', // 화면 하단
+        position: 'bottom-end',
         showConfirmButton: false,
-        timer: 1000, // 3초 뒤 자동 사라짐
+        timer,
         timerProgressBar: true,
-        width: '300px',
-        padding: '0.5rem',
+        width: '320px',
+        padding: '0.7rem 0.85rem',
+        customClass: {
+          popup: 'refresh-toast-popup',
+          title: 'refresh-toast-title',
+        },
         didOpen: (toast) => {
             toast.style.marginBottom = '60px';
             toast.addEventListener('mouseenter', Swal.stopTimer);
@@ -29,8 +45,11 @@ export const showToast = (icon, title) => {
         }
     });
 
-    Toast.fire({
-        icon: icon,
-        title: title
+    return Toast.fire({
+        icon: icon === 'fail' ? 'error' : icon,
+        title,
+        text,
     });
 };
+
+export default AppSwal;

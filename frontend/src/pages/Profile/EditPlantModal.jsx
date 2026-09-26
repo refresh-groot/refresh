@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Swal from 'sweetalert2';
+import Swal from '../../app/alert';
 import api from '../../api/axios';
 import './EditPlantModal.css';
 

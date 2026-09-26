@@ -73,7 +73,6 @@ function PlantChart({ activeTab = 'soil', statsData = {} }) {
 
   const currentLimit = useMemo(() => {
     // statsData.thresholds가 있다면 그걸 쓰고, 없으면 THEME의 기본값 사용
-    console.log("currentLimit 실행 중, thresholds:", thresholds);
     return thresholds[activeTab === 'soil' ? 'moisture' : activeTab] ?? config.limit;
 }, [activeTab, thresholds, config.limit]);
 

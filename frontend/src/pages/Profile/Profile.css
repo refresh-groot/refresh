@@ -1,353 +1,321 @@
-.profile-container{
-    padding: 70px 5px 0 5px;
-    max-width: 650px;
-    margin: 0 auto;
-    font-family: 'Noto Sans KR', sans-serif;
-    box-sizing: border-box;
+.profile-container {
+  box-sizing: border-box;
+  max-width: 760px;
+  min-height: 100vh;
+  padding: 80px 20px 40px;
+  margin: 0 auto;
+  font-family: 'Noto Sans KR', sans-serif;
 }
 
-.profile-tab-menu {
-    display: flex;
-    justify-content: flex-start; 
-    gap: 10px;
-    padding: 0 20px;
-    margin-top: 10px;
-    margin-bottom: -1px; 
+.profile-header {
+  padding: 22px;
+  margin-bottom: 18px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-
-.profile-tab-menu button {
-    flex: 1;
-    background: none;
-    border: none;
-    font-size: 16px;
-    font-weight: 600;
-    color: #888; 
-    padding: 10px 15px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.3s ease;
+.user-info-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-.profile-tab-menu button.active {
-    color: #333;
-    font-weight: 800;
-}
-
-.profile-tab-menu button.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #4CAF50;
-    border-radius: 2px;
-}
-
-.profile-tab-menu button:active {
-    transform: scale(0.95);
-}
-
-.empty-message {
-    text-align: center;
-    color: #999;
-    padding: 40px 0;
-    font-size: 14px;
-}
-
-.user-info-row{
-    display:flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.user-avatar-icon{
-    font-size: 3rem;
-    color: #bdbdbd;
+.user-avatar-icon {
+  color: var(--primary-color);
+  font-size: 3rem;
 }
 
 .user-text h2 {
-    font-size: 1.4rem;
-    margin: 0;
-    color: #333;
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.4rem;
 }
+
 .user-text p {
-    margin: 5px 0 0;
-    color: #888;
-    font-size: 1rem;
+  margin: 5px 0 0;
+  color: var(--text-sub);
+  font-size: 0.95rem;
 }
 
-.divider{
-    border: 0;
-    height: 1px;
-    background: #eee;
-    margin-bottom: 20px;
-}
-
-.plant-list-wrapper{
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.plant-item{
-    display: flex;
-    align-items: center;
-    padding: 15px;
-    border-radius: 12px;
-    height: 80px;
-    position: relative;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.plant-item:hover{
-    transform: translateY(-2px);
-}
-
-.solid-item{
-    background-color: white;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-.item-img-box img{
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-right: 15px;
-    border: 1px solid #eee;
-}
-
-.item-info{
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    margin-right: 10px;
-}
-
-.info-top{
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    max-width: 100%;
-}
-
-.profile-container .plant-nickname{
-    font-weight: bold;
-    font-size: 1rem;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 0 1 auto;
-    min-width: 0;
-    width: auto;
-}
-
-.profile-container .plant-name-tag{
-    font-size: 0.75rem;
-    color: #666;
-    background-color: #f1f1f1;
-    padding: 2px 6px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    max-width: 120px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.info-bottom{
-    font-size: 0.9rem;
-    color: #999;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.delete-btn-box{
-    background-color: white;
-    border: 1px solid #ff8a80;
-    color: #ff5252;
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    cursor: pointer;
-    flex-shrink: 0;
-    margin-left: 5px;
-}
-
-.delete-btn-box:hover{
-    background-color: #ffebee;
-}
-
-
-.plant-item.dead{
-    opacity: 0.55;
-    filter: grayscale(100%);
-    background-color: #f5f5f5;
-}
-
-.plant-item.dead img{
-    filter: grayscale(100%);
-}
-
-.dead-icon{
-    margin-left: 6px;
-    font-size: 14px;
-}
-
-.plant-item.dead:hover{
-    opacity: 0.65;
-}
-
-.death-badge {
-    position: absolute;
-    top: 2.5px;
-    right: 15px;
-    font-size: 10px;
-    font-weight: bold;
-    color: #e57373;
-    background-color: whitesmoke;
-    padding: 3px 8px;
-}
-
-.edit-btn-box{
-    background-color: white;
-    border: 1px solid #9e9696;
-    color: #423f3f;
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    margin-right: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    flex-shrink: 0;
-    margin-left: 5px;
-}
-
-.edit-btn-box:hover{
-    background-color: #a79f9f;
-}
-
-.dashed-item{
-    background-color: transparent;
-    border: 2px dashed #aaa;
-    justify-content: center;
-    color: #888;
-}
-
-.dashed-item:hover{
-    border-color: #4caf50;
-    color: #4caf50;
-    background-color: #f9fbe7;
-}
-
-.add-content{
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-}
-
-.plus-icon{
-    font-size: 1.2rem;
-}
-
-/* 삭제 모달 오버레이 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+.profile-tab-menu {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  gap: 10px;
+  padding: 0;
+  margin: 0 0 18px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* 삭제 모달 박스 */
-.delete-modal {
-  background: white;
-  border-radius: 16px;
-  padding: 28px 24px;
-  width: 300px;
-  text-align: center;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+.profile-tab-menu button {
   position: relative;
+  flex: 1;
+  padding: 12px 10px;
+  color: var(--text-sub);
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
-/* ! 아이콘 — 커뮤니티 모달엔 없으니 숨기기 */
-.delete-icon {
+.profile-tab-menu button.active {
+  color: var(--primary-strong);
+}
+
+.profile-tab-menu button.active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  content: '';
+  background: var(--primary-color);
+}
+
+.divider {
   display: none;
 }
 
-/* 제목 */
-.delete-modal h2 {
-  font-size: 18px;
+.plant-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plant-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 96px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.plant-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.solid-item {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.plant-item.dead {
+  opacity: 0.64;
+  filter: grayscale(1);
+}
+
+.item-img-box img {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  object-fit: cover;
+  border: 2px solid var(--primary-light);
+  border-radius: 50%;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 10px;
+}
+
+.info-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-container .plant-nickname {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 1rem;
   font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 설명 */
+.profile-container .plant-name-tag {
+  flex-shrink: 0;
+  max-width: 120px;
+  padding: 3px 7px;
+  overflow: hidden;
+  color: var(--primary-strong);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--primary-light);
+  border-radius: 999px;
+}
+
+.info-bottom {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--text-sub);
+  font-size: 0.85rem;
+}
+
+.edit-btn-box,
+.delete-btn-box {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: #ffffff;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.edit-btn-box {
+  margin-right: 8px;
+  color: #526057;
+  border: 1px solid #dce3de;
+}
+
+.edit-btn-box:hover {
+  background: #f1f5f2;
+}
+
+.delete-btn-box {
+  color: var(--error-color);
+  border: 1px solid #f1caca;
+}
+
+.delete-btn-box:hover {
+  background: #fff4f4;
+}
+
+.death-badge {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  padding: 3px 7px;
+  color: #b45656;
+  font-size: 0.68rem;
+  font-weight: 650;
+  background: #fff4f4;
+  border-radius: 999px;
+}
+
+.dead-icon {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.dashed-item {
+  justify-content: center;
+  color: var(--primary-color);
+  background: transparent;
+  border: 1px dashed #9bcab0;
+}
+
+.dashed-item:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary-color);
+}
+
+.add-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.plus-icon {
+  font-size: 1.1rem;
+}
+
+.empty-message,
+.loading-message {
+  padding: 48px 0;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(24, 36, 30, 0.42);
+}
+
+.delete-modal {
+  width: min(100%, 340px);
+  padding: 26px 24px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.delete-modal h2 {
+  margin: 0 0 10px;
+  color: var(--text-main);
+  font-size: 1.05rem;
+}
+
 .delete-modal p {
-  font-size: 13px;
-  color: #888;
-  line-height: 1.5;
-  margin-bottom: 24px;
+  margin: 0 0 22px;
+  color: var(--text-sub);
+  font-size: 0.84rem;
+  line-height: 1.55;
 }
 
-/* 버튼 그룹 */
 .delete-btn-group {
   display: flex;
   gap: 10px;
 }
 
-/* 취소 버튼 */
-.cancel-btn {
-  flex: 1;
-  padding: 13px;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-  background: white;
-  color: #555;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.cancel-btn:hover {
-  background: #f5f5f5;
-}
-
-/* 삭제 버튼 */
+.cancel-btn,
 .profile-delete-btn {
   flex: 1;
-  padding: 13px;
-  border-radius: 10px;
-  border: none;
-  background: #e74c3c;
-  color: #ffffff !important;
-  font-weight: 600;
-  font-size: 14px;
+  padding: 11px;
+  font-size: 0.9rem;
+  font-weight: 650;
+  border-radius: 9px;
   cursor: pointer;
 }
 
-.delete-btn:hover {
-  background: #c0392b;
+.cancel-btn {
+  color: #4d5951;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
 }
 
-@media screen and (min-width: 769px){
-    .profile-container{
-        padding-top: 80px;
-        margin-top: 0;
-    }
+.profile-delete-btn {
+  color: #ffffff;
+  background: var(--error-color);
+  border: 1px solid var(--error-color);
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 30px 16px 96px;
+  }
+
+  .profile-header {
+    padding: 18px;
+  }
+
+  .plant-item {
+    height: 92px;
+    padding: 14px;
+  }
+
+  .item-img-box img {
+    width: 54px;
+    height: 54px;
+  }
 }

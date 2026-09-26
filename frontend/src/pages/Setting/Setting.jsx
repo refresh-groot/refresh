@@ -1,64 +1,110 @@
 // frontend/src/pages/Setting/Setting.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaBluetooth } from 'react-icons/fa';
-import { useBluetooth } from '../../context/BluetoothContext';
+import { useBluetooth } from '../../hooks/useBluetooth';
 import { useAuth } from '../../context/AuthContext';
-import { Bluetooth } from '../../hooks/Bluetooth';
-import { useSensorData } from '../../hooks/useSensorData'; // 동료 추가
+import { Bluetooth } from '../../components/Bluetooth/Bluetooth';
 import { useNavigate, useLocation } from 'react-router-dom'; 
-import { showAlert } from '../../app/alert';
-import Swal from 'sweetalert2';
-import { showToast } from '../../app/alert';
+import Swal, { showToast } from '../../app/alert';
 import api from '../../api/axios';
 import './Setting.css';
 
+const getStoredPlant = () => {
+  try {
+    const plants = JSON.parse(localStorage.getItem('my-plants') || '[]');
+    const selectedPlantId = localStorage.getItem('selected-plant-id');
+    if (!Array.isArray(plants)) return null;
+    return plants.find((item) => String(item.id) === selectedPlantId) || plants[0] || null;
+  } catch {
+    return null;
+  }
+};
+
 function Setting() {
   const { user, logout } = useAuth();
-  // 동료 추가: setSensorData
-  const { deviceName, handleConnectSuccess, sendCommand, setSensorData } = useBluetooth(); 
+  const { deviceName } = useBluetooth();
   const navigate = useNavigate();
   const location = useLocation(); 
 
-  // 상세 페이지에서 넘겨준 식물 정보가 있는지 확인
-  const plant = location.state?.plant; 
+  // 메뉴에서 전달받은 식물, 저장된 선택 식물, API 식물 목록 순으로 복원한다.
+  const [plant, setPlant] = useState(() => location.state?.plant || getStoredPlant());
   const plantId = plant?.id;
   
-  // 동료 추가: 센서 데이터 훅 사용
-  const { sensorData } = useSensorData(plantId);
-
-  console.log("▶ 세팅 페이지 진입 완료. 가져온 식물 ID:", plantId);
 
   const [bio, setBio] = useState('');
   const [isAlertOn, setIsAlertOn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState(false);
   const [bioSaving, setBioSaving] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawPassword, setWithdrawPassword] = useState('');
+  const [minMoisture, setMinMoisture] = useState(plant?.min_moisture ?? 30);
+  const [waterDurationMs, setWaterDurationMs] = useState(plant?.water_duration_ms ?? 2000);
+  const [hardwareSaving, setHardwareSaving] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
       try {
+        setProfileError(false);
+        setLoading(true);
         const res = await api.get('/api/user/profile');
         setBio(res.data.bio || '');
         setIsAlertOn(res.data.isAlertOn || false);
       } catch (e) {
         console.error('프로필 불러오기 실패:', e);
+        setProfileError(true);
       } finally {
         setLoading(false);
       }
-    };
-    fetchProfile();
   }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    const incomingPlant = location.state?.plant;
+    if (!incomingPlant?.id) return;
+
+    setPlant(incomingPlant);
+    localStorage.setItem('selected-plant-id', String(incomingPlant.id));
+  }, [location.state?.plant]);
+
+  useEffect(() => {
+    if (plant?.id) return;
+
+    let isActive = true;
+    api.get('/api/plants')
+      .then((response) => {
+        const plants = Array.isArray(response.data) ? response.data : (response.data?.plants ?? []);
+        if (!isActive || plants.length === 0) return;
+
+        const selectedPlantId = localStorage.getItem('selected-plant-id');
+        const selectedPlant = plants.find((item) => String(item.id) === selectedPlantId) || plants[0];
+        setPlant(selectedPlant);
+        localStorage.setItem('my-plants', JSON.stringify(plants));
+        localStorage.setItem('selected-plant-id', String(selectedPlant.id));
+      })
+      .catch((error) => console.error('설정용 식물 목록 불러오기 실패:', error));
+
+    return () => { isActive = false; };
+  }, [plant?.id]);
+
+  useEffect(() => {
+    if (!plantId) return;
+    api.get(`/api/plants/${plantId}/hardware`)
+      .then((res) => {
+        setMinMoisture(res.data.min_moisture ?? 30);
+        setWaterDurationMs(res.data.water_duration_ms ?? 2000);
+      })
+      .catch((error) => console.error('급수 기준 불러오기 실패:', error));
+  }, [plantId]);
 
   // 블루투스 연결 성공 시 자동으로 ID를 쏴주는 함수
   const handleBleSuccess = async (info) => {
-    handleConnectSuccess(info); 
-
-    if (plantId && sendCommand) {
-        console.log(`기존 식물(${plantId}) ID 연동 시도...`);
+    if (plantId && info?.sendCommand) {
         try {
-            await sendCommand(`SET_ID ${plantId}`);
+            await info.sendCommand(`SET_ID ${plantId}`);
             showToast('success', `${plantId}번 식물과 연동되었습니다.`);
         } catch (err) {
             console.error("ID 전송 실패:", err);
@@ -67,36 +113,12 @@ function Setting() {
     }
   };
   
-  // 동료 추가: 메시지 파싱 및 처리 로직
-  const handleMessage = (text) => {
-    console.log('📥 ESP32 수신:', text)
-
-    // ① 자동 급수 완료 감지
-    if (text.includes('WATER_DONE')) {
-      window.dispatchEvent(new CustomEvent('wateringDone'))
-      showToast('success', '자동 급수가 완료되었습니다.')
-      return
-    }
-
-    // ② STATE 명령 응답 파싱
-    if (text.includes('Soil:')) {
-      const soil = text.match(/Soil:(\d+)/)?.[1]
-      const temp = text.match(/Temp:([\d.]+)/)?.[1]
-      const humid = text.match(/Humid:([\d.]+)/)?.[1]
-      setSensorData({
-        soil: soil ? parseInt(soil) : null,
-        temp: temp ? parseFloat(temp) : null,
-        humid: humid ? parseFloat(humid) : null,
-      })
-    }
-  }
-
   const handleBioSave = async () => {
     setBioSaving(true);
     try {
       await api.put('/api/user/profile', { bio });
       showToast('success', '저장 완료');
-    } catch (e) {
+    } catch {
       showToast('fail','저장 실패');
     } finally {
       setBioSaving(false);
@@ -108,9 +130,38 @@ function Setting() {
     setIsAlertOn(next);
     try {
       await api.patch('/api/user/alert', { isAlertOn: next });
-    } catch (e) {
+    } catch {
       setIsAlertOn(!next);
       Swal.fire('오류', '알림 설정 변경에 실패했습니다.', 'error');
+    }
+  };
+
+  const handleHardwareSave = async () => {
+    if (!plantId) return;
+    const moisture = Number(minMoisture);
+    const duration = Number(waterDurationMs);
+
+    if (!Number.isInteger(moisture) || moisture < 1 || moisture > 100) {
+      showToast('error', '최소 토양 수분은 1~100으로 입력해주세요.');
+      return;
+    }
+    if (!Number.isInteger(duration) || duration < 100 || duration > 60000) {
+      showToast('error', '급수 시간은 100~60000ms로 입력해주세요.');
+      return;
+    }
+
+    setHardwareSaving(true);
+    try {
+      await api.patch(`/api/plants/${plantId}/hardware`, {
+        min_moisture: moisture,
+        water_duration_ms: duration,
+      });
+      showToast('success', '식물별 급수 기준을 저장했습니다.');
+    } catch (error) {
+      console.error('급수 기준 저장 실패:', error);
+      showToast('error', '급수 기준 저장에 실패했습니다.');
+    } finally {
+      setHardwareSaving(false);
     }
   };
 
@@ -139,6 +190,16 @@ function Setting() {
   const initials = user?.nickname ? user.nickname.slice(0, 2) : 'RE';
 
   if (loading) return <div className="setting-loading">불러오는 중...</div>;
+  if (profileError) {
+    return (
+      <div className="setting-page">
+        <div className="request-error request-error--page">
+          <span>설정 정보를 불러오지 못했습니다.</span>
+          <button type="button" onClick={fetchProfile}>다시 시도</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="setting-page">
@@ -214,9 +275,7 @@ function Setting() {
                   <div className="s-row-sub">ESP32_PUMP 검색 후 연결</div>
                 </div>
                 {/* 동료 추가된 부분 */}
-                <Bluetooth 
-                  onConnectSuccess={handleBleSuccess} 
-                  onMessageReceived={handleMessage} />
+                <Bluetooth onConnectSuccess={handleBleSuccess} />
               </div>
             </div>
           </div>
@@ -247,6 +306,29 @@ function Setting() {
               </div>
             </div>
           </div>
+
+          {plantId && (
+            <div className="s-card">
+              <div className="s-card-header">
+                <div className="s-card-icon green">💧</div>
+                <span className="s-card-title">{plant?.plant_name} 급수 기준</span>
+              </div>
+              <div className="s-card-body hardware-settings">
+                <label>
+                  최소 토양 수분 (%)
+                  <input type="number" min="1" max="100" value={minMoisture} onChange={(event) => setMinMoisture(event.target.value)} />
+                </label>
+                <label>
+                  1회 급수 시간 (ms)
+                  <input type="number" min="100" max="60000" step="100" value={waterDurationMs} onChange={(event) => setWaterDurationMs(event.target.value)} />
+                </label>
+                <p>AI 진단값 또는 사용자가 저장한 값을 ESP32가 다음 동기화 때 적용합니다.</p>
+                <button className="bio-save-btn" onClick={handleHardwareSave} disabled={hardwareSaving}>
+                  {hardwareSaving ? '저장 중...' : '급수 기준 저장'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 계정 관리 */}
           <div className="s-card">

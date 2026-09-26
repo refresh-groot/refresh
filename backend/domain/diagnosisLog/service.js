@@ -5,6 +5,51 @@ const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
 
+// AI 서버가 일시적으로 응답하지 않을 때 센서값으로 최소한의 관리 안내를 제공한다.
+// 사진 병해 분석을 대신하지 않으므로 결과 문구에서 센서 기반 안내임을 분명히 표시한다.
+const buildSensorFallback = (sensorData) => {
+    let sensor = {};
+
+    try {
+        sensor = typeof sensorData === 'string' ? JSON.parse(sensorData) : (sensorData || {});
+    } catch {
+        sensor = {};
+    }
+
+    const soil = Number(sensor.soil);
+    const temp = Number(sensor.temp);
+    const hasSoil = Number.isFinite(soil);
+    const hasTemp = Number.isFinite(temp);
+    const guides = [];
+    let waterTip = '';
+
+    if (hasSoil && soil <= 30) {
+        guides.push(`현재 토양 수분이 ${soil}%입니다. 흙 표면과 배수 상태를 확인한 뒤 소량 급수를 권장합니다.`);
+        waterTip = '토양 수분이 30% 이하일 때 급수하도록 설정하면 관리에 도움이 됩니다.';
+    } else if (hasSoil) {
+        guides.push(`현재 토양 수분은 ${soil}%로 확인됩니다. 과습을 막기 위해 흙 표면이 마른 뒤 급수해주세요.`);
+    }
+
+    if (hasTemp && temp < 12) {
+        guides.push(`현재 온도는 ${temp}°C입니다. 찬바람을 피하고 15°C 이상을 유지해주세요.`);
+    } else if (hasTemp && temp > 30) {
+        guides.push(`현재 온도는 ${temp}°C입니다. 직사광선을 줄이고 통풍이 되는 곳으로 옮겨주세요.`);
+    }
+
+    if (guides.length === 0) {
+        guides.push('현재 연결된 센서값이 부족합니다. 기기 연결과 토양 상태를 직접 확인해주세요.');
+    }
+
+    guides.push('AI 서버가 복구되면 사진을 첨부해 잎 상태와 병해 가능성을 다시 진단해주세요.');
+
+    return {
+        ui_status: '센서 기반 관리 안내',
+        ui_guide: guides.join('\n'),
+        ui_water_msg: waterTip,
+        confidence: 0.4
+    };
+};
+
 // AI 서버 통신 함수 
 const requestAIAnalysis = async (file, question ,plantSpecies, sensorData) => {
     try {
@@ -28,23 +73,19 @@ const requestAIAnalysis = async (file, question ,plantSpecies, sensorData) => {
         }
 
         if (plantSpecies) formData.append('plant_species', plantSpecies);
-        if (plantSpecies) formData.append('plant_species', plantSpecies);
         // 🚨 form-data 숫자 소실 버그 우회를 위해 문자열 상태 그대로 포장하여 안전하게 전송
         if (sensorData) {
             const sensorString = typeof sensorData === 'string' ? sensorData : JSON.stringify(sensorData);
             formData.append('sensor_data', sensorString);
-            console.log("📦 [Node -> Python] sensor_data 패킹 완료:", sensorString);
         }
 
-        const pythonServerUrl = 'https://ys1235-smartplant.hf.space/predict'.trim();
+        const pythonServerUrl = process.env.AI_SERVER_URL;
         
-        console.log(`🚀 AI 서버(${pythonServerUrl})로 요청 보냄...`);
         const response = await axios.post(pythonServerUrl, formData, {
             headers: { ...formData.getHeaders() },
             timeout: 30000 // AI 서버 응답 지연 시 30초 타임아웃
         });
 
-        console.log("✅ AI 응답 도착:", response.data);
         return response.data;
 
     } catch (error) {
@@ -54,12 +95,7 @@ const requestAIAnalysis = async (file, question ,plantSpecies, sensorData) => {
             console.error('🚨 파이썬 서버의 진짜 에러 원인:', error.response.data);
         }
 
-        return { 
-            ui_status: '통신 오류', 
-            ui_guide: 'AI 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.', 
-            ui_water_msg: '',
-            confidence: 0
-        };
+        return buildSensorFallback(sensorData);
     }
 };
 
@@ -127,7 +163,6 @@ module.exports = {
                 }, {
                     where: { id: plantId } // 현재 진단받은 그 식물의 서랍장만 찾아서!
                 });
-                console.log(`✅ [DB 저장] 식물(ID: ${plantId}) 아두이노 기준값 업데이트 완료! (수분: ${aiResponse.min_moisture}%, 시간: ${aiResponse.water_duration_ms}ms)`);
             } catch (err) {
                 console.error("❌ Plant DB 업데이트 실패:", err);
             }
@@ -158,7 +193,6 @@ module.exports = {
             return plainLog;
         });
         
-        console.log('📋 전송할 로그 데이터:', formattedLogs[0]); // 디버깅용
         return formattedLogs;
     },
 
@@ -191,19 +225,21 @@ module.exports = {
     },
 
     // 5. 세션 이름 변경
-    updateSessionTitle: async (sessionId, title) => {
+    updateSessionTitle: async (sessionId, title, plantId) => {
+        const sessionKey = sessionId === 'no_session' || sessionId === 'null' ? null : sessionId;
         return await DiagnosisLog.update(
             { title: title }, 
-            { where: { session_id: sessionId } }
+            { where: { session_id: sessionKey, plant_id: plantId } }
         );
     },
 
     // 6. 세션 삭제
-    deleteSession: async (sessionId) => {
+    deleteSession: async (sessionId, plantId) => {
+        const sessionKey = sessionId === 'no_session' || sessionId === 'null' ? null : sessionId;
         // 세션 삭제 시 해당 세션에 묶인 이미지도 함께 삭제 (용량 확보)
         try {
             const logsInSession = await DiagnosisLog.findAll({
-                where: { session_id: sessionId }
+                where: { session_id: sessionKey, plant_id: plantId }
             });
 
             logsInSession.forEach(log => {
@@ -224,9 +260,7 @@ module.exports = {
                 }
             });
             
-            return await DiagnosisLog.destroy(
-                { where: { session_id: sessionId } }
-            );
+            return await DiagnosisLog.destroy({ where: { session_id: sessionKey, plant_id: plantId } });
         } catch (error) {
             console.error('세션 삭제 오류:', error.message);
             throw error;

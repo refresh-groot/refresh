@@ -43,7 +43,6 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
     
     const handleRename = (e, chatId) => {
         e.stopPropagation();
-        console.log("메뉴에서 선택한 ID:", chatId);
         setTargetChatId(chatId);
         setEditName(''); 
         setShowRenameModal(true);
@@ -118,7 +117,7 @@ const ChatSidebar = ({isOpen, chats, onClose, onNewChat, onSelectChat, onDeleteC
                         <input className="modal-input" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="새 이름을 입력하세요" />
                         <div className="modal-btn-group">
                             <button className="btn-cancel" onClick={() => setShowRenameModal(false)}>취소</button>
-                            <button className="btn-confirm" onClick={() => { console.log("변경 클릭, 현재 ID:", activeMenuId);onRenameChat(targetChatId, editName); setShowRenameModal(false); }}>변경</button>
+                        <button className="btn-confirm" onClick={() => { onRenameChat(targetChatId, editName); setShowRenameModal(false); }}>변경</button>
                         </div>
                     </div>
                 </div>

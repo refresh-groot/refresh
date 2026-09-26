@@ -1,11 +1,59 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ChatSidebar from './ChatSidebar';
 import './Chat.css';
 import axios from '../../api/axios';
 import { useSensorData } from '../../hooks/useSensorData';
-import { FaPlus, FaHistory, FaPaperPlane, FaUser, FaTimes } from "react-icons/fa";
-import Typewriter from './Typewriter';
+import { FaPlus, FaHistory, FaPaperPlane, FaUser, FaTimes, FaCamera, FaLeaf, FaTint, FaTemperatureHigh } from "react-icons/fa";
+
+const getDiagnosisTone = (result = '') => {
+  const text = String(result).toLowerCase();
+  if (text.includes('통신') || text.includes('오류')) return { key: 'error', label: '재시도 필요' };
+  if (text.includes('건강') || text.includes('정상') || text.includes('양호')) return { key: 'healthy', label: '관리 양호' };
+  return { key: 'attention', label: '관리 확인' };
+};
+
+function DiagnosisResult({ result, confidence, recommendation, onRetry, onOpenSettings }) {
+  const safeConfidence = Math.max(0, Math.min(100, Number(confidence) || 0));
+  const tone = getDiagnosisTone(result);
+  const isSensorFallback = String(result).includes('센서 기반');
+  const needsRetry = safeConfidence < 50 || tone.key === 'error';
+  const guides = String(recommendation || '상세 조치사항이 없습니다.')
+    .split(/\n+/)
+    .map((guide) => guide.trim())
+    .filter(Boolean);
+
+  return (
+    <article className={`diagnosis-result diagnosis-result--${tone.key}`}>
+      <div className="diagnosis-result-header">
+        <span>{isSensorFallback ? '센서 기반 관리 안내' : 'AI 식물 진단'}</span>
+        <strong className="diagnosis-status">{tone.label}</strong>
+      </div>
+      {isSensorFallback && (
+        <p className="diagnosis-fallback-notice">
+          AI 서버에 연결할 수 없어 현재 센서 데이터로 안내합니다. 사진 기반 진단 결과가 아닙니다.
+        </p>
+      )}
+      <section className="diagnosis-result-section">
+        <span className="diagnosis-result-label">진단 요약</span>
+        <h3>{result}</h3>
+      </section>
+      <section className="diagnosis-result-section">
+        <span className="diagnosis-result-label">관리 방법</span>
+        <ul className="diagnosis-guide-list">
+          {guides.map((guide, index) => <li key={index}>{guide}</li>)}
+        </ul>
+      </section>
+      <div className="diagnosis-result-footer">
+        <span>{isSensorFallback ? 'AI 서버 복구 후 사진 재진단 권장' : `AI 신뢰도 ${safeConfidence}%`}</span>
+        <div>
+          <button className="diagnosis-secondary-btn" onClick={onOpenSettings}>급수 기준 확인</button>
+          {needsRetry && <button className="diagnosis-retry-btn" onClick={onRetry}>{isSensorFallback ? 'AI로 다시 진단' : '새 진단'}</button>}
+        </div>
+      </div>
+    </article>
+  );
+}
 
 /**
  * 고유한 세션 ID를 생성하는 함수
@@ -27,6 +75,7 @@ function Chat() {
   // react-router의 location.state에서 식물 정보를 가져옴
   // 전달된 값이 없으면 기본값(id=0, 이름='반려식물') 사용
   const location = useLocation();
+  const navigate = useNavigate();
   const plant = location.state?.plant || { id: 0, plant_name: '반려식물' };
 
   const {sensorData} = useSensorData(plant.id);
@@ -56,6 +105,7 @@ function Chat() {
   // 현재 진행 중인 대화의 세션 ID
   // 메시지 전송 시 서버에 함께 보내 같은 대화 스레드에 기록되도록 함
   const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [submitNotice, setSubmitNotice] = useState('');
   
 
   // ─── DOM 참조 ──────────────────────────────────────────────────────────────
@@ -68,6 +118,7 @@ function Chat() {
 
   // 입력 textarea 참조 — 내용 길이에 따라 높이를 동적으로 조절하기 위해 사용
   const textareaRef = useRef(null);
+  const previewUrlsRef = useRef([]);
 
   /**
    * 메시지 목록을 맨 아래로 부드럽게 스크롤하는 함수
@@ -77,20 +128,27 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ─── 초기화: 컴포넌트 첫 마운트 시 (plant.id가 있을 때만 실행) ─────────────
+  // 대시보드에서 진단 화면으로 들어오면 항상 새 세션으로 시작한다.
+  // 과거 진단은 사용자가 기록 보기에서 선택했을 때만 열어 혼선을 막는다.
   useEffect(() => {
-  if (plant.id && !currentSessionId) {
-    fetchChatHistory().then((history) => {
-      if (history && history.length > 0) {
-        const latestSession = history[0];
-        handleSelectChat(latestSession);
-      } else {
-        setCurrentSessionId(generateSessionId());
-      }
-    });
-  }
+    if (!plant.id) return;
+
+    setMessages([]);
+    setSelectImage([]);
+    setInputText('');
+    setSubmitNotice('');
+    setCurrentSessionId(generateSessionId());
+    fetchChatHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [plant.id]);
+
+  useEffect(() => {
+    previewUrlsRef.current = selectImage.map((image) => image.preview);
+  }, [selectImage]);
+
+  useEffect(() => () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
 
   // messages 배열 또는 isLoading 상태가 바뀔 때마다 스크롤을 맨 아래로 내림
   useEffect(() => {
@@ -112,11 +170,13 @@ function Chat() {
    * - 사이드바를 닫음
    */
   const handleNewChat = () => {
+    selectImage.forEach((image) => URL.revokeObjectURL(image.preview));
     setMessages([]);
     setSelectImage([]); // [수정] 배열 초기화
     setInputText('');
     setIsSidebarOpen(false);
     setCurrentSessionId(generateSessionId());
+    setSubmitNotice('');
   };
 
   /**
@@ -178,12 +238,13 @@ function Chat() {
 
     if (log.result) {
       const confidenceScore = log.confidence ? Math.round(log.confidence * 100) : 0;
-      let confidenceText = `(정확도: ${confidenceScore}%)`;
-      if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
-
       convertedMessages.push({
         id: `ai-${log.id}`,
-        text: `[진단 결과: ${log.result}]\n${confidenceText}\n\n조치사항: \n${log.recommendation}`,
+        diagnosis: {
+          result: log.result || '상담 완료',
+          confidence: confidenceScore,
+          recommendation: log.recommendation || '상세 조치사항이 없습니다.',
+        },
         sender: 'ai',
         timestamp: (log.diagnosis_date || '').slice(11, 16),
         isNew: false
@@ -280,14 +341,24 @@ function Chat() {
    */
   const handleImageSelect = (e) => {
     const selectedFiles = Array.from(e.target.files); // [수정] 변수명 명확화
-    if (selectedFiles.length > 0) {
-      const newImages = selectedFiles.map(file => ({
+    const validFiles = selectedFiles.filter((file) => file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024);
+
+    if (validFiles.length !== selectedFiles.length) {
+      setSubmitNotice('이미지 파일만 선택할 수 있으며, 한 장당 10MB 이하여야 합니다.');
+    }
+
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map(file => ({
         file: file,
         preview: URL.createObjectURL(file)
       }));
 
-      // [수정] setSelectImage (기존 state 변수명 사용)
-      setSelectImage((prev) => [...prev, ...newImages].slice(0, 5)); 
+      setSelectImage((prev) => {
+        const combined = [...prev, ...newImages];
+        const overflow = combined.slice(5);
+        overflow.forEach((image) => URL.revokeObjectURL(image.preview));
+        return combined.slice(0, 5);
+      });
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -296,7 +367,11 @@ function Chat() {
    * [수정] 개별 이미지 삭제 기능 수정
    */
   const removeImage = (index) => {
-    setSelectImage(prev => prev.filter((_, i) => i !== index));
+    setSelectImage(prev => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   /**
@@ -306,6 +381,10 @@ function Chat() {
   const handleSendMessage = async (textOverride) => {
   const textToSend = (typeof textOverride === 'string' ? textOverride : inputText);
 
+  if (!plant.id) {
+    setSubmitNotice('먼저 대시보드에서 진단할 식물을 선택해주세요.');
+    return;
+  }
   if (!textToSend.trim() && selectImage.length === 0) return;
 
   // 임시 ID 생성
@@ -321,31 +400,27 @@ function Chat() {
   setMessages((prev) => [...prev, userMessage]);
 
   const imagesToUpload = [...selectImage];
+  const sessionId = currentSessionId || generateSessionId();
+  if (!currentSessionId) setCurrentSessionId(sessionId);
   setInputText('');
   setSelectImage([]);
+  setSubmitNotice('');
   setIsLoading(true);
 
   try {
     const formData = new FormData();
-    if (currentSessionId) {
-      formData.append('session_id', currentSessionId);
-    }
+    formData.append('session_id', sessionId);
     formData.append('question', textToSend);
     if (sensorData) {
       // null 값은 제외하고 값이 있는 센서 데이터만 전송
       const validSensorData = Object.fromEntries(
-        Object.entries(sensorData).filter(([_, v]) => v !== null && v !== undefined)
+        Object.entries(sensorData).filter(([, value]) => value !== null && value !== undefined)
       );
 
       if (Object.keys(validSensorData).length > 0) {
         formData.append('sensor_data', JSON.stringify(validSensorData));
-        console.log("서버로 전송할 센서 데이터:", validSensorData);
       }
     }
-    console.log("서버로 전송할 데이터 확인:");
-formData.forEach((value, key) => {
-  console.log(`${key}:`, value);
-});
     imagesToUpload.forEach(img => {
       formData.append('images', img.file); 
     });
@@ -383,15 +458,15 @@ formData.forEach((value, key) => {
     }
 
     const confidenceScore = serverData.confidence ? Math.round(serverData.confidence * 100) : 0;
-    let confidenceText = `(정확도: ${confidenceScore}%)`;
-    if (confidenceScore < 50) confidenceText += ' 결과가 불확실할 수 있습니다.';
-
     const aiMessage = {
       id: Date.now() + 1,
-      text: `[진단결과: ${serverData.result || '분석중'}]\n${confidenceText}\n\n조치사항: \n${serverData.recommendation || '특별한 조치사항이 없습니다.'}`,
+      diagnosis: {
+        result: serverData.result || '분석 중',
+        confidence: confidenceScore,
+        recommendation: serverData.recommendation || '특별한 조치사항이 없습니다.',
+      },
       sender: 'ai',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isNew: true, 
     };
 
     setMessages((prev) => [...prev, aiMessage]);
@@ -419,10 +494,8 @@ formData.forEach((value, key) => {
   };
 
   const handleRenameChat = async (sessionId, newName) => {
-    console.log("Rename 호출됨:", sessionId, newName);
     try {
       await axios.put(`/api/diagnosis-logs/session/${sessionId}`, { title: newName });
-      console.log("Rename 성공");
       setChatHistory(prev =>
         prev.map(chat => chat.id === sessionId ? { ...chat, title: newName } : chat)
       );
@@ -432,10 +505,8 @@ formData.forEach((value, key) => {
   };
 
   const handleDeleteChat = async (sessionId) => {
-    console.log("Delete 호출됨:", sessionId);
     try {
       await axios.delete(`/api/diagnosis-logs/session/${sessionId}`);
-      console.log("Delete 성공");
       await fetchChatHistory();
       if (currentSessionId === sessionId || (currentSessionId === null && sessionId === 'no_session')) {
         handleNewChat();
@@ -466,14 +537,27 @@ formData.forEach((value, key) => {
           <button className="history-toggle-btn" onClick={() => setIsSidebarOpen(true)}>
             <FaHistory /> <span className="btn-text">기록 보기</span>
           </button>
+          <div className="diagnosis-plant-chip"><FaLeaf /> {plant.plant_name}</div>
         </div>
 
         <div className="content-width full-height-content">
           {messages.length === 0 ? (
             <div className="empty-state">
-              <div className="ai-logo">🌱</div>
-              <h2>안녕하세요, {plant.plant_name} 진단 AI입니다.</h2>
-              <p>식물 사진을 올리거나, 궁금한 증상을 물어보세요.</p>
+              <div className="ai-logo"><FaLeaf /></div>
+              <p className="empty-state-eyebrow">REFRESH AI CARE</p>
+              <h2>{plant.plant_name}의 상태를 확인해볼까요?</h2>
+              <p>사진과 현재 증상을 함께 보내면 더 정확하게 분석할 수 있어요.</p>
+              <div className="diagnosis-context-card">
+                <div><FaTemperatureHigh /><span>온도</span><strong>{sensorData.temp ?? '--'}°C</strong></div>
+                <div><FaTint /><span>토양 수분</span><strong>{sensorData.soil ?? '--'}%</strong></div>
+                <div><FaLeaf /><span>식물 종류</span><strong>{plant.species || '미등록'}</strong></div>
+              </div>
+              <button
+                className="photo-diagnosis-btn"
+                onClick={() => plant.id ? fileInputRef.current?.click() : setSubmitNotice('먼저 대시보드에서 진단할 식물을 선택해주세요.')}
+              >
+                <FaCamera /> 사진으로 진단 시작
+              </button>
               <div className="suggestion-grid">
                 {suggestions.map((text, index) => (
                   <button key={index} className="suggestion-card" onClick={() => handleSendMessage(text)}>
@@ -485,7 +569,7 @@ formData.forEach((value, key) => {
           ) : (
             <div className="message-list-area">
               {messages.map((msg) => (
-                <div key={msg.id} className={`message-row ${msg.sender}`}>
+                <div key={msg.id} className={`message-row ${msg.sender} ${msg.diagnosis ? 'diagnosis-message' : ''}`}>
                   {msg.sender === 'ai' && (
                     <div className="message-avatar"></div>
                   )}
@@ -504,8 +588,12 @@ formData.forEach((value, key) => {
                       </div>
                     )}
 
-                    {msg.sender === 'ai' && msg.isNew ? (
-                      <Typewriter text={msg.text} speed={30} onUpdate={scrollToBottom}/>
+                    {msg.sender === 'ai' && msg.diagnosis ? (
+                      <DiagnosisResult
+                        {...msg.diagnosis}
+                        onRetry={handleNewChat}
+                        onOpenSettings={() => navigate('/setting', { state: { plant } })}
+                      />
                     ) : (
                       msg.text.split('\n').map((line, i) => (
                         <React.Fragment key={i}>
@@ -527,8 +615,13 @@ formData.forEach((value, key) => {
               {isLoading && (
                 <div className="message-row ai">
                   <div className="message-avatar"></div>
-                  <div className="message-bubble loading">
-                    <div className="dot-flashing"></div>
+                  <div className="message-bubble loading diagnosis-loading-card">
+                    <span className="diagnosis-loading-icon"><FaLeaf /></span>
+                    <div>
+                      <strong>사진과 센서 데이터를 분석하고 있어요</strong>
+                      <span>잎 상태와 관리 환경을 함께 확인하는 중입니다.</span>
+                      <div className="analysis-skeleton" aria-hidden="true"><i /><i /><i /></div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -563,25 +656,27 @@ formData.forEach((value, key) => {
                 multiple 
               />
 
-              <button className='icon-btn' onClick={() => fileInputRef.current.click()}>
+              <button className='icon-btn' onClick={() => fileInputRef.current?.click()} disabled={!plant.id || isLoading} aria-label="진단 사진 추가">
                 <FaPlus />
               </button>
 
               <textarea
                 ref={textareaRef}
-                placeholder={`${plant.plant_name}에 대해 물어보세요.`}
+                placeholder={plant.id ? `${plant.plant_name}의 증상을 입력해주세요.` : '대시보드에서 식물을 선택해주세요.'}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
+                disabled={!plant.id || isLoading}
               />
 
-              <button className='send-btn' onClick={() => handleSendMessage()} disabled={isLoading}>
+              <button className='send-btn' onClick={() => handleSendMessage()} disabled={isLoading || !plant.id} aria-label="진단 요청 보내기">
                 <FaPaperPlane />
               </button>
             </div>
           </div>
-          <p className='disclaimer'>AI는 실수를 할 수 있습니다. 정확한 정보는 전문가와 상담하세요.</p>
+          {submitNotice && <p className="chat-submit-notice">{submitNotice} <button onClick={() => navigate('/profile')}>식물 보러가기</button></p>}
+          <p className='disclaimer'>AI 진단은 관리 보조 기능입니다. 심한 병해는 전문가의 확인이 필요할 수 있어요.</p>
         </div>
       </div>
     </div>

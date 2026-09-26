@@ -3,7 +3,7 @@
 #include "pump.h"
 #include <Preferences.h> // [추가] 저장 기능을 위해 필요
 
-extern void fetchPlantConfigFromAI(String plantName);
+extern void fetchPlantConfigFromServer();
 extern int MY_PLANT_ID; // [추가] main.cpp에 있는 변수를 수정하기 위해 불러옴
 
 void handleCommand(String cmd) {
@@ -26,6 +26,7 @@ void handleCommand(String cmd) {
 
             Serial.print("▶ [ID 연동 완료] 새로운 식물 ID: ");
             Serial.println(MY_PLANT_ID);
+            fetchPlantConfigFromServer();
         }
         return;
     }
@@ -68,11 +69,14 @@ void handleCommand(String cmd) {
         return;
     }
 
-    // 여기서 AI 식물 설정을 먼저 체크
-    if (up.startsWith("PLANT-TYPE:")) {
-        String name = cmd.substring(6);
-        name.trim();
-        fetchPlantConfigFromAI(name); // AI 서버 요청
+    // 식물 선택 후 서버에 저장된 급수 기준을 기기로 동기화한다.
+    // 기존 PLANT-TYPE 명령도 허용해 이전 프론트와의 호환성을 유지한다.
+    if (up.startsWith("PLANT:") || up.startsWith("PLANT-TYPE:")) {
+        if (MY_PLANT_ID <= 0) {
+            Serial.println("ERR: plant ID is not set");
+            return;
+        }
+        fetchPlantConfigFromServer();
         return;
     }
 

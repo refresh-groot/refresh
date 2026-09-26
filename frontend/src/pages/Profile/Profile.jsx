@@ -1,16 +1,15 @@
 // Profile.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import { FaPlus, FaCalendarAlt, FaUserCircle, FaTrash } from 'react-icons/fa';
 import { LuPencilLine } from "react-icons/lu";
 import { useAuth } from '../../context/AuthContext';
-import { useBluetooth } from '../../context/BluetoothContext'; // 동료 추가: 블루투스 Context
-import Swal from 'sweetalert2';
 import AddPlantModal from './AddPlantModal';
 import EditPlantModal from './EditPlantModal';
 import api from '../../api/axios';
-import { showToast } from '../../app/alert';
+import Swal, { showToast } from '../../app/alert';
+import { PlantListSkeleton, ProfileSkeleton } from '../../components/Skeleton/Skeleton';
 
 // 식물 목록 조회, 등록, 수정, 삭제 및 필터링 기능을 제공하는 프로필 대시보드 컴포넌트
 function Profile() {
@@ -18,8 +17,7 @@ function Profile() {
   // AuthContext에서 로그인한 사용자 정보와 인증 로딩 상태를 가져옴
   const { user, loading: authLoading } = useAuth();
   
-  // 동료 추가: 블루투스 명령 전송 및 커스텀 삭제 모달 상태
-  const { sendCommand } = useBluetooth();
+  // 커스텀 삭제 모달 상태
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPlantId, setSelectedPlantId] = useState(null);
   
@@ -28,6 +26,7 @@ function Profile() {
   const [isModalOpen, setIsModalOpen] = useState(false);  // 추가 모달 열림 여부
   const [plants, setPlants] = useState([]);               // 전체 식물 목록
   const [loading, setLoading] = useState(true);           // 데이터 로딩 상태
+  const [loadError, setLoadError] = useState(false);
   const [currentTab, setCurrentTab] = useState('all');    // 필터 탭 상태 (전체/생존/사망)
 
   // 현재 탭 설정에 따라 식물 목록을 필터링하고 정렬하는 로직
@@ -48,42 +47,13 @@ function Profile() {
     return 0;
   });
 
-  // 디버깅용 로그
-  console.log('전체 식물 수:', plants.length);
-  console.log('필터링된 식물 수:', filteredPlants.length);
-  console.log('현재 탭:', currentTab);
-
-  /* ===============================
-     초기화: 로그인 체크 및 데이터 로드
-  =============================== */
-  useEffect(() => {
-    // 인증 상태 확인이 끝날 때까지 대기
-    if (authLoading) return;
-
-    // 비로그인 상태면 경고 후 로그인 페이지로 이동
-    if (!user) {
-      Swal.fire({
-        icon: 'warning',
-        title: '로그인 필요',
-        text: '로그인 후 이용해주세요.',
-      }).then(() => navigate('/login'));
-      return;
-    }
-
-    // 로그인 확인 후 식물 목록 조회
-    fetchPlants();
-  }, [user, authLoading, navigate]);
-
-  if (authLoading) {
-    return <div className="profile-container">로딩 중...</div>;
-  }
-
   /* ===============================
      API: 식물 목록 조회 (GET)
   =============================== */
-  const fetchPlants = async () => {
+  const fetchPlants = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const res = await api.get('/api/plants');
       const data = res.data;
 
@@ -103,12 +73,34 @@ function Profile() {
         Swal.fire('인증 만료', '다시 로그인해주세요.', 'error')
           .then(() => navigate('/login'));
       } else {
-        Swal.fire('오류', '식물 목록을 불러오지 못했습니다.', 'error');
+        setLoadError(true);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  /* ===============================
+     초기화: 로그인 체크 및 데이터 로드
+  =============================== */
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      Swal.fire({
+        icon: 'warning',
+        title: '로그인 필요',
+        text: '로그인 후 이용해주세요.',
+      }).then(() => navigate('/login'));
+      return;
+    }
+
+    fetchPlants();
+  }, [user, authLoading, navigate, fetchPlants]);
+
+  if (authLoading) {
+    return <ProfileSkeleton />;
+  }
 
   /* ===============================
      API: 식물 등록 (POST)
@@ -125,27 +117,12 @@ function Profile() {
       formData.append('reg_date', date);
       if (file) formData.append('img', file);
 
-      // [변화 1] 서버의 응답(ID가 들어있음)을 변수에 담음
       const res = await api.post('/api/plants', formData); 
-
-      // 동료 추가된 부분: 백엔드에서 발급해준 새 식물 ID를 기기에 전송
-      const newPlantId = res.data.id || res.data.plant_id; 
-
-      // 사용자가 모달에서 '기기 연동'을 미리 해두었다면 sendCommand가 존재함
-      if (sendCommand && newPlantId) {
-          console.log(`▶ 새 식물 DB 등록 완료! ESP32에 새 식물 ID(${newPlantId}) 맵핑 시도...`);
-          try {
-              await sendCommand(`SET_ID ${newPlantId}`);
-          } catch (err) {
-              console.error("ID 전송 실패:", err);
-              showToast('error', '기기 연동 중 문제가 발생했습니다.');
-          }
-      }
 
       showToast('success','등록 완료');
       fetchPlants();
 
-      // [변화 2] 응답 데이터(ID 포함)를 모달(AddPlantModal)로 돌려줌
+      // AddPlantModal이 응답의 plant.id로 기기 ID를 연동한다.
       return res.data; 
     } catch (error) {
       console.error('식물 등록 실패:', error);
@@ -212,7 +189,12 @@ function Profile() {
       {/* 식물 목록 그리드 */}
       <div className="plant-list-wrapper">
         {loading ? (
-          <div className="loading-message">식물 목록을 불러오는 중...</div>
+          <PlantListSkeleton />
+        ) : loadError ? (
+          <div className="request-error">
+            <span>식물 목록을 불러오지 못했습니다.</span>
+            <button type="button" onClick={fetchPlants}>다시 시도</button>
+          </div>
         ) : filteredPlants.length === 0 ? (
           <div className="empty-message">등록된 식물이 없습니다.</div>
         ) : (

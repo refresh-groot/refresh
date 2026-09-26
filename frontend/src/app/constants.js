@@ -1,5 +1,5 @@
-// 모드에 상관없이 항상 클라우드 서버 주소를 사용하도록 변경
-export const SERVER_URL = "";
+// 배포 환경에서는 같은 도메인의 API를 사용하고, 별도 서버가 필요하면 VITE_API_BASE_URL로 지정합니다.
+export const SERVER_URL = import.meta.env.VITE_API_BASE_URL || "";
 
 // 2. 앱 기본 정보
 export const APP_NAME = "Refresh";

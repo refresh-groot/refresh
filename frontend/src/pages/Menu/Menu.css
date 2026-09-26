@@ -707,3 +707,316 @@
         font-size: 0.7rem;
     }
 }
+
+/* Clean dashboard system */
+.menu-dashboard {
+    grid-template-columns: minmax(0, 1.65fr) minmax(285px, 0.85fr);
+    gap: 20px;
+    max-width: 1180px;
+    padding: 88px 20px 36px;
+}
+
+.menu-dashboard .card,
+.menu-dashboard .history-card {
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.menu-dashboard .profile-card {
+    min-height: 132px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.menu-dashboard .img-placeholder,
+.menu-dashboard .img-placeholder img {
+    width: 82px;
+    height: 82px;
+}
+
+.menu-dashboard .img-placeholder {
+    background: var(--primary-light);
+}
+
+.menu-dashboard .plant-nickname { color: var(--text-main); }
+.menu-dashboard .plant-species { color: var(--primary-color); }
+.menu-dashboard .growth-day { color: var(--primary-strong); }
+
+.plant-health {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid;
+    border-radius: 10px;
+}
+
+.plant-health div {
+    display: grid;
+    gap: 3px;
+}
+
+.plant-health strong {
+    font-size: 0.82rem;
+}
+
+.plant-health span {
+    color: var(--text-sub);
+    font-size: 0.72rem;
+}
+
+.plant-health button {
+    flex-shrink: 0;
+    padding: 6px 8px;
+    color: inherit;
+    font-size: 0.73rem;
+    font-weight: 700;
+    background: #ffffff;
+    border: 1px solid currentColor;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.plant-health.healthy {
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border-color: #cde3d4;
+}
+
+.plant-health.attention {
+    color: #aa6c29;
+    background: #fff9ed;
+    border-color: #f0d6a8;
+}
+
+.plant-health.danger {
+    color: #b55050;
+    background: #fff4f4;
+    border-color: #f0cccc;
+}
+
+.menu-dashboard .sensor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.menu-dashboard .sensor-card {
+    min-height: 118px;
+    padding: 18px 14px;
+    border: 1px solid #e9edeb;
+    border-radius: var(--radius-md);
+    background: #fbfcfb;
+}
+
+.weekly-report {
+    padding: 20px;
+    background: #ffffff;
+}
+
+.weekly-report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.weekly-report-header span {
+    color: var(--primary-color);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.weekly-report-header h3 {
+    margin: 4px 0 0;
+    color: var(--text-main);
+    font-size: 1.05rem;
+}
+
+.weekly-report-header button {
+    padding: 7px 10px;
+    color: var(--primary-strong);
+    font-size: 0.76rem;
+    font-weight: 700;
+    background: var(--primary-soft);
+    border: 1px solid #cde3d4;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.weekly-report-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.weekly-report-grid div {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    background: #f8faf8;
+    border: 1px solid #edf0ed;
+    border-radius: 10px;
+}
+
+.weekly-report-grid span {
+    color: var(--text-sub);
+    font-size: 0.73rem;
+}
+
+.weekly-report-grid strong {
+    color: var(--text-main);
+    font-size: 0.92rem;
+}
+
+.weekly-report-note {
+    margin: 14px 0 0;
+    color: var(--text-sub);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.menu-dashboard .sensor-value { font-size: 1.45rem; }
+.menu-dashboard .sensor-label { color: var(--text-sub); }
+
+.sensor-freshness {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -2px 0 10px;
+    color: var(--primary-strong);
+    font-size: 0.78rem;
+}
+
+.sensor-freshness span {
+    width: 7px;
+    height: 7px;
+    background: var(--primary-color);
+    border-radius: 50%;
+}
+
+.sensor-freshness.stale {
+    color: #b56a2d;
+}
+
+.sensor-freshness.stale span {
+    background: #d68b40;
+}
+.menu-dashboard .mode-toggle-box {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+}
+.menu-dashboard .mode-toggle-box.auto {
+    background: var(--primary-soft);
+    border-color: #cde4d5;
+}
+
+.menu-dashboard .water-btn {
+    border-radius: 12px;
+    background: #2878bc;
+    box-shadow: none;
+}
+
+.demo-mode-btn {
+    align-self: flex-start;
+    padding: 7px 10px;
+    color: #566159;
+    font-size: 0.76rem;
+    font-weight: 650;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.demo-mode-btn.active {
+    color: var(--primary-strong);
+    background: var(--primary-light);
+    border-color: #bcdcc8;
+}
+
+.connection-guide {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 9px;
+    margin: 12px 0 2px;
+    padding: 11px;
+    border: 1px solid #d9e3dc;
+    border-radius: 12px;
+    color: #526158;
+    background: #fafcfb;
+}
+
+.connection-guide.emphasized {
+    border-color: #9ccdb0;
+    background: var(--primary-soft);
+}
+
+.connection-guide > svg { color: var(--primary-color); font-size: 1.05rem; }
+.connection-guide div { display: grid; gap: 2px; }
+.connection-guide strong { color: var(--text-main); font-size: 0.78rem; }
+.connection-guide span { color: var(--text-sub); font-size: 0.7rem; line-height: 1.35; }
+.connection-guide button {
+    padding: 7px 9px;
+    border: 1px solid #bcdcc8;
+    border-radius: 8px;
+    color: var(--primary-strong);
+    background: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.history-moisture {
+    color: var(--text-sub);
+    font-size: 0.78rem;
+}
+
+.menu-dashboard .water-history-btn {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #ffffff;
+    color: #435047;
+    box-shadow: none;
+}
+
+.menu-dashboard .chart-card {
+    min-height: 390px;
+}
+
+.menu-dashboard .chart-wrapper {
+    height: 300px;
+}
+
+.menu-dashboard .ai-diagnosis {
+    min-height: 96px;
+    border: 1px solid #cde4d5;
+    border-radius: var(--radius-lg);
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .menu-dashboard {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 36px 16px 96px;
+        margin-top: 0;
+    }
+
+    .menu-dashboard .card,
+    .menu-dashboard .history-card {
+        border-radius: var(--radius-lg);
+    }
+
+    .weekly-report-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

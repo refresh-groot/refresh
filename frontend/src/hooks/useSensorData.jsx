@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { SERVER_URL } from '../app/constants';
 // 기본 메뉴화면 카드 4개 관리
@@ -10,13 +10,16 @@ const [sensorData, setSensorData] = useState({
     light: null
 });
 const [loading, setLoading] = useState(true);
+const [fetchedAt, setFetchedAt] = useState(null);
+const [error, setError] = useState(false);
 
-const fetchData = async () => {
+ const fetchData = useCallback(async () => {
     if(!plantId) {
         setLoading(false);
         return;
     }
     try {
+        setError(false);
         const response = await axios.get(`${SERVER_URL}/api/environment-log/${plantId}`);
         const serverData = Array.isArray(response.data) ? response.data[0] : response.data;
 
@@ -28,20 +31,21 @@ const fetchData = async () => {
     });
     
     setSensorData(newData);
-        console.log("실시간 데이터 동기화 완료:", newData);
+    setFetchedAt(Date.now());
     } catch (error) {
         console.error("데이터 로드 실패:", error);
+        setError(true);
     } finally {
         setLoading(false);
     }
-    };
+    }, [plantId]);
 
     useEffect(() => {
     fetchData();
     const timer = setInterval(fetchData, intervalTime); 
 
     return () => clearInterval(timer);
-    }, [plantId, intervalTime]);
+    }, [fetchData, intervalTime]);
 
-    return { sensorData, loading, fetchData };
+    return { sensorData, loading, error, fetchData, fetchedAt };
 };

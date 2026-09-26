@@ -1,6 +1,7 @@
 // backend/domain/plant/controller.js
 const service = require('./service');
 const repository = require('./repository');
+const { Plant } = require('../index');
 
 module.exports = {
   addPlant: async (req, res) => {
@@ -86,7 +87,7 @@ module.exports = {
     try {
       const plantId = req.params.id; // 라우터의 /:id (식물 고유번호) 가져오기
       
-      const plant = await Plant.findByPk(plantId);
+      const plant = req.plant || await Plant.findByPk(plantId);
       
       if (!plant) {
         return res.status(404).json({ message: "해당 식물을 찾을 수 없습니다." });
@@ -101,6 +102,35 @@ module.exports = {
     } catch (error) {
       console.error("❌ 하드웨어 설정 조회 에러:", error);
       return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+    }
+  }
+  ,
+  updateHardwareSettings: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { min_moisture, water_duration_ms } = req.body;
+
+      if (!Number.isInteger(min_moisture) || min_moisture < 1 || min_moisture > 100) {
+        return res.status(400).json({ message: '최소 토양 수분은 1~100 사이의 정수여야 합니다.' });
+      }
+
+      if (!Number.isInteger(water_duration_ms) || water_duration_ms < 100 || water_duration_ms > 60000) {
+        return res.status(400).json({ message: '급수 시간은 100~60000ms 사이의 정수여야 합니다.' });
+      }
+
+      const plant = req.plant || await Plant.findByPk(id);
+      if (!plant) {
+        return res.status(404).json({ message: '해당 식물을 찾을 수 없습니다.' });
+      }
+
+      await plant.update({ min_moisture, water_duration_ms });
+      return res.status(200).json({
+        min_moisture: plant.min_moisture,
+        water_duration_ms: plant.water_duration_ms,
+      });
+    } catch (error) {
+      console.error('하드웨어 설정 수정 에러:', error);
+      return res.status(500).json({ message: '하드웨어 설정 저장에 실패했습니다.' });
     }
   }
 };

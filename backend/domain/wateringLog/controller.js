@@ -5,7 +5,6 @@ module.exports = {
     // [POST] 급수 기록 저장
     createWateringLog: async (req, res) => {
         try {
-            console.log("급수 기록 요청 도착:", req.body);
             const log = await service.recordWatering(req.body);
             return res.status(201).json({
                 message: '급수 이력이 성공적으로 저장되었습니다.',

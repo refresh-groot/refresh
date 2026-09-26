@@ -4,7 +4,6 @@ module.exports = {
     // [POST] 하드웨어 -> 서버 데이터 전송
     createEnvironmentLog: async (req, res) => {
         try {
-            console.log("실시간 환경 데이터 도착:", req.body);
             const log = await service.recordEnvironment(req.body);
             return res.status(201).json({
                 message: '환경 데이터가 저장되었습니다.',

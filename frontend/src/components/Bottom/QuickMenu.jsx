@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useBluetooth } from '../../context/BluetoothContext';
+import { useBluetooth } from '../../hooks/useBluetooth';
 import { useNavigate } from 'react-router-dom';
 import './QuickMenu.css';
 import { IoWaterOutline } from "react-icons/io5";
@@ -80,7 +80,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
     setPlantLoading(true);
     try {
       const res = await api.get('/api/plants');
-      setPlantList(res.data);
+      setPlantList(Array.isArray(res.data) ? res.data : (res.data?.plants ?? []));
     } catch (error) {
       console.error('식물 목록 불러오기 실패:', error);
       showToast('error', '식물 목록을 불러오지 못했습니다.');
@@ -101,8 +101,9 @@ const QuickMenu = ({ onClose, currentPlant }) => {
   const handlePlantSelect = async (plant) => {
     try {
       localStorage.setItem('my-plants', JSON.stringify([plant]));
+      localStorage.setItem('selected-plant-id', String(plant.id));
       if (sendCommand && deviceName) {
-        await sendCommand(`PLANT:${plant.species}`);
+        await sendCommand(`SET_ID ${plant.id}`);
       }
       showToast('success', `${plant.plant_name}으로 전환되었습니다.`);
       setShowPlantModal(false);
@@ -155,18 +156,6 @@ const QuickMenu = ({ onClose, currentPlant }) => {
     try {
       await sendCommand(`WATER ${Math.round(waterDuration * pumpRate)}`); //await sendCommand(`WATER ${waterDuration}`);
       showToast('success', `${waterDuration}초 급수를 시작했습니다.`);
-      if (currentPlant?.id) {
-        await fetch(`${SERVER_URL}/api/watering-log`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plant_id: currentPlant.id,
-            is_auto: false,
-            duration_sec: waterDuration
-          })
-        });
-        window.dispatchEvent(new CustomEvent('wateringDone'));
-      }
       setShowWaterModal(false);
       onClose();
     } catch (error) {
@@ -187,7 +176,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
       setWifiSSID('');
       setWifiPassword('');
       onClose();
-    } catch (error) {
+    } catch {
       showToast('error', 'Wi-Fi 설정 전송에 실패했습니다.');
     }
   };
@@ -203,7 +192,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
       showToast('success', `펌프 보정값이 ${calValue}ml/초로 설정되었습니다.`);
       setShowCalModal(false);
       onClose();
-    } catch (error) {
+    } catch {
       showToast('error', '펌프 보정 전송에 실패했습니다.');
     }
   };
@@ -230,25 +219,10 @@ const QuickMenu = ({ onClose, currentPlant }) => {
       return;
     }
     if (item.special === 'plant') {
-    setPlantLoading(true);
-    try {
-      const res = await api.get('/api/plants');
-      const data = res.data;
-      if (Array.isArray(data)) {
-        setPlantList(data);
-      } else if (data?.plants) {
-        setPlantList(data.plants);
-      } else {
-        setPlantList([]);
-      }
-    } catch (error) {
-      showToast('error', '식물 목록을 불러오지 못했습니다.');
-    } finally {
-      setPlantLoading(false);
+      await fetchPlantList();
+      setShowPlantModal(true);
+      return;
     }
-    setShowPlantModal(true);  // fetch 완전히 끝난 후 모달 열기
-    return;
-  }
     if (item.special === 'cal') {
       if (!deviceName || !sendCommand) {
         setIsAlertOpen(true);
@@ -403,7 +377,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
                     setIsAutoMode(false);
                     setShowModeConfirmModal(false);
                     setShowWaterModal(true);
-                  } catch (error) {
+                  } catch {
                     showToast('error', '모드 전환에 실패했습니다.');
                   }
                 }}
@@ -499,7 +473,7 @@ const QuickMenu = ({ onClose, currentPlant }) => {
                 onClick={() => {
                   setIsAlertOpen(false);
                   onClose();
-                  navigate('/Setting');
+                  navigate('/setting');
                 }}
               >
                 연결하기

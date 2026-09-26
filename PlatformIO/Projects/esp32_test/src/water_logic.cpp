@@ -110,7 +110,11 @@ void waterLoop() {
         pumpOff();
         watering = false;
         last_water_done_ms = now;
-        Serial.println("WATER DONE");
+        Serial.println("WATER_DONE");
+        if (pTxCharacteristic) {
+            pTxCharacteristic->setValue("WATER_DONE");
+            pTxCharacteristic->notify();
+        }
         sendWateringLog(target_seconds);
     }
 }

@@ -12,6 +12,20 @@ const diagnosisLogRouter = require('./domain/diagnosisLog/router');
 const environmentLogRouter = require('./domain/EnvironmentLog/router');
 const notificationRouter = require('./domain/notification/router');
 const communityRouter = require('./domain/community/router'); 
+const COOKIE_SECRET = process.env.COOKIE_SECRET;
+const AI_SERVER_URL = process.env.AI_SERVER_URL;
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (!COOKIE_SECRET) {
+  throw new Error('COOKIE_SECRET 환경 변수가 필요합니다.');
+}
+
+if (!AI_SERVER_URL) {
+  throw new Error('AI_SERVER_URL 환경 변수가 필요합니다.');
+}
 
 // --- [Gemini AI 설정 시작] ---
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -54,13 +68,6 @@ const app = express(); // 익스프레스 애플리케이션 객체 생성
 
 app.set('trust proxy', 1); // 추가: 프록시 환경에서 세션 쿠키가 잘 전달되도록 설정
 
-// 외부에서 접속하는 프론트엔드 주소를 추가하여 CORS 에러 원천 차단!
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://223.130.157.123:8080',
-  'http://223.130.157.123:5173' // 추가된 프론트엔드 접속 주소
-];
-
 /**
  * 1. 미들웨어 설정
  */
@@ -79,7 +86,7 @@ app.use(express.json()); // [중요] JSON 데이터 파싱 (req.body 생성)
 app.use(express.urlencoded({ extended: true })); 
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-app.use(cookieParser(process.env.COOKIE_SECRET || 'smartplant-secret'));
+app.use(cookieParser(COOKIE_SECRET));
 
 /**
  * 2. 세션 설정
@@ -87,7 +94,7 @@ app.use(cookieParser(process.env.COOKIE_SECRET || 'smartplant-secret'));
 app.use(session({
   resave: false,               
   saveUninitialized: false,    
-  secret: process.env.COOKIE_SECRET || 'smartplant-secret',
+  secret: COOKIE_SECRET,
   cookie: { 
     httpOnly: true, // 자바스크립트로 쿠키 탈취 방지
     secure: false,  // HTTP 환경이므로 false 유지
@@ -130,14 +137,11 @@ app.use('/api/community', communityRouter);
  */
 app.get('/plant/:plantName', async (req, res) => {
   const plantName = req.params.plantName;
-  console.log(`[AI 요청] 식물: ${plantName}`);
-
   try {
     const result = await plantModel.generateContent(plantName);
     const response = await result.response;
     const text = response.text();
     
-    console.log(`[AI 응답] ${text}`);
     // AI가 준 JSON 문자열을 실제 객체로 변환하여 전송
     res.json(JSON.parse(text));
     
