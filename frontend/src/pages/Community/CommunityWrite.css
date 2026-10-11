@@ -306,3 +306,38 @@
     padding: 5px 12px;
 }
 }
+
+/* 작성 화면 정리 */
+.write-page { min-height: calc(100vh - 60px); margin-top: 0; padding: 42px 24px 96px; background: var(--bg-color); border: 0; }
+.write-inner { grid-template-columns: minmax(0, 1fr) 240px; gap: 28px; max-width: 1080px; height: auto; }
+.write-left { padding: 26px; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.write-page-heading { margin-bottom: 28px; }
+.write-page-heading p { margin: 0 0 7px; color: var(--primary-strong); font-size: .72rem; font-weight: 800; letter-spacing: .11em; }
+.write-page-heading h1 { margin: 0; color: var(--text-main); font-size: 1.65rem; }
+.write-page-heading span { display: block; margin-top: 8px; color: var(--text-sub); font-size: .86rem; }
+.write-field { gap: 9px; margin-bottom: 20px; }
+.write-field-label { color: var(--text-main); font-size: .88rem; font-weight: 700; }
+.write-field input[type="text"],
+.write-field textarea { border: 1px solid var(--border-color); border-radius: 11px; color: var(--text-main); background: #fcfdfc; }
+.write-field input[type="text"]:focus,
+.write-field textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(46, 140, 77, .1); }
+.write-field textarea { height: 230px; padding: 13px 14px; }
+.category-btn { padding: 8px 14px; border-color: var(--border-color); border-radius: 999px; font-size: .8rem; font-weight: 650; cursor: pointer; }
+.category-btn.active { background: var(--primary-color); border-color: var(--primary-color); }
+.file-upload-label { min-height: 128px; border-color: #b8d6c1; border-radius: 12px; color: var(--primary-strong); background: #fbfdfb; font-size: .86rem; font-weight: 650; }
+.file-upload-label:hover { background: var(--primary-soft); border-color: var(--primary-color); }
+.write-right { padding-top: 0; }
+.write-submit-btn,
+.write-cancel-btn { height: 44px; border-radius: 10px; }
+.write-submit-btn { background: var(--primary-color); border: 0; }
+.write-cancel-btn { border-color: var(--border-color); }
+.write-tip { margin-top: 8px; padding: 17px; border-color: var(--border-color); border-radius: var(--radius-lg); background: #fff; }
+.tip-title { color: var(--text-main); font-weight: 700; }
+.write-tip ul li { color: var(--text-sub); }
+
+@media (max-width: 768px) {
+  .write-page { padding: 28px 16px 88px; }
+  .write-left { padding: 20px 16px; }
+  .write-page-heading { margin-bottom: 22px; }
+  .write-field textarea { height: 190px; }
+}

@@ -203,7 +203,7 @@ function Login() {
           login(userData);
 
           const nickname = userData.nickname || '사용자';
-          await showAlert('success', '로그인 성공!', `${nickname}님 환영합니다!`, 1500);
+          await showAlert('success', '로그인 완료', `${nickname}님으로 로그인했습니다.`, 1500);
           navigate('/profile'); 
           
         } else {
@@ -243,7 +243,7 @@ function Login() {
         };
 
         await signupApi(signupData);
-        await showAlert('success', '회원가입 완료!', '이제 로그인을 진행해주세요.', 1000);
+        await showAlert('success', '회원가입 완료', '로그인 화면에서 이용할 수 있습니다.', 1000);
         handleTabChange('signin');
 
       } catch (err) {

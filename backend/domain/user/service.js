@@ -25,7 +25,6 @@ module.exports = {
   sendEmailCode: async (email) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     verificationCodes[email] = code;
-    console.log(`[메일발송] ${email} -> 번호: ${code}`); 
 
     await mailer.sendVerificationCode(email, code);
 

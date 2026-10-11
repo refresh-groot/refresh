@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTimes } from 'react-icons/fa';
-import Swal from 'sweetalert2';
-import { showAlert } from '../../app/alert';
+import Swal, { showAlert } from '../../app/alert';
 import './CommunityWrite.css';
 import api from '../../api/axios';
 
@@ -35,18 +34,17 @@ import api from '../../api/axios';
     if (!content.trim()) return Swal.fire('알림', '내용을 입력해주세요.', 'warning');
 
     try {
-        let res;
         if (images.length > 0) {
         const formData = new FormData();
             formData.append('category', category);
             formData.append('title', title);
             formData.append('content', content);
             images.forEach((img) => formData.append('image', img.file));
-            res = await api.post('/api/community', formData, {
+            await api.post('/api/community', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         } else {
-            res = await api.post('/api/community', { category, title, content });
+            await api.post('/api/community', { category, title, content });
         }
 
         await showAlert('success', '성공', '게시글이 등록되었습니다.', 1000);
@@ -62,6 +60,11 @@ import api from '../../api/axios';
         <div className="write-inner">
         
             <div className="write-left">
+            <header className="write-page-heading">
+                <p>REFRESH COMMUNITY</p>
+                <h1>새 이야기 작성</h1>
+                <span>다른 식물 친구에게 도움이 될 경험을 남겨보세요.</span>
+            </header>
 
             <div className="write-field">
             <div className="write-field-label">카테고리</div>

@@ -1,5 +1,25 @@
 const repository = require('./repository');
-const { Notification, Plant, SpeciesInfo } = require('../index');
+const { Notification, Plant, SpeciesInfo, Sequelize } = require('../index');
+
+const { Op } = Sequelize;
+const ALERT_COOLDOWN_MS = 30 * 60 * 1000;
+
+const createErrorNotification = async ({ plant_id, messagePrefix, message, captured_value }) => {
+    const latest = await Notification.findOne({
+        where: {
+            plant_id,
+            type: 'ERROR',
+            message: { [Op.like]: `${messagePrefix}%` }
+        },
+        order: [['created_at', 'DESC']]
+    });
+
+    if (latest && Date.now() - new Date(latest.createdAt).getTime() < ALERT_COOLDOWN_MS) {
+        return;
+    }
+
+    await Notification.create({ plant_id, type: 'ERROR', message, captured_value });
+};
 
 module.exports = {
     // 하드웨어로부터 받은 환경 데이터 기록
@@ -31,9 +51,9 @@ module.exports = {
 
         // 1. 조도 알림 (ERROR)
         if (light_level !== null && light_level < limits.min_light) {
-            await Notification.create({
+            await createErrorNotification({
                 plant_id,
-                type: 'ERROR',
+                messagePrefix: '일조량 부족',
                 message: `일조량 부족 (조도: ${light_level})`,
                 captured_value: `${light_level}`
             });
@@ -42,16 +62,16 @@ module.exports = {
         // 2. 온도 알림 (ERROR)
         if (temperature !== null) {
             if (temperature > limits.max_temp) {
-                await Notification.create({
+                await createErrorNotification({
                     plant_id,
-                    type: 'ERROR',
+                    messagePrefix: '고온 위험',
                     message: `고온 위험 (현재: ${temperature.toFixed(1)}°C)`,
                     captured_value: `${temperature}`
                 });
             } else if (temperature < limits.min_temp) {
-                await Notification.create({
+                await createErrorNotification({
                     plant_id,
-                    type: 'ERROR',
+                    messagePrefix: '저온 위험',
                     message: `저온 위험 (현재: ${temperature.toFixed(1)}°C)`,
                     captured_value: `${temperature}`
                 });
@@ -60,9 +80,9 @@ module.exports = {
 
         // 3. 수분 알림 (ERROR - 가장 중요)
         if (moisture_level !== null && moisture_level < limits.min_moisture) {
-            await Notification.create({
+            await createErrorNotification({
                 plant_id,
-                type: 'ERROR',
+                messagePrefix: '토양 건조 주의',
                 message: `토양 건조 주의 (수분: ${moisture_level}%)`,
                 captured_value: `${moisture_level}`
             });

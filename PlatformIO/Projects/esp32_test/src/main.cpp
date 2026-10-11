@@ -10,7 +10,7 @@
 #include <Preferences.h>
 #include <ArduinoJson.h> 
 
-const char* aiServerBaseUrl = "http://223.130.157.123:8080/plant/";
+const char* hardwareConfigBaseUrl = "http://223.130.157.123:8080/api/plants/";
 const char* serverUrl = "http://223.130.157.123:8080/api/watering-log";
 const char* envServerUrl = "http://223.130.157.123:8080/api/environment-log";
 
@@ -19,15 +19,22 @@ int MY_PLANT_ID = 0;
 
 unsigned long lastEnvLogMs = 0;
 const unsigned long REPORT_INTERVAL = 60000;
+unsigned long lastConfigSyncMs = 0;
+const unsigned long CONFIG_SYNC_INTERVAL = 60000;
 
-void fetchPlantConfigFromAI(String plantName) {
+void fetchPlantConfigFromServer() {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi not connected!");
         return;
     }
 
+    if (MY_PLANT_ID <= 0) {
+        Serial.println("Plant ID is not set!");
+        return;
+    }
+
     HTTPClient http;
-    String url = String(aiServerBaseUrl) + plantName;
+    String url = String(hardwareConfigBaseUrl) + String(MY_PLANT_ID) + "/hardware";
     
     Serial.print(">> AI 서버 요청 중: ");
     Serial.println(url);
@@ -45,16 +52,19 @@ void fetchPlantConfigFromAI(String plantName) {
         if (!error) {
             int minMoisture = doc["min_moisture"]; 
             int duration = doc["water_duration_ms"];
-            const char* tip = doc["care_tip"];
+            if (!doc.containsKey("min_moisture") || !doc.containsKey("water_duration_ms")) {
+                Serial.println("급수 기준이 없는 서버 응답입니다.");
+                http.end();
+                return;
+            }
 
             ai_target_moisture = minMoisture;
             ai_water_duration = duration;
 
-            Serial.println("====== [AI 설정 적용 완료] ======");
-            Serial.printf("식물명    : %s\n", plantName.c_str());
+            Serial.println("====== [서버 급수 설정 적용 완료] ======");
+            Serial.printf("식물 ID   : %d\n", MY_PLANT_ID);
             Serial.printf("기준 습도 : %d%% 미만일 때 급수\n", ai_target_moisture);
             Serial.printf("급수 시간 : %d ms\n", ai_water_duration);
-            Serial.printf("관리 팁   : %s\n", tip);
             Serial.println("===============================");
         } else {
             Serial.println("JSON 파싱 실패");
@@ -142,7 +152,10 @@ void setup() {
             Serial.print(".");
             retry++;
         }
-        if(WiFi.status() == WL_CONNECTED) Serial.println("\nWiFi Connected!");
+    if(WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nWiFi Connected!");
+        fetchPlantConfigFromServer();
+    }
         else Serial.println("\nWiFi FAIL");
     }
 
@@ -155,6 +168,11 @@ void loop() {
     handleSerial(); 
     
     unsigned long now = millis();
+    if (now - lastConfigSyncMs >= CONFIG_SYNC_INTERVAL) {
+        lastConfigSyncMs = now;
+        fetchPlantConfigFromServer();
+    }
+
     if (now - lastEnvLogMs >= REPORT_INTERVAL) {
         lastEnvLogMs = now; 
         Serial.println(">>> 1분 주기 환경 데이터 자동 전송 시작");

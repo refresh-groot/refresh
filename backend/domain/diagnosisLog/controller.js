@@ -73,7 +73,7 @@ const updateSessionTitle = async (req, res) => {
         if (!title) return res.status(400).json({ message: '이름을 입력해주세요.' });
 
         // 서비스의 세션 이름 변경 함수 호출
-        await service.updateSessionTitle(sessionId, title);
+        await service.updateSessionTitle(sessionId, title, req.plant.id);
         res.status(200).json({ message: '채팅방 이름 변경 성공' });
     } catch (error) {
         console.error('세션 이름 변경 실패:', error);
@@ -87,7 +87,7 @@ const deleteSession = async (req, res) => {
         const { sessionId } = req.params;
         
         // 서비스의 세션 삭제 함수 호출
-        await service.deleteSession(sessionId);
+        await service.deleteSession(sessionId, req.plant.id);
         res.status(200).json({ message: '채팅방 삭제 성공' });
     } catch (error) {
         console.error('세션 삭제 실패:', error);

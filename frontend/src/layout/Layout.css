@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column; 
     height: 100vh; 
-    background-color: #f9fbfa; 
+    background: transparent;
     overflow: hidden; 
 }
 
@@ -11,7 +11,7 @@
     flex: 1; 
     overflow-y: auto; 
     padding-top: 0 !important;
-    padding-bottom: 70px;
+    padding-bottom: 88px;
 }
 
 @media screen and (min-width: 769px) {

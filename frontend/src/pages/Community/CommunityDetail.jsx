@@ -88,7 +88,6 @@ const CommunityDetail = () => {
   );
 
     const formatRelativeDate = (dateString) => {
-    console.log('날짜값:', dateString);
   if (!dateString) return '';
   const now = new Date();
   const date = new Date(dateString);

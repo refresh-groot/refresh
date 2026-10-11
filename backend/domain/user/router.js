@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('./controller');
 const validator = require('../../middleware/validator');
+const { requireLogin } = require('../../middleware/plantAuthorization');
 
 // 회원가입
 router.post('/signup', validator.Signup, controller.signup);
@@ -15,12 +16,12 @@ router.post('/login', controller.login);
 router.post('/logout', controller.logout);
 
 // 프로필 조회 및 수정
-router.get('/profile', controller.getProfile);
-router.put('/profile', controller.updateProfile);
-router.patch('/alert', validator.UpdateAlert, controller.updateAlert);
+router.get('/profile', requireLogin, controller.getProfile);
+router.put('/profile', requireLogin, controller.updateProfile);
+router.patch('/alert', requireLogin, validator.UpdateAlert, controller.updateAlert);
 
 // 회원 탈퇴
-router.delete('/withdraw', validator.Withdraw, controller.withdraw);
+router.delete('/withdraw', requireLogin, validator.Withdraw, controller.withdraw);
 
 // 세션 체크 및 소셜 로그인 콜백
 router.get('/check', controller.check);

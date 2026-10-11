@@ -518,3 +518,35 @@
     grid-template-columns: 1fr 1fr;
 }
 }
+
+/* 게시글 상세 화면 정리 */
+.detail-page { min-height: calc(100vh - 60px); padding: 42px 24px 96px; background: var(--bg-color); }
+.detail-inner { max-width: 1080px; gap: 28px; }
+.detail-main { padding: 28px 30px; border-color: var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.detail-panel { padding: 18px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-sm); }
+.detail-back { color: var(--text-sub); font-weight: 650; }
+.detail-back:hover { color: var(--primary-strong); }
+.detail-title { color: var(--text-main); font-size: clamp(1.35rem, 3vw, 1.8rem); font-weight: 750; }
+.detail-author-row { border-color: #edf0ee; }
+.detail-avatar { color: var(--primary-strong); background: var(--primary-light); }
+.detail-content { color: #4e5b52; line-height: 1.85; white-space: pre-wrap; }
+.detail-image-box { margin: 6px 0; padding: 12px; background: #f7faf8; border-radius: 14px; }
+.detail-main-img { max-height: 520px; border-radius: 10px; box-shadow: none; }
+.detail-action-row { margin-top: 8px; padding-top: 16px; border-top: 1px solid #edf0ee; }
+.detail-action-btn { min-height: 38px; border-color: var(--border-color); border-radius: 9px; font-weight: 650; }
+.detail-action-btn:hover { border-color: #bcdcc8; color: var(--primary-strong); background: var(--primary-soft); }
+.comment-section { margin-top: 16px; padding-top: 22px; border-top: 1px solid #edf0ee; }
+.comment-title { color: var(--text-main); font-size: 1rem; font-weight: 750; }
+.comment-item { padding: 12px 0; border-bottom: 1px solid #f0f3f1; }
+.comment-input { border-color: var(--border-color); border-radius: 10px; }
+.comment-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(46, 140, 77, .1); }
+.comment-send-btn { border-radius: 10px; background: var(--primary-color); font-weight: 700; }
+.panel-title { color: var(--text-sub); font-weight: 750; }
+.stat-card,
+.related-item { border-color: #e3eae5; border-radius: 10px; }
+.related-item:hover { background: var(--primary-soft); }
+
+@media (max-width: 768px) {
+  .detail-page { padding: 28px 16px 88px; }
+  .detail-main { padding: 21px 18px; }
+}

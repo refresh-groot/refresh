@@ -25,8 +25,6 @@ const Community = () => {
       setLoading(true);
       try {
         const sortMap = { '최신순': 'new', '댓글순': 'chat', '좋아요순': 'likes' };
-         console.log('📌 currentSort:', currentSort);           // 추가
-    console.log('📌 sortMap 변환값:', sortMap[currentSort]); // 추가
         const res = await api.get('/api/community', {
           params: {
             category: activeCategory === '전체' ? undefined : activeCategory,
@@ -38,7 +36,6 @@ const Community = () => {
         
         // 데이터 구조 안전하게 받기
         if (res.data && res.data.posts) {
-          console.log('📌 서버에서 받은 전체 게시글:', res.data.posts);
           setPosts(res.data.posts);
           setTotalPages(res.data.totalPages || 1);
         } else {
@@ -66,7 +63,6 @@ const Community = () => {
   const sortOptions = [{ label: '최신순', value: 'new' }, { label: '좋아요순', value: 'likes' }, { label: '댓글순', value: 'chat' }];
 
   const formatRelativeDate = (dateString) => {
-    console.log('날짜값:', dateString);
   if (!dateString) return '';
   const now = new Date();
   const date = new Date(dateString);
@@ -96,6 +92,14 @@ const Community = () => {
           <button className='sidebar-write-btn' onClick={() => Navigate('/community/write')}>글쓰기</button>
         </aside>
         <main className='community-main'>
+          <header className="community-hero">
+            <div>
+              <p>REFRESH COMMUNITY</p>
+              <h1>식물과 함께한 오늘을 나눠보세요</h1>
+              <span>질문, 관리 팁, 성장 기록을 식물 친구들과 공유할 수 있어요.</span>
+            </div>
+            <button className="community-hero-write" onClick={() => Navigate('/community/write')}>글쓰기</button>
+          </header>
           <div className="community-main-container">
             <div className="search-box">
               <input type="text" placeholder='검색어를 입력하세요' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/>
@@ -124,7 +128,13 @@ const Community = () => {
             {loading && <div className="loading">불러오는 중...</div>}
             
             {/* posts가 undefined일 경우를 대비해 옵셔널 체이닝 사용 */}
-            {!loading && posts?.length === 0 && <div className="no-posts">게시글이 없습니다.</div>}
+            {!loading && posts?.length === 0 && (
+              <div className="no-posts">
+                <strong>아직 게시글이 없어요</strong>
+                <span>첫 번째 식물 이야기를 남겨보세요.</span>
+                <button onClick={() => Navigate('/community/write')}>글쓰기</button>
+              </div>
+            )}
             
             {!loading && posts?.map((post) => (
               <div key={post.id} className="post-card" onClick={() => Navigate(`/community/${post.id}`)}>

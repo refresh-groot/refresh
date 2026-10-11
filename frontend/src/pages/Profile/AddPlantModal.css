@@ -13,8 +13,10 @@
 
 .modal-content {
   background: white;
-  padding: 25px;
-  border-radius: 15px;
+  max-height: min(92vh, 780px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 20px;
   width: 90%;          
   max-width: 400px;
   position: relative;
@@ -42,16 +44,36 @@
   color: #777;
 }
 
-.modal-content h2 {
+.plant-modal-heading {
+  margin: 4px 0 20px;
   text-align: center;
-  margin-bottom: 20px;
-  color: #333;
+}
+
+.plant-modal-heading p {
+  margin: 0 0 5px;
+  color: var(--primary-strong);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.plant-modal-heading h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.35rem;
+}
+
+.plant-modal-heading span {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-sub);
+  font-size: 0.82rem;
 }
 
 .modal-img-upload {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 6px;
   position: relative;
 }
 
@@ -60,14 +82,14 @@
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #eee;
+  border: 3px solid #e5eee7;
 }
 
 .modal-camera-btn {
   position: absolute;
   bottom: 0;
-  right: 35%; 
-  background: #4caf50;
+  right: calc(50% - 50px);
+  background: var(--primary-color);
   color: white;
   width: 30px;
   height: 30px;
@@ -79,35 +101,47 @@
 }
 
 .modal-input-group {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .modal-input-group label {
   display: block;
   font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 5px;
+  color: var(--text-sub);
+  margin-bottom: 7px;
+  font-weight: 650;
 }
+
+.modal-input-group label em { color: #d25454; font-style: normal; }
 
 .modal-input-group input {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
   box-sizing: border-box; 
 }
 
 .modal-submit-btn {
   width: 100%;
   padding: 12px;
-  background-color: #4caf50;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   margin-top: 10px;
+}
+
+.modal-submit-btn:disabled { cursor: wait; opacity: 0.7; }
+
+.image-upload-guide {
+  margin: 0 0 20px;
+  color: var(--text-sub);
+  font-size: 0.76rem;
+  text-align: center;
 }
 
 .datepicker-container {
@@ -161,6 +195,39 @@
 .ble-group {
     margin-top: 5px; 
 }
+
+.ble-group {
+    margin-top: 4px;
+    padding: 13px;
+    border: 1px solid #dce8df;
+    border-radius: 12px;
+    background: #fafcfb;
+}
+
+.ble-group__heading {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.ble-group__heading label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.ble-group__heading small {
+    padding: 2px 6px;
+    border-radius: 99px;
+    color: var(--text-sub);
+    background: #edf1ee;
+    font-size: 0.65rem;
+    font-weight: 650;
+}
+
+.ble-group__heading span { color: var(--text-sub); font-size: 0.74rem; }
 
 .ble-connect-btn {
     width: 100%;

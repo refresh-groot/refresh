@@ -393,3 +393,86 @@
 
   .danger-btn { width: 100%; text-align: center; }
 }
+
+/* Clean settings system */
+.setting-page {
+  background: transparent;
+}
+
+.s-card {
+  border-color: var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.s-card-header { padding: 20px 22px 14px; }
+.s-card-body { padding: 18px 22px 22px; }
+.s-card-title { color: var(--text-main); font-weight: 650; }
+.s-card-icon,
+.s-row-icon { border-radius: 10px; }
+
+.profile-avatar {
+  color: var(--primary-strong);
+  background: var(--primary-light);
+  border-color: #cbe4d4;
+}
+
+.bio-input {
+  background: #fbfcfb;
+  border-color: #dce4df;
+  border-radius: 10px;
+}
+
+.bio-save-btn {
+  background: var(--primary-color);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.bio-save-btn:hover { background: var(--primary-strong); }
+.ble-pill { color: var(--primary-strong); background: var(--primary-light); }
+.ble-dot { background: var(--primary-color); }
+.toggle.on { background: var(--primary-color); }
+
+.s-row .ble-connect-btn {
+  color: var(--primary-strong);
+  background: #ffffff;
+  border-color: #c7ddce;
+  border-radius: 9px;
+}
+
+.s-row .ble-connect-btn:hover { background: var(--primary-soft); }
+
+.hardware-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.hardware-settings label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-sub);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.hardware-settings input {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--text-main);
+  background: #fbfcfb;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+}
+
+.hardware-settings p {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .setting-page { padding: 34px 16px 96px; }
+  .s-card { border-radius: var(--radius-lg); }
+}

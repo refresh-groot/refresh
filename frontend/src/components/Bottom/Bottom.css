@@ -2,19 +2,20 @@
   position: fixed;
   bottom: 0;
   left: 0;
-  width: 100%;
-  height: 65px;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
-  border-radius: 20px 20px 0 0;
-  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 68px;
+  padding: 0 14px;
+  background: #ffffff;
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 16px rgba(22, 34, 27, 0.04);
 }
 
-.nav-group-left, .nav-group-right {
+.nav-group-left,
+.nav-group-right {
   display: flex;
   flex: 1;
   justify-content: space-around;
@@ -25,38 +26,57 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #888888;
+  color: #8a938d;
   cursor: pointer;
-  transition: color 0.3s ease;
 }
 
-.nav-icon { font-size: 24px; margin-bottom: 2px; }
-.nav-label { font-size: 11px; font-weight: 500; }
-.nav-item.active { color: #2A3559; }
+.nav-icon {
+  margin-bottom: 3px;
+  font-size: 21px;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
 
 .quick-btn {
-  width: 55px;
-  height: 55px;
-  border-radius: 50%;
-  background-color: #2A3559;
-  color: white;
-  border: none;
-  font-size: 28px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(42, 53, 89, 0.4);
   z-index: 1001;
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-shrink: 0;
-  margin-top: 0px; /* 위로 살짝 띄움 */
-  transition: transform 0.2s;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-top: -14px;
+  color: #ffffff;
+  font-size: 25px;
+  background: var(--primary-color);
+  border: 4px solid var(--bg-color);
+  border-radius: 50%;
+  box-shadow: 0 5px 12px rgba(47, 125, 87, 0.22);
+  cursor: pointer;
 }
 
-.quick-btn:active { transform: translateY(-10px) scale(0.95); }
+.quick-btn:hover {
+  background: var(--primary-strong);
+  transform: translateY(-2px);
+}
+
+.quick-btn:active {
+  transform: scale(0.96);
+}
 
 @media screen and (min-width: 768px) {
-  .bottom-nav-container { display: none; }
+  .bottom-nav-container {
+    display: none;
+  }
 }
 
-.bottom-nav-container.hidden { display: none !important; }
+.bottom-nav-container.hidden {
+  display: none !important;
+}
