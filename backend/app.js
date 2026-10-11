@@ -58,7 +58,8 @@ app.set('trust proxy', 1); // 추가: 프록시 환경에서 세션 쿠키가 �
 const allowedOrigins = [
   'http://localhost:5173',
   'http://223.130.157.123:8080',
-  'http://223.130.157.123:5173' // 추가된 프론트엔드 접속 주소
+  'http://223.130.157.123:5173',
+  'https://refresh-app-six.vercel.app'
 ];
 
 /**
