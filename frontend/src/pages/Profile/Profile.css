@@ -302,7 +302,8 @@
 
 @media (max-width: 768px) {
   .profile-container {
-    padding: 30px 16px 96px;
+    /* 상단 패딩을 30px -> 80px로 수정해서 헤더 밑으로 카드가 안 깔리게 방지 */
+    padding: 80px 16px 96px;
   }
 
   .profile-header {

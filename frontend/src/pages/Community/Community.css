@@ -485,7 +485,22 @@
 
 @media (max-width: 768px) {
   .community-page { padding: 28px 16px 88px; }
-  .community-inner { gap: 18px; }
+  
+  /* 수정: 모바일에서는 사이드바와 콘텐츠를 위아래 1열로 변경 */
+  .community-inner { 
+    grid-template-columns: 1fr !important; 
+    gap: 18px; 
+  }
+  
+  /* 모바일 사이드바 세로 정렬 감싸기 */
+  .community-sidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
   .community-hero { align-items: flex-start; }
   .community-hero span { line-height: 1.5; }
   .sidebar-write-btn { display: none; }
