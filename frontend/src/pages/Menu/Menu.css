@@ -1007,7 +1007,8 @@
     .menu-dashboard {
         grid-template-columns: 1fr;
         gap: 16px;
-        padding: 36px 16px 96px;
+        /* padding 상단을 36px -> 85px로 수정 */
+        padding: 85px 16px 96px !important;
         margin-top: 0;
     }
 

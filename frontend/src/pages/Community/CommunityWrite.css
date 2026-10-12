@@ -336,8 +336,38 @@
 .write-tip ul li { color: var(--text-sub); }
 
 @media (max-width: 768px) {
-  .write-page { padding: 28px 16px 88px; }
-  .write-left { padding: 20px 16px; }
-  .write-page-heading { margin-bottom: 22px; }
-  .write-field textarea { height: 190px; }
+  /* 1. 상단 패딩을 80px로 수정하여 헤더 가림 방지 */
+  .write-page { 
+    padding: 80px 16px 96px !important; 
+    margin-top: 0 !important;
+  }
+  
+  /* 2. 모바일에서는 좌/우 그리드를 위아래 1열로 변경 */
+  .write-inner { 
+    grid-template-columns: 1fr !important; 
+    gap: 16px !important; 
+    height: auto !important;
+  }
+
+  .write-left { 
+    padding: 18px 14px !important; 
+  }
+
+  .write-page-heading { 
+    margin-bottom: 20px !important; 
+  }
+
+  .write-field textarea { 
+    height: 180px !important; 
+  }
+
+  .write-submit-btn,
+  .write-cancel-btn {
+    height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  .file-upload-label {
+    min-height: 90px !important;
+  }
 }

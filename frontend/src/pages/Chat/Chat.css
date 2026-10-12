@@ -235,6 +235,7 @@
   font-weight: bold;
   background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
   -webkit-background-clip: text;
+  background-clip: text; /* ★ 표준 속성 추가 */
   -webkit-text-fill-color: transparent;
 }
 

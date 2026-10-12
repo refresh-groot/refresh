@@ -547,6 +547,9 @@
 .related-item:hover { background: var(--primary-soft); }
 
 @media (max-width: 768px) {
-  .detail-page { padding: 28px 16px 88px; }
+  /* 상단 패딩을 28px -> 80px로 변경하여 헤더 가림 방지 */
+  .detail-page { 
+    padding: 80px 16px 88px !important; 
+  }
   .detail-main { padding: 21px 18px; }
 }

@@ -310,6 +310,7 @@
 .post-title {
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1; /* ★ 표준 속성 추가 */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -318,6 +319,7 @@
 .post-preview {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* ★ 표준 속성 추가 */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -484,15 +486,15 @@
 .page-number.active { background: var(--primary-color); border-color: var(--primary-color); }
 
 @media (max-width: 768px) {
-  .community-page { padding: 28px 16px 88px; }
+  /* padding 상단을 28px -> 80px로 수정 */
+  .community-page { padding: 80px 16px 88px !important; }
   
-  /* 수정: 모바일에서는 사이드바와 콘텐츠를 위아래 1열로 변경 */
+  /* 모바일에서는 사이드바와 콘텐츠를 위아래 1열로 정렬 */
   .community-inner { 
     grid-template-columns: 1fr !important; 
     gap: 18px; 
   }
   
-  /* 모바일 사이드바 세로 정렬 감싸기 */
   .community-sidebar {
     position: static;
     flex-direction: row;

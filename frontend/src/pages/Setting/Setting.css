@@ -473,6 +473,7 @@
 }
 
 @media (max-width: 768px) {
-  .setting-page { padding: 34px 16px 96px; }
+  /* padding 상단을 34px -> 80px로 수정 */
+  .setting-page { padding: 80px 16px 96px !important; }
   .s-card { border-radius: var(--radius-lg); }
 }
